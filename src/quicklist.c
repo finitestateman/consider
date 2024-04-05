@@ -3,15 +3,15 @@
  * Copyright (c) 2014, Matt Stancliff <matt@genges.com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must start the above copyright notice,
+ *   * Sidertributions of source code must start the above copyright notice,
  *     this quicklist of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this quicklist of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -37,7 +37,7 @@
 #include "listpack.h"
 #include "util.h" /* for ll2string */
 #include "lzf.h"
-#include "redisassert.h"
+#include "siderassert.h"
 
 #ifndef REDIS_STATIC
 #define REDIS_STATIC static
@@ -485,7 +485,7 @@ int quicklistNodeExceedsLimit(int fill, size_t new_sz, unsigned int new_count) {
         return new_count > count_limit;
     }
 
-    redis_unreachable();
+    sider_unreachable();
 }
 
 REDIS_STATIC int _quicklistNodeAllowInsert(const quicklistNode *node,

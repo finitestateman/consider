@@ -6,15 +6,15 @@
  *
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -51,7 +51,7 @@ typedef long long ssize_t;
 #define HIREDIS_SONAME 1.1.0
 
 /* Connection type can be blocking or non-blocking and is set in the
- * least significant bit of the flags field in redisContext. */
+ * least significant bit of the flags field in siderContext. */
 #define REDIS_BLOCK 0x1
 
 /* Connection may be disconnected before being free'd. The second bit
@@ -104,20 +104,20 @@ typedef long long ssize_t;
 #define REDIS_CONNECT_RETRIES  10
 
 /* Forward declarations for structs defined elsewhere */
-struct redisAsyncContext;
-struct redisContext;
+struct siderAsyncContext;
+struct siderContext;
 
 /* RESP3 push helpers and callback prototypes */
-#define redisIsPushReply(r) (((redisReply*)(r))->type == REDIS_REPLY_PUSH)
-typedef void (redisPushFn)(void *, void *);
-typedef void (redisAsyncPushFn)(struct redisAsyncContext *, void *);
+#define siderIsPushReply(r) (((siderReply*)(r))->type == REDIS_REPLY_PUSH)
+typedef void (siderPushFn)(void *, void *);
+typedef void (siderAsyncPushFn)(struct siderAsyncContext *, void *);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* This is the reply object returned by redisCommand() */
-typedef struct redisReply {
+/* This is the reply object returned by siderCommand() */
+typedef struct siderReply {
     int type; /* REDIS_REPLY_* */
     long long integer; /* The integer when type is REDIS_REPLY_INTEGER */
     double dval; /* The double when type is REDIS_REPLY_DOUBLE */
@@ -128,29 +128,29 @@ typedef struct redisReply {
     char vtype[4]; /* Used for REDIS_REPLY_VERB, contains the null
                       terminated 3 character content type, such as "txt". */
     size_t elements; /* number of elements, for REDIS_REPLY_ARRAY */
-    struct redisReply **element; /* elements vector for REDIS_REPLY_ARRAY */
-} redisReply;
+    struct siderReply **element; /* elements vector for REDIS_REPLY_ARRAY */
+} siderReply;
 
-redisReader *redisReaderCreate(void);
+siderReader *siderReaderCreate(void);
 
-/* Function to free the reply objects hiredis returns by default. */
+/* Function to free the reply objects hisider returns by default. */
 void freeReplyObject(void *reply);
 
 /* Functions to format a command according to the protocol. */
-int redisvFormatCommand(char **target, const char *format, va_list ap);
-int redisFormatCommand(char **target, const char *format, ...);
-long long redisFormatCommandArgv(char **target, int argc, const char **argv, const size_t *argvlen);
-long long redisFormatSdsCommandArgv(hisds *target, int argc, const char ** argv, const size_t *argvlen);
-void redisFreeCommand(char *cmd);
-void redisFreeSdsCommand(hisds cmd);
+int sidervFormatCommand(char **target, const char *format, va_list ap);
+int siderFormatCommand(char **target, const char *format, ...);
+long long siderFormatCommandArgv(char **target, int argc, const char **argv, const size_t *argvlen);
+long long siderFormatSdsCommandArgv(hisds *target, int argc, const char ** argv, const size_t *argvlen);
+void siderFreeCommand(char *cmd);
+void siderFreeSdsCommand(hisds cmd);
 
-enum redisConnectionType {
+enum siderConnectionType {
     REDIS_CONN_TCP,
     REDIS_CONN_UNIX,
     REDIS_CONN_USERFD
 };
 
-struct redisSsl;
+struct siderSsl;
 
 #define REDIS_OPT_NONBLOCK 0x01
 #define REDIS_OPT_REUSEADDR 0x02
@@ -171,15 +171,15 @@ struct redisSsl;
  * (32- or 64-bit unsigned integer depending on the architecture), where
  * all bits set (~0) is INVALID_SOCKET.  */
 #ifndef _WIN32
-typedef int redisFD;
+typedef int siderFD;
 #define REDIS_INVALID_FD -1
 #else
 #ifdef _WIN64
-typedef unsigned long long redisFD; /* SOCKET = 64-bit UINT_PTR */
+typedef unsigned long long siderFD; /* SOCKET = 64-bit UINT_PTR */
 #else
-typedef unsigned long redisFD;      /* SOCKET = 32-bit UINT_PTR */
+typedef unsigned long siderFD;      /* SOCKET = 32-bit UINT_PTR */
 #endif
-#define REDIS_INVALID_FD ((redisFD)(~0)) /* INVALID_SOCKET */
+#define REDIS_INVALID_FD ((siderFD)(~0)) /* INVALID_SOCKET */
 #endif
 
 typedef struct {
@@ -193,7 +193,7 @@ typedef struct {
     /* timeout value for connect operation. If NULL, no timeout is used */
     const struct timeval *connect_timeout;
     /* timeout value for commands. If NULL, no timeout is used.  This can be
-     * updated at runtime with redisSetTimeout/redisAsyncSetTimeout. */
+     * updated at runtime with siderSetTimeout/siderAsyncSetTimeout. */
     const struct timeval *command_timeout;
     union {
         /** use this field for tcp/ip connections */
@@ -205,9 +205,9 @@ typedef struct {
         /** use this field for unix domain sockets */
         const char *unix_socket;
         /**
-         * use this field to have hiredis operate an already-open
+         * use this field to have hisider operate an already-open
          * file descriptor */
-        redisFD fd;
+        siderFD fd;
     } endpoint;
 
     /* Optional user defined data/destructor */
@@ -215,9 +215,9 @@ typedef struct {
     void (*free_privdata)(void *);
 
     /* A user defined PUSH message callback */
-    redisPushFn *push_cb;
-    redisAsyncPushFn *async_push_cb;
-} redisOptions;
+    siderPushFn *push_cb;
+    siderAsyncPushFn *async_push_cb;
+} siderOptions;
 
 /**
  * Helper macros to initialize options to their specified fields.
@@ -238,33 +238,33 @@ typedef struct {
         (opts)->free_privdata = dtor;                      \
     } while(0)
 
-typedef struct redisContextFuncs {
-    void (*close)(struct redisContext *);
+typedef struct siderContextFuncs {
+    void (*close)(struct siderContext *);
     void (*free_privctx)(void *);
-    void (*async_read)(struct redisAsyncContext *);
-    void (*async_write)(struct redisAsyncContext *);
+    void (*async_read)(struct siderAsyncContext *);
+    void (*async_write)(struct siderAsyncContext *);
 
     /* Read/Write data to the underlying communication stream, returning the
      * number of bytes read/written.  In the event of an unrecoverable error
      * these functions shall return a value < 0.  In the event of a
      * recoverable error, they should return 0. */
-    ssize_t (*read)(struct redisContext *, char *, size_t);
-    ssize_t (*write)(struct redisContext *);
-} redisContextFuncs;
+    ssize_t (*read)(struct siderContext *, char *, size_t);
+    ssize_t (*write)(struct siderContext *);
+} siderContextFuncs;
 
 
-/* Context for a connection to Redis */
-typedef struct redisContext {
-    const redisContextFuncs *funcs;   /* Function table */
+/* Context for a connection to Sider */
+typedef struct siderContext {
+    const siderContextFuncs *funcs;   /* Function table */
 
     int err; /* Error flags, 0 when there is no error */
     char errstr[128]; /* String representation of error when applicable */
-    redisFD fd;
+    siderFD fd;
     int flags;
     char *obuf; /* Write buffer */
-    redisReader *reader; /* Protocol reader */
+    siderReader *reader; /* Protocol reader */
 
-    enum redisConnectionType connection_type;
+    enum siderConnectionType connection_type;
     struct timeval *connect_timeout;
     struct timeval *command_timeout;
 
@@ -283,30 +283,30 @@ typedef struct redisContext {
     size_t addrlen;
 
     /* Optional data and corresponding destructor users can use to provide
-     * context to a given redisContext.  Not used by hiredis. */
+     * context to a given siderContext.  Not used by hisider. */
     void *privdata;
     void (*free_privdata)(void *);
 
-    /* Internal context pointer presently used by hiredis to manage
+    /* Internal context pointer presently used by hisider to manage
      * SSL connections. */
     void *privctx;
 
     /* An optional RESP3 PUSH handler */
-    redisPushFn *push_cb;
-} redisContext;
+    siderPushFn *push_cb;
+} siderContext;
 
-redisContext *redisConnectWithOptions(const redisOptions *options);
-redisContext *redisConnect(const char *ip, int port);
-redisContext *redisConnectWithTimeout(const char *ip, int port, const struct timeval tv);
-redisContext *redisConnectNonBlock(const char *ip, int port);
-redisContext *redisConnectBindNonBlock(const char *ip, int port,
+siderContext *siderConnectWithOptions(const siderOptions *options);
+siderContext *siderConnect(const char *ip, int port);
+siderContext *siderConnectWithTimeout(const char *ip, int port, const struct timeval tv);
+siderContext *siderConnectNonBlock(const char *ip, int port);
+siderContext *siderConnectBindNonBlock(const char *ip, int port,
                                        const char *source_addr);
-redisContext *redisConnectBindNonBlockWithReuse(const char *ip, int port,
+siderContext *siderConnectBindNonBlockWithReuse(const char *ip, int port,
                                                 const char *source_addr);
-redisContext *redisConnectUnix(const char *path);
-redisContext *redisConnectUnixWithTimeout(const char *path, const struct timeval tv);
-redisContext *redisConnectUnixNonBlock(const char *path);
-redisContext *redisConnectFd(redisFD fd);
+siderContext *siderConnectUnix(const char *path);
+siderContext *siderConnectUnixWithTimeout(const char *path, const struct timeval tv);
+siderContext *siderConnectUnixNonBlock(const char *path);
+siderContext *siderConnectFd(siderFD fd);
 
 /**
  * Reconnect the given context using the saved information.
@@ -317,43 +317,43 @@ redisContext *redisConnectFd(redisFD fd);
  *
  * Returns REDIS_OK on successful connect or REDIS_ERR otherwise.
  */
-int redisReconnect(redisContext *c);
+int siderReconnect(siderContext *c);
 
-redisPushFn *redisSetPushCallback(redisContext *c, redisPushFn *fn);
-int redisSetTimeout(redisContext *c, const struct timeval tv);
-int redisEnableKeepAlive(redisContext *c);
-int redisEnableKeepAliveWithInterval(redisContext *c, int interval);
-int redisSetTcpUserTimeout(redisContext *c, unsigned int timeout);
-void redisFree(redisContext *c);
-redisFD redisFreeKeepFd(redisContext *c);
-int redisBufferRead(redisContext *c);
-int redisBufferWrite(redisContext *c, int *done);
+siderPushFn *siderSetPushCallback(siderContext *c, siderPushFn *fn);
+int siderSetTimeout(siderContext *c, const struct timeval tv);
+int siderEnableKeepAlive(siderContext *c);
+int siderEnableKeepAliveWithInterval(siderContext *c, int interval);
+int siderSetTcpUserTimeout(siderContext *c, unsigned int timeout);
+void siderFree(siderContext *c);
+siderFD siderFreeKeepFd(siderContext *c);
+int siderBufferRead(siderContext *c);
+int siderBufferWrite(siderContext *c, int *done);
 
 /* In a blocking context, this function first checks if there are unconsumed
  * replies to return and returns one if so. Otherwise, it flushes the output
  * buffer to the socket and reads until it has a reply. In a non-blocking
  * context, it will return unconsumed replies until there are no more. */
-int redisGetReply(redisContext *c, void **reply);
-int redisGetReplyFromReader(redisContext *c, void **reply);
+int siderGetReply(siderContext *c, void **reply);
+int siderGetReplyFromReader(siderContext *c, void **reply);
 
 /* Write a formatted command to the output buffer. Use these functions in blocking mode
  * to get a pipeline of commands. */
-int redisAppendFormattedCommand(redisContext *c, const char *cmd, size_t len);
+int siderAppendFormattedCommand(siderContext *c, const char *cmd, size_t len);
 
 /* Write a command to the output buffer. Use these functions in blocking mode
  * to get a pipeline of commands. */
-int redisvAppendCommand(redisContext *c, const char *format, va_list ap);
-int redisAppendCommand(redisContext *c, const char *format, ...);
-int redisAppendCommandArgv(redisContext *c, int argc, const char **argv, const size_t *argvlen);
+int sidervAppendCommand(siderContext *c, const char *format, va_list ap);
+int siderAppendCommand(siderContext *c, const char *format, ...);
+int siderAppendCommandArgv(siderContext *c, int argc, const char **argv, const size_t *argvlen);
 
-/* Issue a command to Redis. In a blocking context, it is identical to calling
- * redisAppendCommand, followed by redisGetReply. The function will return
+/* Issue a command to Sider. In a blocking context, it is identical to calling
+ * siderAppendCommand, followed by siderGetReply. The function will return
  * NULL if there was an error in performing the request, otherwise it will
  * return the reply. In a non-blocking context, it is identical to calling
- * only redisAppendCommand and will always return NULL. */
-void *redisvCommand(redisContext *c, const char *format, va_list ap);
-void *redisCommand(redisContext *c, const char *format, ...);
-void *redisCommandArgv(redisContext *c, int argc, const char **argv, const size_t *argvlen);
+ * only siderAppendCommand and will always return NULL. */
+void *sidervCommand(siderContext *c, const char *format, va_list ap);
+void *siderCommand(siderContext *c, const char *format, ...);
+void *siderCommandArgv(siderContext *c, int argc, const char **argv, const size_t *argvlen);
 
 #ifdef __cplusplus
 }

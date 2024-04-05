@@ -1,4 +1,4 @@
-#include "redismodule.h"
+#include "sidermodule.h"
 #include <string.h>
 #include <assert.h>
 #include <unistd.h>
@@ -6,7 +6,7 @@
 #define UNUSED(V) ((void) V)
 
 /* Registered type */
-RedisModuleType *mallocsize_type = NULL;
+SiderModuleType *mallocsize_type = NULL;
 
 typedef enum {
     UDT_RAW,
@@ -23,8 +23,8 @@ typedef struct {
     udt_type_t type;
     union {
         raw_t raw;
-        RedisModuleString *str;
-        RedisModuleDict *dict;
+        SiderModuleString *str;
+        SiderModuleDict *dict;
     } data;
 } udt_t;
 
@@ -32,76 +32,76 @@ void udt_free(void *value) {
     udt_t *udt = value;
     switch (udt->type) {
         case (UDT_RAW): {
-            RedisModule_Free(udt->data.raw.ptr);
+            SiderModule_Free(udt->data.raw.ptr);
             break;
         }
         case (UDT_STRING): {
-            RedisModule_FreeString(NULL, udt->data.str);
+            SiderModule_FreeString(NULL, udt->data.str);
             break;
         }
         case (UDT_DICT): {
-            RedisModuleString *dk, *dv;
-            RedisModuleDictIter *iter = RedisModule_DictIteratorStartC(udt->data.dict, "^", NULL, 0);
-            while((dk = RedisModule_DictNext(NULL, iter, (void **)&dv)) != NULL) {
-                RedisModule_FreeString(NULL, dk);
-                RedisModule_FreeString(NULL, dv);
+            SiderModuleString *dk, *dv;
+            SiderModuleDictIter *iter = SiderModule_DictIteratorStartC(udt->data.dict, "^", NULL, 0);
+            while((dk = SiderModule_DictNext(NULL, iter, (void **)&dv)) != NULL) {
+                SiderModule_FreeString(NULL, dk);
+                SiderModule_FreeString(NULL, dv);
             }
-            RedisModule_DictIteratorStop(iter);
-            RedisModule_FreeDict(NULL, udt->data.dict);
+            SiderModule_DictIteratorStop(iter);
+            SiderModule_FreeDict(NULL, udt->data.dict);
             break;
         }
     }
-    RedisModule_Free(udt);
+    SiderModule_Free(udt);
 }
 
-void udt_rdb_save(RedisModuleIO *rdb, void *value) {
+void udt_rdb_save(SiderModuleIO *rdb, void *value) {
     udt_t *udt = value;
-    RedisModule_SaveUnsigned(rdb, udt->type);
+    SiderModule_SaveUnsigned(rdb, udt->type);
     switch (udt->type) {
         case (UDT_RAW): {
-            RedisModule_SaveStringBuffer(rdb, udt->data.raw.ptr, udt->data.raw.len);
+            SiderModule_SaveStringBuffer(rdb, udt->data.raw.ptr, udt->data.raw.len);
             break;
         }
         case (UDT_STRING): {
-            RedisModule_SaveString(rdb, udt->data.str);
+            SiderModule_SaveString(rdb, udt->data.str);
             break;
         }
         case (UDT_DICT): {
-            RedisModule_SaveUnsigned(rdb, RedisModule_DictSize(udt->data.dict));
-            RedisModuleString *dk, *dv;
-            RedisModuleDictIter *iter = RedisModule_DictIteratorStartC(udt->data.dict, "^", NULL, 0);
-            while((dk = RedisModule_DictNext(NULL, iter, (void **)&dv)) != NULL) {
-                RedisModule_SaveString(rdb, dk);
-                RedisModule_SaveString(rdb, dv);
-                RedisModule_FreeString(NULL, dk); /* Allocated by RedisModule_DictNext */
+            SiderModule_SaveUnsigned(rdb, SiderModule_DictSize(udt->data.dict));
+            SiderModuleString *dk, *dv;
+            SiderModuleDictIter *iter = SiderModule_DictIteratorStartC(udt->data.dict, "^", NULL, 0);
+            while((dk = SiderModule_DictNext(NULL, iter, (void **)&dv)) != NULL) {
+                SiderModule_SaveString(rdb, dk);
+                SiderModule_SaveString(rdb, dv);
+                SiderModule_FreeString(NULL, dk); /* Allocated by SiderModule_DictNext */
             }
-            RedisModule_DictIteratorStop(iter);
+            SiderModule_DictIteratorStop(iter);
             break;
         }
     }
 }
 
-void *udt_rdb_load(RedisModuleIO *rdb, int encver) {
+void *udt_rdb_load(SiderModuleIO *rdb, int encver) {
     if (encver != 0)
         return NULL;
-    udt_t *udt = RedisModule_Alloc(sizeof(*udt));
-    udt->type = RedisModule_LoadUnsigned(rdb);
+    udt_t *udt = SiderModule_Alloc(sizeof(*udt));
+    udt->type = SiderModule_LoadUnsigned(rdb);
     switch (udt->type) {
         case (UDT_RAW): {
-            udt->data.raw.ptr = RedisModule_LoadStringBuffer(rdb, &udt->data.raw.len);
+            udt->data.raw.ptr = SiderModule_LoadStringBuffer(rdb, &udt->data.raw.len);
             break;
         }
         case (UDT_STRING): {
-            udt->data.str = RedisModule_LoadString(rdb);
+            udt->data.str = SiderModule_LoadString(rdb);
             break;
         }
         case (UDT_DICT): {
-            long long dict_len = RedisModule_LoadUnsigned(rdb);
-            udt->data.dict = RedisModule_CreateDict(NULL);
+            long long dict_len = SiderModule_LoadUnsigned(rdb);
+            udt->data.dict = SiderModule_CreateDict(NULL);
             for (int i = 0; i < dict_len; i += 2) {
-                RedisModuleString *key = RedisModule_LoadString(rdb);
-                RedisModuleString *val = RedisModule_LoadString(rdb);
-                RedisModule_DictSet(udt->data.dict, key, val);
+                SiderModuleString *key = SiderModule_LoadString(rdb);
+                SiderModuleString *val = SiderModule_LoadString(rdb);
+                SiderModule_DictSet(udt->data.dict, key, val);
             }
             break;
         }
@@ -110,7 +110,7 @@ void *udt_rdb_load(RedisModuleIO *rdb, int encver) {
     return udt;
 }
 
-size_t udt_mem_usage(RedisModuleKeyOptCtx *ctx, const void *value, size_t sample_size) {
+size_t udt_mem_usage(SiderModuleKeyOptCtx *ctx, const void *value, size_t sample_size) {
     UNUSED(ctx);
     UNUSED(sample_size);
     
@@ -119,23 +119,23 @@ size_t udt_mem_usage(RedisModuleKeyOptCtx *ctx, const void *value, size_t sample
     
     switch (udt->type) {
         case (UDT_RAW): {
-            size += RedisModule_MallocSize(udt->data.raw.ptr);
+            size += SiderModule_MallocSize(udt->data.raw.ptr);
             break;
         }
         case (UDT_STRING): {
-            size += RedisModule_MallocSizeString(udt->data.str);
+            size += SiderModule_MallocSizeString(udt->data.str);
             break;
         }
         case (UDT_DICT): {
             void *dk;
             size_t keylen;
-            RedisModuleString *dv;
-            RedisModuleDictIter *iter = RedisModule_DictIteratorStartC(udt->data.dict, "^", NULL, 0);
-            while((dk = RedisModule_DictNextC(iter, &keylen, (void **)&dv)) != NULL) {
+            SiderModuleString *dv;
+            SiderModuleDictIter *iter = SiderModule_DictIteratorStartC(udt->data.dict, "^", NULL, 0);
+            while((dk = SiderModule_DictNextC(iter, &keylen, (void **)&dv)) != NULL) {
                 size += keylen;
-                size += RedisModule_MallocSizeString(dv);
+                size += SiderModule_MallocSizeString(dv);
             }
-            RedisModule_DictIteratorStop(iter);
+            SiderModule_DictIteratorStop(iter);
             break;
         }
     }
@@ -144,75 +144,75 @@ size_t udt_mem_usage(RedisModuleKeyOptCtx *ctx, const void *value, size_t sample
 }
 
 /* MALLOCSIZE.SETRAW key len */
-int cmd_setraw(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int cmd_setraw(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     if (argc != 3)
-        return RedisModule_WrongArity(ctx);
+        return SiderModule_WrongArity(ctx);
         
-    RedisModuleKey *key = RedisModule_OpenKey(ctx, argv[1], REDISMODULE_WRITE);
+    SiderModuleKey *key = SiderModule_OpenKey(ctx, argv[1], REDISMODULE_WRITE);
 
-    udt_t *udt = RedisModule_Alloc(sizeof(*udt));
+    udt_t *udt = SiderModule_Alloc(sizeof(*udt));
     udt->type = UDT_RAW;
     
     long long raw_len;
-    RedisModule_StringToLongLong(argv[2], &raw_len);
-    udt->data.raw.ptr = RedisModule_Alloc(raw_len);
+    SiderModule_StringToLongLong(argv[2], &raw_len);
+    udt->data.raw.ptr = SiderModule_Alloc(raw_len);
     udt->data.raw.len = raw_len;
     
-    RedisModule_ModuleTypeSetValue(key, mallocsize_type, udt);
-    RedisModule_CloseKey(key);
+    SiderModule_ModuleTypeSetValue(key, mallocsize_type, udt);
+    SiderModule_CloseKey(key);
 
-    return RedisModule_ReplyWithSimpleString(ctx, "OK");
+    return SiderModule_ReplyWithSimpleString(ctx, "OK");
 }
 
 /* MALLOCSIZE.SETSTR key string */
-int cmd_setstr(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int cmd_setstr(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     if (argc != 3)
-        return RedisModule_WrongArity(ctx);
+        return SiderModule_WrongArity(ctx);
         
-    RedisModuleKey *key = RedisModule_OpenKey(ctx, argv[1], REDISMODULE_WRITE);
+    SiderModuleKey *key = SiderModule_OpenKey(ctx, argv[1], REDISMODULE_WRITE);
 
-    udt_t *udt = RedisModule_Alloc(sizeof(*udt));
+    udt_t *udt = SiderModule_Alloc(sizeof(*udt));
     udt->type = UDT_STRING;
     
     udt->data.str = argv[2];
-    RedisModule_RetainString(ctx, argv[2]);
+    SiderModule_RetainString(ctx, argv[2]);
     
-    RedisModule_ModuleTypeSetValue(key, mallocsize_type, udt);
-    RedisModule_CloseKey(key);
+    SiderModule_ModuleTypeSetValue(key, mallocsize_type, udt);
+    SiderModule_CloseKey(key);
 
-    return RedisModule_ReplyWithSimpleString(ctx, "OK");
+    return SiderModule_ReplyWithSimpleString(ctx, "OK");
 }
 
 /* MALLOCSIZE.SETDICT key field value [field value ...] */
-int cmd_setdict(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int cmd_setdict(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     if (argc < 4 || argc % 2)
-        return RedisModule_WrongArity(ctx);
+        return SiderModule_WrongArity(ctx);
         
-    RedisModuleKey *key = RedisModule_OpenKey(ctx, argv[1], REDISMODULE_WRITE);
+    SiderModuleKey *key = SiderModule_OpenKey(ctx, argv[1], REDISMODULE_WRITE);
 
-    udt_t *udt = RedisModule_Alloc(sizeof(*udt));
+    udt_t *udt = SiderModule_Alloc(sizeof(*udt));
     udt->type = UDT_DICT;
     
-    udt->data.dict = RedisModule_CreateDict(ctx);
+    udt->data.dict = SiderModule_CreateDict(ctx);
     for (int i = 2; i < argc; i += 2) {
-        RedisModule_DictSet(udt->data.dict, argv[i], argv[i+1]);
+        SiderModule_DictSet(udt->data.dict, argv[i], argv[i+1]);
         /* No need to retain argv[i], it is copied as the rax key */
-        RedisModule_RetainString(ctx, argv[i+1]);   
+        SiderModule_RetainString(ctx, argv[i+1]);   
     }
     
-    RedisModule_ModuleTypeSetValue(key, mallocsize_type, udt);
-    RedisModule_CloseKey(key);
+    SiderModule_ModuleTypeSetValue(key, mallocsize_type, udt);
+    SiderModule_CloseKey(key);
 
-    return RedisModule_ReplyWithSimpleString(ctx, "OK");
+    return SiderModule_ReplyWithSimpleString(ctx, "OK");
 }
 
-int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int SiderModule_OnLoad(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     UNUSED(argv);
     UNUSED(argc);
-    if (RedisModule_Init(ctx,"mallocsize",1,REDISMODULE_APIVER_1)== REDISMODULE_ERR)
+    if (SiderModule_Init(ctx,"mallocsize",1,REDISMODULE_APIVER_1)== REDISMODULE_ERR)
         return REDISMODULE_ERR;
         
-    RedisModuleTypeMethods tm = {
+    SiderModuleTypeMethods tm = {
         .version = REDISMODULE_TYPE_METHOD_VERSION,
         .rdb_load = udt_rdb_load,
         .rdb_save = udt_rdb_save,
@@ -220,17 +220,17 @@ int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) 
         .mem_usage2 = udt_mem_usage,
     };
 
-    mallocsize_type = RedisModule_CreateDataType(ctx, "allocsize", 0, &tm);
+    mallocsize_type = SiderModule_CreateDataType(ctx, "allocsize", 0, &tm);
     if (mallocsize_type == NULL)
         return REDISMODULE_ERR;
 
-    if (RedisModule_CreateCommand(ctx, "mallocsize.setraw", cmd_setraw, "", 1, 1, 1) == REDISMODULE_ERR)
+    if (SiderModule_CreateCommand(ctx, "mallocsize.setraw", cmd_setraw, "", 1, 1, 1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
         
-    if (RedisModule_CreateCommand(ctx, "mallocsize.setstr", cmd_setstr, "", 1, 1, 1) == REDISMODULE_ERR)
+    if (SiderModule_CreateCommand(ctx, "mallocsize.setstr", cmd_setstr, "", 1, 1, 1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
         
-    if (RedisModule_CreateCommand(ctx, "mallocsize.setdict", cmd_setdict, "", 1, 1, 1) == REDISMODULE_ERR)
+    if (SiderModule_CreateCommand(ctx, "mallocsize.setdict", cmd_setdict, "", 1, 1, 1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
     return REDISMODULE_OK;

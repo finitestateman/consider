@@ -214,7 +214,7 @@
                 ]
             },
             {
-                "name": "storedist",
+                "name": "stosidert",
                 "token": "STOREDIST",
                 "type": "pure-token",
                 "optional": true

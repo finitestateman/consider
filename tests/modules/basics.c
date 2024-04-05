@@ -1,19 +1,19 @@
-/* Module designed to test the Redis modules subsystem.
+/* Module designed to test the Sider modules subsystem.
  *
  * -----------------------------------------------------------------------------
  *
  * Copyright (c) 2016, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -30,340 +30,340 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "redismodule.h"
+#include "sidermodule.h"
 #include <string.h>
 #include <stdlib.h>
 
 /* --------------------------------- Helpers -------------------------------- */
 
 /* Return true if the reply and the C null term string matches. */
-int TestMatchReply(RedisModuleCallReply *reply, char *str) {
-    RedisModuleString *mystr;
-    mystr = RedisModule_CreateStringFromCallReply(reply);
+int TestMatchReply(SiderModuleCallReply *reply, char *str) {
+    SiderModuleString *mystr;
+    mystr = SiderModule_CreateStringFromCallReply(reply);
     if (!mystr) return 0;
-    const char *ptr = RedisModule_StringPtrLen(mystr,NULL);
+    const char *ptr = SiderModule_StringPtrLen(mystr,NULL);
     return strcmp(ptr,str) == 0;
 }
 
 /* ------------------------------- Test units ------------------------------- */
 
 /* TEST.CALL -- Test Call() API. */
-int TestCall(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int TestCall(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    RedisModule_AutoMemory(ctx);
-    RedisModuleCallReply *reply;
+    SiderModule_AutoMemory(ctx);
+    SiderModuleCallReply *reply;
 
-    RedisModule_Call(ctx,"DEL","c","mylist");
-    RedisModuleString *mystr = RedisModule_CreateString(ctx,"foo",3);
-    RedisModule_Call(ctx,"RPUSH","csl","mylist",mystr,(long long)1234);
-    reply = RedisModule_Call(ctx,"LRANGE","ccc","mylist","0","-1");
-    long long items = RedisModule_CallReplyLength(reply);
+    SiderModule_Call(ctx,"DEL","c","mylist");
+    SiderModuleString *mystr = SiderModule_CreateString(ctx,"foo",3);
+    SiderModule_Call(ctx,"RPUSH","csl","mylist",mystr,(long long)1234);
+    reply = SiderModule_Call(ctx,"LRANGE","ccc","mylist","0","-1");
+    long long items = SiderModule_CallReplyLength(reply);
     if (items != 2) goto fail;
 
-    RedisModuleCallReply *item0, *item1;
+    SiderModuleCallReply *item0, *item1;
 
-    item0 = RedisModule_CallReplyArrayElement(reply,0);
-    item1 = RedisModule_CallReplyArrayElement(reply,1);
+    item0 = SiderModule_CallReplyArrayElement(reply,0);
+    item1 = SiderModule_CallReplyArrayElement(reply,1);
     if (!TestMatchReply(item0,"foo")) goto fail;
     if (!TestMatchReply(item1,"1234")) goto fail;
 
-    RedisModule_ReplyWithSimpleString(ctx,"OK");
+    SiderModule_ReplyWithSimpleString(ctx,"OK");
     return REDISMODULE_OK;
 
 fail:
-    RedisModule_ReplyWithSimpleString(ctx,"ERR");
+    SiderModule_ReplyWithSimpleString(ctx,"ERR");
     return REDISMODULE_OK;
 }
 
-int TestCallResp3Attribute(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int TestCallResp3Attribute(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    RedisModule_AutoMemory(ctx);
-    RedisModuleCallReply *reply;
+    SiderModule_AutoMemory(ctx);
+    SiderModuleCallReply *reply;
 
-    reply = RedisModule_Call(ctx,"DEBUG","3cc" ,"PROTOCOL", "attrib"); /* 3 stands for resp 3 reply */
-    if (RedisModule_CallReplyType(reply) != REDISMODULE_REPLY_STRING) goto fail;
+    reply = SiderModule_Call(ctx,"DEBUG","3cc" ,"PROTOCOL", "attrib"); /* 3 stands for resp 3 reply */
+    if (SiderModule_CallReplyType(reply) != REDISMODULE_REPLY_STRING) goto fail;
 
     /* make sure we can not reply to resp2 client with resp3 (it might be a string but it contains attribute) */
-    if (RedisModule_ReplyWithCallReply(ctx, reply) != REDISMODULE_ERR) goto fail;
+    if (SiderModule_ReplyWithCallReply(ctx, reply) != REDISMODULE_ERR) goto fail;
 
     if (!TestMatchReply(reply,"Some real reply following the attribute")) goto fail;
 
-    reply = RedisModule_CallReplyAttribute(reply);
-    if (!reply || RedisModule_CallReplyType(reply) != REDISMODULE_REPLY_ATTRIBUTE) goto fail;
+    reply = SiderModule_CallReplyAttribute(reply);
+    if (!reply || SiderModule_CallReplyType(reply) != REDISMODULE_REPLY_ATTRIBUTE) goto fail;
     /* make sure we can not reply to resp2 client with resp3 attribute */
-    if (RedisModule_ReplyWithCallReply(ctx, reply) != REDISMODULE_ERR) goto fail;
-    if (RedisModule_CallReplyLength(reply) != 1) goto fail;
+    if (SiderModule_ReplyWithCallReply(ctx, reply) != REDISMODULE_ERR) goto fail;
+    if (SiderModule_CallReplyLength(reply) != 1) goto fail;
 
-    RedisModuleCallReply *key, *val;
-    if (RedisModule_CallReplyAttributeElement(reply,0,&key,&val) != REDISMODULE_OK) goto fail;
+    SiderModuleCallReply *key, *val;
+    if (SiderModule_CallReplyAttributeElement(reply,0,&key,&val) != REDISMODULE_OK) goto fail;
     if (!TestMatchReply(key,"key-popularity")) goto fail;
-    if (RedisModule_CallReplyType(val) != REDISMODULE_REPLY_ARRAY) goto fail;
-    if (RedisModule_CallReplyLength(val) != 2) goto fail;
-    if (!TestMatchReply(RedisModule_CallReplyArrayElement(val, 0),"key:123")) goto fail;
-    if (!TestMatchReply(RedisModule_CallReplyArrayElement(val, 1),"90")) goto fail;
+    if (SiderModule_CallReplyType(val) != REDISMODULE_REPLY_ARRAY) goto fail;
+    if (SiderModule_CallReplyLength(val) != 2) goto fail;
+    if (!TestMatchReply(SiderModule_CallReplyArrayElement(val, 0),"key:123")) goto fail;
+    if (!TestMatchReply(SiderModule_CallReplyArrayElement(val, 1),"90")) goto fail;
 
-    RedisModule_ReplyWithSimpleString(ctx,"OK");
+    SiderModule_ReplyWithSimpleString(ctx,"OK");
     return REDISMODULE_OK;
 
 fail:
-    RedisModule_ReplyWithSimpleString(ctx,"ERR");
+    SiderModule_ReplyWithSimpleString(ctx,"ERR");
     return REDISMODULE_OK;
 }
 
-int TestGetResp(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int TestGetResp(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    int flags = RedisModule_GetContextFlags(ctx);
+    int flags = SiderModule_GetContextFlags(ctx);
 
     if (flags & REDISMODULE_CTX_FLAGS_RESP3) {
-        RedisModule_ReplyWithLongLong(ctx, 3);
+        SiderModule_ReplyWithLongLong(ctx, 3);
     } else {
-        RedisModule_ReplyWithLongLong(ctx, 2);
+        SiderModule_ReplyWithLongLong(ctx, 2);
     }
 
     return REDISMODULE_OK;
 }
 
-int TestCallRespAutoMode(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int TestCallRespAutoMode(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    RedisModule_AutoMemory(ctx);
-    RedisModuleCallReply *reply;
+    SiderModule_AutoMemory(ctx);
+    SiderModuleCallReply *reply;
 
-    RedisModule_Call(ctx,"DEL","c","myhash");
-    RedisModule_Call(ctx,"HSET","ccccc","myhash", "f1", "v1", "f2", "v2");
+    SiderModule_Call(ctx,"DEL","c","myhash");
+    SiderModule_Call(ctx,"HSET","ccccc","myhash", "f1", "v1", "f2", "v2");
     /* 0 stands for auto mode, we will get the reply in the same format as the client */
-    reply = RedisModule_Call(ctx,"HGETALL","0c" ,"myhash");
-    RedisModule_ReplyWithCallReply(ctx, reply);
+    reply = SiderModule_Call(ctx,"HGETALL","0c" ,"myhash");
+    SiderModule_ReplyWithCallReply(ctx, reply);
     return REDISMODULE_OK;
 }
 
-int TestCallResp3Map(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int TestCallResp3Map(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    RedisModule_AutoMemory(ctx);
-    RedisModuleCallReply *reply;
+    SiderModule_AutoMemory(ctx);
+    SiderModuleCallReply *reply;
 
-    RedisModule_Call(ctx,"DEL","c","myhash");
-    RedisModule_Call(ctx,"HSET","ccccc","myhash", "f1", "v1", "f2", "v2");
-    reply = RedisModule_Call(ctx,"HGETALL","3c" ,"myhash"); /* 3 stands for resp 3 reply */
-    if (RedisModule_CallReplyType(reply) != REDISMODULE_REPLY_MAP) goto fail;
+    SiderModule_Call(ctx,"DEL","c","myhash");
+    SiderModule_Call(ctx,"HSET","ccccc","myhash", "f1", "v1", "f2", "v2");
+    reply = SiderModule_Call(ctx,"HGETALL","3c" ,"myhash"); /* 3 stands for resp 3 reply */
+    if (SiderModule_CallReplyType(reply) != REDISMODULE_REPLY_MAP) goto fail;
 
     /* make sure we can not reply to resp2 client with resp3 map */
-    if (RedisModule_ReplyWithCallReply(ctx, reply) != REDISMODULE_ERR) goto fail;
+    if (SiderModule_ReplyWithCallReply(ctx, reply) != REDISMODULE_ERR) goto fail;
 
-    long long items = RedisModule_CallReplyLength(reply);
+    long long items = SiderModule_CallReplyLength(reply);
     if (items != 2) goto fail;
 
-    RedisModuleCallReply *key0, *key1;
-    RedisModuleCallReply *val0, *val1;
-    if (RedisModule_CallReplyMapElement(reply,0,&key0,&val0) != REDISMODULE_OK) goto fail;
-    if (RedisModule_CallReplyMapElement(reply,1,&key1,&val1) != REDISMODULE_OK) goto fail;
+    SiderModuleCallReply *key0, *key1;
+    SiderModuleCallReply *val0, *val1;
+    if (SiderModule_CallReplyMapElement(reply,0,&key0,&val0) != REDISMODULE_OK) goto fail;
+    if (SiderModule_CallReplyMapElement(reply,1,&key1,&val1) != REDISMODULE_OK) goto fail;
     if (!TestMatchReply(key0,"f1")) goto fail;
     if (!TestMatchReply(key1,"f2")) goto fail;
     if (!TestMatchReply(val0,"v1")) goto fail;
     if (!TestMatchReply(val1,"v2")) goto fail;
 
-    RedisModule_ReplyWithSimpleString(ctx,"OK");
+    SiderModule_ReplyWithSimpleString(ctx,"OK");
     return REDISMODULE_OK;
 
 fail:
-    RedisModule_ReplyWithSimpleString(ctx,"ERR");
+    SiderModule_ReplyWithSimpleString(ctx,"ERR");
     return REDISMODULE_OK;
 }
 
-int TestCallResp3Bool(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int TestCallResp3Bool(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    RedisModule_AutoMemory(ctx);
-    RedisModuleCallReply *reply;
+    SiderModule_AutoMemory(ctx);
+    SiderModuleCallReply *reply;
 
-    reply = RedisModule_Call(ctx,"DEBUG","3cc" ,"PROTOCOL", "true"); /* 3 stands for resp 3 reply */
-    if (RedisModule_CallReplyType(reply) != REDISMODULE_REPLY_BOOL) goto fail;
+    reply = SiderModule_Call(ctx,"DEBUG","3cc" ,"PROTOCOL", "true"); /* 3 stands for resp 3 reply */
+    if (SiderModule_CallReplyType(reply) != REDISMODULE_REPLY_BOOL) goto fail;
     /* make sure we can not reply to resp2 client with resp3 bool */
-    if (RedisModule_ReplyWithCallReply(ctx, reply) != REDISMODULE_ERR) goto fail;
+    if (SiderModule_ReplyWithCallReply(ctx, reply) != REDISMODULE_ERR) goto fail;
 
-    if (!RedisModule_CallReplyBool(reply)) goto fail;
-    reply = RedisModule_Call(ctx,"DEBUG","3cc" ,"PROTOCOL", "false"); /* 3 stands for resp 3 reply */
-    if (RedisModule_CallReplyType(reply) != REDISMODULE_REPLY_BOOL) goto fail;
-    if (RedisModule_CallReplyBool(reply)) goto fail;
+    if (!SiderModule_CallReplyBool(reply)) goto fail;
+    reply = SiderModule_Call(ctx,"DEBUG","3cc" ,"PROTOCOL", "false"); /* 3 stands for resp 3 reply */
+    if (SiderModule_CallReplyType(reply) != REDISMODULE_REPLY_BOOL) goto fail;
+    if (SiderModule_CallReplyBool(reply)) goto fail;
 
-    RedisModule_ReplyWithSimpleString(ctx,"OK");
+    SiderModule_ReplyWithSimpleString(ctx,"OK");
     return REDISMODULE_OK;
 
 fail:
-    RedisModule_ReplyWithSimpleString(ctx,"ERR");
+    SiderModule_ReplyWithSimpleString(ctx,"ERR");
     return REDISMODULE_OK;
 }
 
-int TestCallResp3Null(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int TestCallResp3Null(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    RedisModule_AutoMemory(ctx);
-    RedisModuleCallReply *reply;
+    SiderModule_AutoMemory(ctx);
+    SiderModuleCallReply *reply;
 
-    reply = RedisModule_Call(ctx,"DEBUG","3cc" ,"PROTOCOL", "null"); /* 3 stands for resp 3 reply */
-    if (RedisModule_CallReplyType(reply) != REDISMODULE_REPLY_NULL) goto fail;
+    reply = SiderModule_Call(ctx,"DEBUG","3cc" ,"PROTOCOL", "null"); /* 3 stands for resp 3 reply */
+    if (SiderModule_CallReplyType(reply) != REDISMODULE_REPLY_NULL) goto fail;
 
     /* make sure we can not reply to resp2 client with resp3 null */
-    if (RedisModule_ReplyWithCallReply(ctx, reply) != REDISMODULE_ERR) goto fail;
+    if (SiderModule_ReplyWithCallReply(ctx, reply) != REDISMODULE_ERR) goto fail;
 
-    RedisModule_ReplyWithSimpleString(ctx,"OK");
+    SiderModule_ReplyWithSimpleString(ctx,"OK");
     return REDISMODULE_OK;
 
 fail:
-    RedisModule_ReplyWithSimpleString(ctx,"ERR");
+    SiderModule_ReplyWithSimpleString(ctx,"ERR");
     return REDISMODULE_OK;
 }
 
-int TestCallReplyWithNestedReply(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int TestCallReplyWithNestedReply(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    RedisModule_AutoMemory(ctx);
-    RedisModuleCallReply *reply;
+    SiderModule_AutoMemory(ctx);
+    SiderModuleCallReply *reply;
 
-    RedisModule_Call(ctx,"DEL","c","mylist");
-    RedisModule_Call(ctx,"RPUSH","ccl","mylist","test",(long long)1234);
-    reply = RedisModule_Call(ctx,"LRANGE","ccc","mylist","0","-1");
-    if (RedisModule_CallReplyType(reply) != REDISMODULE_REPLY_ARRAY) goto fail;
-    if (RedisModule_CallReplyLength(reply) < 1) goto fail;
-    RedisModuleCallReply *nestedReply = RedisModule_CallReplyArrayElement(reply, 0);
+    SiderModule_Call(ctx,"DEL","c","mylist");
+    SiderModule_Call(ctx,"RPUSH","ccl","mylist","test",(long long)1234);
+    reply = SiderModule_Call(ctx,"LRANGE","ccc","mylist","0","-1");
+    if (SiderModule_CallReplyType(reply) != REDISMODULE_REPLY_ARRAY) goto fail;
+    if (SiderModule_CallReplyLength(reply) < 1) goto fail;
+    SiderModuleCallReply *nestedReply = SiderModule_CallReplyArrayElement(reply, 0);
 
-    RedisModule_ReplyWithCallReply(ctx,nestedReply);
+    SiderModule_ReplyWithCallReply(ctx,nestedReply);
     return REDISMODULE_OK;
 
 fail:
-    RedisModule_ReplyWithSimpleString(ctx,"ERR");
+    SiderModule_ReplyWithSimpleString(ctx,"ERR");
     return REDISMODULE_OK;
 }
 
-int TestCallReplyWithArrayReply(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int TestCallReplyWithArrayReply(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    RedisModule_AutoMemory(ctx);
-    RedisModuleCallReply *reply;
+    SiderModule_AutoMemory(ctx);
+    SiderModuleCallReply *reply;
 
-    RedisModule_Call(ctx,"DEL","c","mylist");
-    RedisModule_Call(ctx,"RPUSH","ccl","mylist","test",(long long)1234);
-    reply = RedisModule_Call(ctx,"LRANGE","ccc","mylist","0","-1");
-    if (RedisModule_CallReplyType(reply) != REDISMODULE_REPLY_ARRAY) goto fail;
+    SiderModule_Call(ctx,"DEL","c","mylist");
+    SiderModule_Call(ctx,"RPUSH","ccl","mylist","test",(long long)1234);
+    reply = SiderModule_Call(ctx,"LRANGE","ccc","mylist","0","-1");
+    if (SiderModule_CallReplyType(reply) != REDISMODULE_REPLY_ARRAY) goto fail;
 
-    RedisModule_ReplyWithCallReply(ctx,reply);
+    SiderModule_ReplyWithCallReply(ctx,reply);
     return REDISMODULE_OK;
 
 fail:
-    RedisModule_ReplyWithSimpleString(ctx,"ERR");
+    SiderModule_ReplyWithSimpleString(ctx,"ERR");
     return REDISMODULE_OK;
 }
 
-int TestCallResp3Double(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int TestCallResp3Double(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    RedisModule_AutoMemory(ctx);
-    RedisModuleCallReply *reply;
+    SiderModule_AutoMemory(ctx);
+    SiderModuleCallReply *reply;
 
-    reply = RedisModule_Call(ctx,"DEBUG","3cc" ,"PROTOCOL", "double"); /* 3 stands for resp 3 reply */
-    if (RedisModule_CallReplyType(reply) != REDISMODULE_REPLY_DOUBLE) goto fail;
+    reply = SiderModule_Call(ctx,"DEBUG","3cc" ,"PROTOCOL", "double"); /* 3 stands for resp 3 reply */
+    if (SiderModule_CallReplyType(reply) != REDISMODULE_REPLY_DOUBLE) goto fail;
 
     /* make sure we can not reply to resp2 client with resp3 double*/
-    if (RedisModule_ReplyWithCallReply(ctx, reply) != REDISMODULE_ERR) goto fail;
+    if (SiderModule_ReplyWithCallReply(ctx, reply) != REDISMODULE_ERR) goto fail;
 
-    double d = RedisModule_CallReplyDouble(reply);
+    double d = SiderModule_CallReplyDouble(reply);
     /* we compare strings, since comparing doubles directly can fail in various architectures, e.g. 32bit */
     char got[30], expected[30];
     snprintf(got, sizeof(got), "%.17g", d);
     snprintf(expected, sizeof(expected), "%.17g", 3.141);
     if (strcmp(got, expected) != 0) goto fail;
-    RedisModule_ReplyWithSimpleString(ctx,"OK");
+    SiderModule_ReplyWithSimpleString(ctx,"OK");
     return REDISMODULE_OK;
 
 fail:
-    RedisModule_ReplyWithSimpleString(ctx,"ERR");
+    SiderModule_ReplyWithSimpleString(ctx,"ERR");
     return REDISMODULE_OK;
 }
 
-int TestCallResp3BigNumber(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int TestCallResp3BigNumber(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    RedisModule_AutoMemory(ctx);
-    RedisModuleCallReply *reply;
+    SiderModule_AutoMemory(ctx);
+    SiderModuleCallReply *reply;
 
-    reply = RedisModule_Call(ctx,"DEBUG","3cc" ,"PROTOCOL", "bignum"); /* 3 stands for resp 3 reply */
-    if (RedisModule_CallReplyType(reply) != REDISMODULE_REPLY_BIG_NUMBER) goto fail;
+    reply = SiderModule_Call(ctx,"DEBUG","3cc" ,"PROTOCOL", "bignum"); /* 3 stands for resp 3 reply */
+    if (SiderModule_CallReplyType(reply) != REDISMODULE_REPLY_BIG_NUMBER) goto fail;
 
     /* make sure we can not reply to resp2 client with resp3 big number */
-    if (RedisModule_ReplyWithCallReply(ctx, reply) != REDISMODULE_ERR) goto fail;
+    if (SiderModule_ReplyWithCallReply(ctx, reply) != REDISMODULE_ERR) goto fail;
 
     size_t len;
-    const char* big_num = RedisModule_CallReplyBigNumber(reply, &len);
-    RedisModule_ReplyWithStringBuffer(ctx,big_num,len);
+    const char* big_num = SiderModule_CallReplyBigNumber(reply, &len);
+    SiderModule_ReplyWithStringBuffer(ctx,big_num,len);
     return REDISMODULE_OK;
 
 fail:
-    RedisModule_ReplyWithSimpleString(ctx,"ERR");
+    SiderModule_ReplyWithSimpleString(ctx,"ERR");
     return REDISMODULE_OK;
 }
 
-int TestCallResp3Verbatim(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int TestCallResp3Verbatim(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    RedisModule_AutoMemory(ctx);
-    RedisModuleCallReply *reply;
+    SiderModule_AutoMemory(ctx);
+    SiderModuleCallReply *reply;
 
-    reply = RedisModule_Call(ctx,"DEBUG","3cc" ,"PROTOCOL", "verbatim"); /* 3 stands for resp 3 reply */
-    if (RedisModule_CallReplyType(reply) != REDISMODULE_REPLY_VERBATIM_STRING) goto fail;
+    reply = SiderModule_Call(ctx,"DEBUG","3cc" ,"PROTOCOL", "verbatim"); /* 3 stands for resp 3 reply */
+    if (SiderModule_CallReplyType(reply) != REDISMODULE_REPLY_VERBATIM_STRING) goto fail;
 
     /* make sure we can not reply to resp2 client with resp3 verbatim string */
-    if (RedisModule_ReplyWithCallReply(ctx, reply) != REDISMODULE_ERR) goto fail;
+    if (SiderModule_ReplyWithCallReply(ctx, reply) != REDISMODULE_ERR) goto fail;
 
     const char* format;
     size_t len;
-    const char* str = RedisModule_CallReplyVerbatim(reply, &len, &format);
-    RedisModuleString *s = RedisModule_CreateStringPrintf(ctx, "%.*s:%.*s", 3, format, (int)len, str);
-    RedisModule_ReplyWithString(ctx,s);
+    const char* str = SiderModule_CallReplyVerbatim(reply, &len, &format);
+    SiderModuleString *s = SiderModule_CreateStringPrintf(ctx, "%.*s:%.*s", 3, format, (int)len, str);
+    SiderModule_ReplyWithString(ctx,s);
     return REDISMODULE_OK;
 
 fail:
-    RedisModule_ReplyWithSimpleString(ctx,"ERR");
+    SiderModule_ReplyWithSimpleString(ctx,"ERR");
     return REDISMODULE_OK;
 }
 
-int TestCallResp3Set(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int TestCallResp3Set(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    RedisModule_AutoMemory(ctx);
-    RedisModuleCallReply *reply;
+    SiderModule_AutoMemory(ctx);
+    SiderModuleCallReply *reply;
 
-    RedisModule_Call(ctx,"DEL","c","myset");
-    RedisModule_Call(ctx,"sadd","ccc","myset", "v1", "v2");
-    reply = RedisModule_Call(ctx,"smembers","3c" ,"myset"); // N stands for resp 3 reply
-    if (RedisModule_CallReplyType(reply) != REDISMODULE_REPLY_SET) goto fail;
+    SiderModule_Call(ctx,"DEL","c","myset");
+    SiderModule_Call(ctx,"sadd","ccc","myset", "v1", "v2");
+    reply = SiderModule_Call(ctx,"smembers","3c" ,"myset"); // N stands for resp 3 reply
+    if (SiderModule_CallReplyType(reply) != REDISMODULE_REPLY_SET) goto fail;
 
     /* make sure we can not reply to resp2 client with resp3 set */
-    if (RedisModule_ReplyWithCallReply(ctx, reply) != REDISMODULE_ERR) goto fail;
+    if (SiderModule_ReplyWithCallReply(ctx, reply) != REDISMODULE_ERR) goto fail;
 
-    long long items = RedisModule_CallReplyLength(reply);
+    long long items = SiderModule_CallReplyLength(reply);
     if (items != 2) goto fail;
 
-    RedisModuleCallReply *val0, *val1;
+    SiderModuleCallReply *val0, *val1;
 
-    val0 = RedisModule_CallReplySetElement(reply,0);
-    val1 = RedisModule_CallReplySetElement(reply,1);
+    val0 = SiderModule_CallReplySetElement(reply,0);
+    val1 = SiderModule_CallReplySetElement(reply,1);
 
     /*
      * The order of elements on sets are not promised so we just
@@ -372,173 +372,173 @@ int TestCallResp3Set(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     if (!TestMatchReply(val0,"v1") && !TestMatchReply(val0,"v2")) goto fail;
     if (!TestMatchReply(val1,"v1") && !TestMatchReply(val1,"v2")) goto fail;
 
-    RedisModule_ReplyWithSimpleString(ctx,"OK");
+    SiderModule_ReplyWithSimpleString(ctx,"OK");
     return REDISMODULE_OK;
 
 fail:
-    RedisModule_ReplyWithSimpleString(ctx,"ERR");
+    SiderModule_ReplyWithSimpleString(ctx,"ERR");
     return REDISMODULE_OK;
 }
 
 /* TEST.STRING.APPEND -- Test appending to an existing string object. */
-int TestStringAppend(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int TestStringAppend(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    RedisModuleString *s = RedisModule_CreateString(ctx,"foo",3);
-    RedisModule_StringAppendBuffer(ctx,s,"bar",3);
-    RedisModule_ReplyWithString(ctx,s);
-    RedisModule_FreeString(ctx,s);
+    SiderModuleString *s = SiderModule_CreateString(ctx,"foo",3);
+    SiderModule_StringAppendBuffer(ctx,s,"bar",3);
+    SiderModule_ReplyWithString(ctx,s);
+    SiderModule_FreeString(ctx,s);
     return REDISMODULE_OK;
 }
 
 /* TEST.STRING.APPEND.AM -- Test append with retain when auto memory is on. */
-int TestStringAppendAM(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int TestStringAppendAM(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    RedisModule_AutoMemory(ctx);
-    RedisModuleString *s = RedisModule_CreateString(ctx,"foo",3);
-    RedisModule_RetainString(ctx,s);
-    RedisModule_TrimStringAllocation(s);    /* Mostly NOP, but exercises the API function */
-    RedisModule_StringAppendBuffer(ctx,s,"bar",3);
-    RedisModule_ReplyWithString(ctx,s);
-    RedisModule_FreeString(ctx,s);
+    SiderModule_AutoMemory(ctx);
+    SiderModuleString *s = SiderModule_CreateString(ctx,"foo",3);
+    SiderModule_RetainString(ctx,s);
+    SiderModule_TrimStringAllocation(s);    /* Mostly NOP, but exercises the API function */
+    SiderModule_StringAppendBuffer(ctx,s,"bar",3);
+    SiderModule_ReplyWithString(ctx,s);
+    SiderModule_FreeString(ctx,s);
     return REDISMODULE_OK;
 }
 
 /* TEST.STRING.TRIM -- Test we trim a string with free space. */
-int TestTrimString(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int TestTrimString(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
-    RedisModuleString *s = RedisModule_CreateString(ctx,"foo",3);
-    char *tmp = RedisModule_Alloc(1024);
-    RedisModule_StringAppendBuffer(ctx,s,tmp,1024);
-    size_t string_len = RedisModule_MallocSizeString(s);
-    RedisModule_TrimStringAllocation(s);
-    size_t len_after_trim = RedisModule_MallocSizeString(s);
+    SiderModuleString *s = SiderModule_CreateString(ctx,"foo",3);
+    char *tmp = SiderModule_Alloc(1024);
+    SiderModule_StringAppendBuffer(ctx,s,tmp,1024);
+    size_t string_len = SiderModule_MallocSizeString(s);
+    SiderModule_TrimStringAllocation(s);
+    size_t len_after_trim = SiderModule_MallocSizeString(s);
 
     /* Determine if using jemalloc memory allocator. */
-    RedisModuleServerInfoData *info = RedisModule_GetServerInfo(ctx, "memory");
-    const char *field = RedisModule_ServerInfoGetFieldC(info, "mem_allocator");
+    SiderModuleServerInfoData *info = SiderModule_GetServerInfo(ctx, "memory");
+    const char *field = SiderModule_ServerInfoGetFieldC(info, "mem_allocator");
     int use_jemalloc = !strncmp(field, "jemalloc", 8);
 
-    /* Jemalloc will reallocate `s` from 2k to 1k after RedisModule_TrimStringAllocation(),
+    /* Jemalloc will reallocate `s` from 2k to 1k after SiderModule_TrimStringAllocation(),
      * but non-jemalloc memory allocators may keep the old size. */
     if ((use_jemalloc && len_after_trim < string_len) ||
         (!use_jemalloc && len_after_trim <= string_len))
     {
-        RedisModule_ReplyWithSimpleString(ctx, "OK");
+        SiderModule_ReplyWithSimpleString(ctx, "OK");
     } else {
-        RedisModule_ReplyWithError(ctx, "String was not trimmed as expected.");
+        SiderModule_ReplyWithError(ctx, "String was not trimmed as expected.");
     }
-    RedisModule_FreeServerInfo(ctx, info);
-    RedisModule_Free(tmp);
-    RedisModule_FreeString(ctx,s);
+    SiderModule_FreeServerInfo(ctx, info);
+    SiderModule_Free(tmp);
+    SiderModule_FreeString(ctx,s);
     return REDISMODULE_OK;
 }
 
 /* TEST.STRING.PRINTF -- Test string formatting. */
-int TestStringPrintf(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
-    RedisModule_AutoMemory(ctx);
+int TestStringPrintf(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
+    SiderModule_AutoMemory(ctx);
     if (argc < 3) {
-        return RedisModule_WrongArity(ctx);
+        return SiderModule_WrongArity(ctx);
     }
-    RedisModuleString *s = RedisModule_CreateStringPrintf(ctx,
+    SiderModuleString *s = SiderModule_CreateStringPrintf(ctx,
         "Got %d args. argv[1]: %s, argv[2]: %s",
         argc,
-        RedisModule_StringPtrLen(argv[1], NULL),
-        RedisModule_StringPtrLen(argv[2], NULL)
+        SiderModule_StringPtrLen(argv[1], NULL),
+        SiderModule_StringPtrLen(argv[2], NULL)
     );
 
-    RedisModule_ReplyWithString(ctx,s);
+    SiderModule_ReplyWithString(ctx,s);
 
     return REDISMODULE_OK;
 }
 
-int failTest(RedisModuleCtx *ctx, const char *msg) {
-    RedisModule_ReplyWithError(ctx, msg);
+int failTest(SiderModuleCtx *ctx, const char *msg) {
+    SiderModule_ReplyWithError(ctx, msg);
     return REDISMODULE_ERR;
 }
 
-int TestUnlink(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
-    RedisModule_AutoMemory(ctx);
+int TestUnlink(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
+    SiderModule_AutoMemory(ctx);
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    RedisModuleKey *k = RedisModule_OpenKey(ctx, RedisModule_CreateStringPrintf(ctx, "unlinked"), REDISMODULE_WRITE | REDISMODULE_READ);
+    SiderModuleKey *k = SiderModule_OpenKey(ctx, SiderModule_CreateStringPrintf(ctx, "unlinked"), REDISMODULE_WRITE | REDISMODULE_READ);
     if (!k) return failTest(ctx, "Could not create key");
 
-    if (REDISMODULE_ERR == RedisModule_StringSet(k, RedisModule_CreateStringPrintf(ctx, "Foobar"))) {
+    if (REDISMODULE_ERR == SiderModule_StringSet(k, SiderModule_CreateStringPrintf(ctx, "Foobar"))) {
         return failTest(ctx, "Could not set string value");
     }
 
-    RedisModuleCallReply *rep = RedisModule_Call(ctx, "EXISTS", "c", "unlinked");
-    if (!rep || RedisModule_CallReplyInteger(rep) != 1) {
+    SiderModuleCallReply *rep = SiderModule_Call(ctx, "EXISTS", "c", "unlinked");
+    if (!rep || SiderModule_CallReplyInteger(rep) != 1) {
         return failTest(ctx, "Key does not exist before unlink");
     }
 
-    if (REDISMODULE_ERR == RedisModule_UnlinkKey(k)) {
+    if (REDISMODULE_ERR == SiderModule_UnlinkKey(k)) {
         return failTest(ctx, "Could not unlink key");
     }
 
-    rep = RedisModule_Call(ctx, "EXISTS", "c", "unlinked");
-    if (!rep || RedisModule_CallReplyInteger(rep) != 0) {
+    rep = SiderModule_Call(ctx, "EXISTS", "c", "unlinked");
+    if (!rep || SiderModule_CallReplyInteger(rep) != 0) {
         return failTest(ctx, "Could not verify key to be unlinked");
     }
-    return RedisModule_ReplyWithSimpleString(ctx, "OK");
+    return SiderModule_ReplyWithSimpleString(ctx, "OK");
 }
 
-int TestNestedCallReplyArrayElement(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
-    RedisModule_AutoMemory(ctx);
+int TestNestedCallReplyArrayElement(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
+    SiderModule_AutoMemory(ctx);
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    RedisModuleString *expect_key = RedisModule_CreateString(ctx, "mykey", strlen("mykey"));
-    RedisModule_SelectDb(ctx, 1);
-    RedisModule_Call(ctx, "LPUSH", "sc", expect_key, "myvalue");
+    SiderModuleString *expect_key = SiderModule_CreateString(ctx, "mykey", strlen("mykey"));
+    SiderModule_SelectDb(ctx, 1);
+    SiderModule_Call(ctx, "LPUSH", "sc", expect_key, "myvalue");
 
-    RedisModuleCallReply *scan_reply = RedisModule_Call(ctx, "SCAN", "l", (long long)0);
-    RedisModule_Assert(scan_reply != NULL && RedisModule_CallReplyType(scan_reply) == REDISMODULE_REPLY_ARRAY);
-    RedisModule_Assert(RedisModule_CallReplyLength(scan_reply) == 2);
+    SiderModuleCallReply *scan_reply = SiderModule_Call(ctx, "SCAN", "l", (long long)0);
+    SiderModule_Assert(scan_reply != NULL && SiderModule_CallReplyType(scan_reply) == REDISMODULE_REPLY_ARRAY);
+    SiderModule_Assert(SiderModule_CallReplyLength(scan_reply) == 2);
 
     long long scan_cursor;
-    RedisModuleCallReply *cursor_reply = RedisModule_CallReplyArrayElement(scan_reply, 0);
-    RedisModule_Assert(RedisModule_CallReplyType(cursor_reply) == REDISMODULE_REPLY_STRING);
-    RedisModule_Assert(RedisModule_StringToLongLong(RedisModule_CreateStringFromCallReply(cursor_reply), &scan_cursor) == REDISMODULE_OK);
-    RedisModule_Assert(scan_cursor == 0);
+    SiderModuleCallReply *cursor_reply = SiderModule_CallReplyArrayElement(scan_reply, 0);
+    SiderModule_Assert(SiderModule_CallReplyType(cursor_reply) == REDISMODULE_REPLY_STRING);
+    SiderModule_Assert(SiderModule_StringToLongLong(SiderModule_CreateStringFromCallReply(cursor_reply), &scan_cursor) == REDISMODULE_OK);
+    SiderModule_Assert(scan_cursor == 0);
 
-    RedisModuleCallReply *keys_reply = RedisModule_CallReplyArrayElement(scan_reply, 1);
-    RedisModule_Assert(RedisModule_CallReplyType(keys_reply) == REDISMODULE_REPLY_ARRAY);
-    RedisModule_Assert( RedisModule_CallReplyLength(keys_reply) == 1);
+    SiderModuleCallReply *keys_reply = SiderModule_CallReplyArrayElement(scan_reply, 1);
+    SiderModule_Assert(SiderModule_CallReplyType(keys_reply) == REDISMODULE_REPLY_ARRAY);
+    SiderModule_Assert( SiderModule_CallReplyLength(keys_reply) == 1);
  
-    RedisModuleCallReply *key_reply = RedisModule_CallReplyArrayElement(keys_reply, 0);
-    RedisModule_Assert(RedisModule_CallReplyType(key_reply) == REDISMODULE_REPLY_STRING);
-    RedisModuleString *key = RedisModule_CreateStringFromCallReply(key_reply);
-    RedisModule_Assert(RedisModule_StringCompare(key, expect_key) == 0);
+    SiderModuleCallReply *key_reply = SiderModule_CallReplyArrayElement(keys_reply, 0);
+    SiderModule_Assert(SiderModule_CallReplyType(key_reply) == REDISMODULE_REPLY_STRING);
+    SiderModuleString *key = SiderModule_CreateStringFromCallReply(key_reply);
+    SiderModule_Assert(SiderModule_StringCompare(key, expect_key) == 0);
 
-    RedisModule_ReplyWithSimpleString(ctx, "OK");
+    SiderModule_ReplyWithSimpleString(ctx, "OK");
     return REDISMODULE_OK;
 }
 
 /* TEST.STRING.TRUNCATE -- Test truncating an existing string object. */
-int TestStringTruncate(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
-    RedisModule_AutoMemory(ctx);
+int TestStringTruncate(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
+    SiderModule_AutoMemory(ctx);
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    RedisModule_Call(ctx, "SET", "cc", "foo", "abcde");
-    RedisModuleKey *k = RedisModule_OpenKey(ctx, RedisModule_CreateStringPrintf(ctx, "foo"), REDISMODULE_READ | REDISMODULE_WRITE);
+    SiderModule_Call(ctx, "SET", "cc", "foo", "abcde");
+    SiderModuleKey *k = SiderModule_OpenKey(ctx, SiderModule_CreateStringPrintf(ctx, "foo"), REDISMODULE_READ | REDISMODULE_WRITE);
     if (!k) return failTest(ctx, "Could not create key");
 
     size_t len = 0;
     char* s;
 
     /* expand from 5 to 8 and check null pad */
-    if (REDISMODULE_ERR == RedisModule_StringTruncate(k, 8)) {
+    if (REDISMODULE_ERR == SiderModule_StringTruncate(k, 8)) {
         return failTest(ctx, "Could not truncate string value (8)");
     }
-    s = RedisModule_StringDMA(k, &len, REDISMODULE_READ);
+    s = SiderModule_StringDMA(k, &len, REDISMODULE_READ);
     if (!s) {
         return failTest(ctx, "Failed to read truncated string (8)");
     } else if (len != 8) {
@@ -548,10 +548,10 @@ int TestStringTruncate(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) 
     }
 
     /* shrink from 8 to 4 */
-    if (REDISMODULE_ERR == RedisModule_StringTruncate(k, 4)) {
+    if (REDISMODULE_ERR == SiderModule_StringTruncate(k, 4)) {
         return failTest(ctx, "Could not truncate string value (4)");
     }
-    s = RedisModule_StringDMA(k, &len, REDISMODULE_READ);
+    s = SiderModule_StringDMA(k, &len, REDISMODULE_READ);
     if (!s) {
         return failTest(ctx, "Failed to read truncated string (4)");
     } else if (len != 4) {
@@ -561,120 +561,120 @@ int TestStringTruncate(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) 
     }
 
     /* shrink to 0 */
-    if (REDISMODULE_ERR == RedisModule_StringTruncate(k, 0)) {
+    if (REDISMODULE_ERR == SiderModule_StringTruncate(k, 0)) {
         return failTest(ctx, "Could not truncate string value (0)");
     }
-    s = RedisModule_StringDMA(k, &len, REDISMODULE_READ);
+    s = SiderModule_StringDMA(k, &len, REDISMODULE_READ);
     if (!s) {
         return failTest(ctx, "Failed to read truncated string (0)");
     } else if (len != 0) {
         return failTest(ctx, "Failed to shrink string value to (0)");
     }
 
-    return RedisModule_ReplyWithSimpleString(ctx, "OK");
+    return SiderModule_ReplyWithSimpleString(ctx, "OK");
 }
 
-int NotifyCallback(RedisModuleCtx *ctx, int type, const char *event,
-                   RedisModuleString *key) {
-  RedisModule_AutoMemory(ctx);
+int NotifyCallback(SiderModuleCtx *ctx, int type, const char *event,
+                   SiderModuleString *key) {
+  SiderModule_AutoMemory(ctx);
   /* Increment a counter on the notifications: for each key notified we
    * increment a counter */
-  RedisModule_Log(ctx, "notice", "Got event type %d, event %s, key %s", type,
-                  event, RedisModule_StringPtrLen(key, NULL));
+  SiderModule_Log(ctx, "notice", "Got event type %d, event %s, key %s", type,
+                  event, SiderModule_StringPtrLen(key, NULL));
 
-  RedisModule_Call(ctx, "HINCRBY", "csc", "notifications", key, "1");
+  SiderModule_Call(ctx, "HINCRBY", "csc", "notifications", key, "1");
   return REDISMODULE_OK;
 }
 
 /* TEST.NOTIFICATIONS -- Test Keyspace Notifications. */
-int TestNotifications(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
-    RedisModule_AutoMemory(ctx);
+int TestNotifications(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
+    SiderModule_AutoMemory(ctx);
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
 #define FAIL(msg, ...)                                                                       \
     {                                                                                        \
-        RedisModule_Log(ctx, "warning", "Failed NOTIFY Test. Reason: " #msg, ##__VA_ARGS__); \
+        SiderModule_Log(ctx, "warning", "Failed NOTIFY Test. Reason: " #msg, ##__VA_ARGS__); \
         goto err;                                                                            \
     }
-    RedisModule_Call(ctx, "FLUSHDB", "");
+    SiderModule_Call(ctx, "FLUSHDB", "");
 
-    RedisModule_Call(ctx, "SET", "cc", "foo", "bar");
-    RedisModule_Call(ctx, "SET", "cc", "foo", "baz");
-    RedisModule_Call(ctx, "SADD", "cc", "bar", "x");
-    RedisModule_Call(ctx, "SADD", "cc", "bar", "y");
+    SiderModule_Call(ctx, "SET", "cc", "foo", "bar");
+    SiderModule_Call(ctx, "SET", "cc", "foo", "baz");
+    SiderModule_Call(ctx, "SADD", "cc", "bar", "x");
+    SiderModule_Call(ctx, "SADD", "cc", "bar", "y");
 
-    RedisModule_Call(ctx, "HSET", "ccc", "baz", "x", "y");
+    SiderModule_Call(ctx, "HSET", "ccc", "baz", "x", "y");
     /* LPUSH should be ignored and not increment any counters */
-    RedisModule_Call(ctx, "LPUSH", "cc", "l", "y");
-    RedisModule_Call(ctx, "LPUSH", "cc", "l", "y");
+    SiderModule_Call(ctx, "LPUSH", "cc", "l", "y");
+    SiderModule_Call(ctx, "LPUSH", "cc", "l", "y");
 
     /* Miss some keys intentionally so we will get a "keymiss" notification. */
-    RedisModule_Call(ctx, "GET", "c", "nosuchkey");
-    RedisModule_Call(ctx, "SMEMBERS", "c", "nosuchkey");
+    SiderModule_Call(ctx, "GET", "c", "nosuchkey");
+    SiderModule_Call(ctx, "SMEMBERS", "c", "nosuchkey");
 
     size_t sz;
     const char *rep;
-    RedisModuleCallReply *r = RedisModule_Call(ctx, "HGET", "cc", "notifications", "foo");
-    if (r == NULL || RedisModule_CallReplyType(r) != REDISMODULE_REPLY_STRING) {
+    SiderModuleCallReply *r = SiderModule_Call(ctx, "HGET", "cc", "notifications", "foo");
+    if (r == NULL || SiderModule_CallReplyType(r) != REDISMODULE_REPLY_STRING) {
         FAIL("Wrong or no reply for foo");
     } else {
-        rep = RedisModule_CallReplyStringPtr(r, &sz);
+        rep = SiderModule_CallReplyStringPtr(r, &sz);
         if (sz != 1 || *rep != '2') {
-            FAIL("Got reply '%s'. expected '2'", RedisModule_CallReplyStringPtr(r, NULL));
+            FAIL("Got reply '%s'. expected '2'", SiderModule_CallReplyStringPtr(r, NULL));
         }
     }
 
-    r = RedisModule_Call(ctx, "HGET", "cc", "notifications", "bar");
-    if (r == NULL || RedisModule_CallReplyType(r) != REDISMODULE_REPLY_STRING) {
+    r = SiderModule_Call(ctx, "HGET", "cc", "notifications", "bar");
+    if (r == NULL || SiderModule_CallReplyType(r) != REDISMODULE_REPLY_STRING) {
         FAIL("Wrong or no reply for bar");
     } else {
-        rep = RedisModule_CallReplyStringPtr(r, &sz);
+        rep = SiderModule_CallReplyStringPtr(r, &sz);
         if (sz != 1 || *rep != '2') {
             FAIL("Got reply '%s'. expected '2'", rep);
         }
     }
 
-    r = RedisModule_Call(ctx, "HGET", "cc", "notifications", "baz");
-    if (r == NULL || RedisModule_CallReplyType(r) != REDISMODULE_REPLY_STRING) {
+    r = SiderModule_Call(ctx, "HGET", "cc", "notifications", "baz");
+    if (r == NULL || SiderModule_CallReplyType(r) != REDISMODULE_REPLY_STRING) {
         FAIL("Wrong or no reply for baz");
     } else {
-        rep = RedisModule_CallReplyStringPtr(r, &sz);
+        rep = SiderModule_CallReplyStringPtr(r, &sz);
         if (sz != 1 || *rep != '1') {
             FAIL("Got reply '%.*s'. expected '1'", (int)sz, rep);
         }
     }
     /* For l we expect nothing since we didn't subscribe to list events */
-    r = RedisModule_Call(ctx, "HGET", "cc", "notifications", "l");
-    if (r == NULL || RedisModule_CallReplyType(r) != REDISMODULE_REPLY_NULL) {
+    r = SiderModule_Call(ctx, "HGET", "cc", "notifications", "l");
+    if (r == NULL || SiderModule_CallReplyType(r) != REDISMODULE_REPLY_NULL) {
         FAIL("Wrong reply for l");
     }
 
-    r = RedisModule_Call(ctx, "HGET", "cc", "notifications", "nosuchkey");
-    if (r == NULL || RedisModule_CallReplyType(r) != REDISMODULE_REPLY_STRING) {
+    r = SiderModule_Call(ctx, "HGET", "cc", "notifications", "nosuchkey");
+    if (r == NULL || SiderModule_CallReplyType(r) != REDISMODULE_REPLY_STRING) {
         FAIL("Wrong or no reply for nosuchkey");
     } else {
-        rep = RedisModule_CallReplyStringPtr(r, &sz);
+        rep = SiderModule_CallReplyStringPtr(r, &sz);
         if (sz != 1 || *rep != '2') {
             FAIL("Got reply '%.*s'. expected '2'", (int)sz, rep);
         }
     }
 
-    RedisModule_Call(ctx, "FLUSHDB", "");
+    SiderModule_Call(ctx, "FLUSHDB", "");
 
-    return RedisModule_ReplyWithSimpleString(ctx, "OK");
+    return SiderModule_ReplyWithSimpleString(ctx, "OK");
 err:
-    RedisModule_Call(ctx, "FLUSHDB", "");
+    SiderModule_Call(ctx, "FLUSHDB", "");
 
-    return RedisModule_ReplyWithSimpleString(ctx, "ERR");
+    return SiderModule_ReplyWithSimpleString(ctx, "ERR");
 }
 
 /* TEST.CTXFLAGS -- Test GetContextFlags. */
-int TestCtxFlags(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int TestCtxFlags(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     REDISMODULE_NOT_USED(argc);
     REDISMODULE_NOT_USED(argv);
 
-    RedisModule_AutoMemory(ctx);
+    SiderModule_AutoMemory(ctx);
 
     int ok = 1;
     const char *errString = NULL;
@@ -686,7 +686,7 @@ int TestCtxFlags(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
         goto end;        \
     }
 
-    int flags = RedisModule_GetContextFlags(ctx);
+    int flags = SiderModule_GetContextFlags(ctx);
     if (flags == 0) {
         FAIL("Got no flags");
     }
@@ -696,17 +696,17 @@ int TestCtxFlags(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
 
     if (flags & REDISMODULE_CTX_FLAGS_AOF) FAIL("AOF Flag was set")
     /* Enable AOF to test AOF flags */
-    RedisModule_Call(ctx, "config", "ccc", "set", "appendonly", "yes");
-    flags = RedisModule_GetContextFlags(ctx);
+    SiderModule_Call(ctx, "config", "ccc", "set", "appendonly", "yes");
+    flags = SiderModule_GetContextFlags(ctx);
     if (!(flags & REDISMODULE_CTX_FLAGS_AOF)) FAIL("AOF Flag not set after config set");
 
     /* Disable RDB saving and test the flag. */
-    RedisModule_Call(ctx, "config", "ccc", "set", "save", "");
-    flags = RedisModule_GetContextFlags(ctx);
+    SiderModule_Call(ctx, "config", "ccc", "set", "save", "");
+    flags = SiderModule_GetContextFlags(ctx);
     if (flags & REDISMODULE_CTX_FLAGS_RDB) FAIL("RDB Flag was set");
     /* Enable RDB to test RDB flags */
-    RedisModule_Call(ctx, "config", "ccc", "set", "save", "900 1");
-    flags = RedisModule_GetContextFlags(ctx);
+    SiderModule_Call(ctx, "config", "ccc", "set", "save", "900 1");
+    flags = SiderModule_GetContextFlags(ctx);
     if (!(flags & REDISMODULE_CTX_FLAGS_RDB)) FAIL("RDB Flag was not set after config set");
 
     if (!(flags & REDISMODULE_CTX_FLAGS_MASTER)) FAIL("Master flag was not set");
@@ -715,52 +715,52 @@ int TestCtxFlags(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     if (flags & REDISMODULE_CTX_FLAGS_CLUSTER) FAIL("Cluster flag was set");
 
     /* Disable maxmemory and test the flag. (it is implicitly set in 32bit builds. */
-    RedisModule_Call(ctx, "config", "ccc", "set", "maxmemory", "0");
-    flags = RedisModule_GetContextFlags(ctx);
+    SiderModule_Call(ctx, "config", "ccc", "set", "maxmemory", "0");
+    flags = SiderModule_GetContextFlags(ctx);
     if (flags & REDISMODULE_CTX_FLAGS_MAXMEMORY) FAIL("Maxmemory flag was set");
 
     /* Enable maxmemory and test the flag. */
-    RedisModule_Call(ctx, "config", "ccc", "set", "maxmemory", "100000000");
-    flags = RedisModule_GetContextFlags(ctx);
+    SiderModule_Call(ctx, "config", "ccc", "set", "maxmemory", "100000000");
+    flags = SiderModule_GetContextFlags(ctx);
     if (!(flags & REDISMODULE_CTX_FLAGS_MAXMEMORY))
         FAIL("Maxmemory flag was not set after config set");
 
     if (flags & REDISMODULE_CTX_FLAGS_EVICT) FAIL("Eviction flag was set");
-    RedisModule_Call(ctx, "config", "ccc", "set", "maxmemory-policy", "allkeys-lru");
-    flags = RedisModule_GetContextFlags(ctx);
+    SiderModule_Call(ctx, "config", "ccc", "set", "maxmemory-policy", "allkeys-lru");
+    flags = SiderModule_GetContextFlags(ctx);
     if (!(flags & REDISMODULE_CTX_FLAGS_EVICT)) FAIL("Eviction flag was not set after config set");
 
 end:
     /* Revert config changes */
-    RedisModule_Call(ctx, "config", "ccc", "set", "appendonly", "no");
-    RedisModule_Call(ctx, "config", "ccc", "set", "save", "");
-    RedisModule_Call(ctx, "config", "ccc", "set", "maxmemory", "0");
-    RedisModule_Call(ctx, "config", "ccc", "set", "maxmemory-policy", "noeviction");
+    SiderModule_Call(ctx, "config", "ccc", "set", "appendonly", "no");
+    SiderModule_Call(ctx, "config", "ccc", "set", "save", "");
+    SiderModule_Call(ctx, "config", "ccc", "set", "maxmemory", "0");
+    SiderModule_Call(ctx, "config", "ccc", "set", "maxmemory-policy", "noeviction");
 
     if (!ok) {
-        RedisModule_Log(ctx, "warning", "Failed CTXFLAGS Test. Reason: %s", errString);
-        return RedisModule_ReplyWithSimpleString(ctx, "ERR");
+        SiderModule_Log(ctx, "warning", "Failed CTXFLAGS Test. Reason: %s", errString);
+        return SiderModule_ReplyWithSimpleString(ctx, "ERR");
     }
 
-    return RedisModule_ReplyWithSimpleString(ctx, "OK");
+    return SiderModule_ReplyWithSimpleString(ctx, "OK");
 }
 
 /* ----------------------------- Test framework ----------------------------- */
 
 /* Return 1 if the reply matches the specified string, otherwise log errors
  * in the server log and return 0. */
-int TestAssertErrorReply(RedisModuleCtx *ctx, RedisModuleCallReply *reply, char *str, size_t len) {
-    RedisModuleString *mystr, *expected;
-    if (RedisModule_CallReplyType(reply) != REDISMODULE_REPLY_ERROR) {
+int TestAssertErrorReply(SiderModuleCtx *ctx, SiderModuleCallReply *reply, char *str, size_t len) {
+    SiderModuleString *mystr, *expected;
+    if (SiderModule_CallReplyType(reply) != REDISMODULE_REPLY_ERROR) {
         return 0;
     }
 
-    mystr = RedisModule_CreateStringFromCallReply(reply);
-    expected = RedisModule_CreateString(ctx,str,len);
-    if (RedisModule_StringCompare(mystr,expected) != 0) {
-        const char *mystr_ptr = RedisModule_StringPtrLen(mystr,NULL);
-        const char *expected_ptr = RedisModule_StringPtrLen(expected,NULL);
-        RedisModule_Log(ctx,"warning",
+    mystr = SiderModule_CreateStringFromCallReply(reply);
+    expected = SiderModule_CreateString(ctx,str,len);
+    if (SiderModule_StringCompare(mystr,expected) != 0) {
+        const char *mystr_ptr = SiderModule_StringPtrLen(mystr,NULL);
+        const char *expected_ptr = SiderModule_StringPtrLen(expected,NULL);
+        SiderModule_Log(ctx,"warning",
             "Unexpected Error reply reply '%s' (instead of '%s')",
             mystr_ptr, expected_ptr);
         return 0;
@@ -768,24 +768,24 @@ int TestAssertErrorReply(RedisModuleCtx *ctx, RedisModuleCallReply *reply, char 
     return 1;
 }
 
-int TestAssertStringReply(RedisModuleCtx *ctx, RedisModuleCallReply *reply, char *str, size_t len) {
-    RedisModuleString *mystr, *expected;
+int TestAssertStringReply(SiderModuleCtx *ctx, SiderModuleCallReply *reply, char *str, size_t len) {
+    SiderModuleString *mystr, *expected;
 
-    if (RedisModule_CallReplyType(reply) == REDISMODULE_REPLY_ERROR) {
-        RedisModule_Log(ctx,"warning","Test error reply: %s",
-            RedisModule_CallReplyStringPtr(reply, NULL));
+    if (SiderModule_CallReplyType(reply) == REDISMODULE_REPLY_ERROR) {
+        SiderModule_Log(ctx,"warning","Test error reply: %s",
+            SiderModule_CallReplyStringPtr(reply, NULL));
         return 0;
-    } else if (RedisModule_CallReplyType(reply) != REDISMODULE_REPLY_STRING) {
-        RedisModule_Log(ctx,"warning","Unexpected reply type %d",
-            RedisModule_CallReplyType(reply));
+    } else if (SiderModule_CallReplyType(reply) != REDISMODULE_REPLY_STRING) {
+        SiderModule_Log(ctx,"warning","Unexpected reply type %d",
+            SiderModule_CallReplyType(reply));
         return 0;
     }
-    mystr = RedisModule_CreateStringFromCallReply(reply);
-    expected = RedisModule_CreateString(ctx,str,len);
-    if (RedisModule_StringCompare(mystr,expected) != 0) {
-        const char *mystr_ptr = RedisModule_StringPtrLen(mystr,NULL);
-        const char *expected_ptr = RedisModule_StringPtrLen(expected,NULL);
-        RedisModule_Log(ctx,"warning",
+    mystr = SiderModule_CreateStringFromCallReply(reply);
+    expected = SiderModule_CreateString(ctx,str,len);
+    if (SiderModule_StringCompare(mystr,expected) != 0) {
+        const char *mystr_ptr = SiderModule_StringPtrLen(mystr,NULL);
+        const char *expected_ptr = SiderModule_StringPtrLen(expected,NULL);
+        SiderModule_Log(ctx,"warning",
             "Unexpected string reply '%s' (instead of '%s')",
             mystr_ptr, expected_ptr);
         return 0;
@@ -795,19 +795,19 @@ int TestAssertStringReply(RedisModuleCtx *ctx, RedisModuleCallReply *reply, char
 
 /* Return 1 if the reply matches the specified integer, otherwise log errors
  * in the server log and return 0. */
-int TestAssertIntegerReply(RedisModuleCtx *ctx, RedisModuleCallReply *reply, long long expected) {
-    if (RedisModule_CallReplyType(reply) == REDISMODULE_REPLY_ERROR) {
-        RedisModule_Log(ctx,"warning","Test error reply: %s",
-            RedisModule_CallReplyStringPtr(reply, NULL));
+int TestAssertIntegerReply(SiderModuleCtx *ctx, SiderModuleCallReply *reply, long long expected) {
+    if (SiderModule_CallReplyType(reply) == REDISMODULE_REPLY_ERROR) {
+        SiderModule_Log(ctx,"warning","Test error reply: %s",
+            SiderModule_CallReplyStringPtr(reply, NULL));
         return 0;
-    } else if (RedisModule_CallReplyType(reply) != REDISMODULE_REPLY_INTEGER) {
-        RedisModule_Log(ctx,"warning","Unexpected reply type %d",
-            RedisModule_CallReplyType(reply));
+    } else if (SiderModule_CallReplyType(reply) != REDISMODULE_REPLY_INTEGER) {
+        SiderModule_Log(ctx,"warning","Unexpected reply type %d",
+            SiderModule_CallReplyType(reply));
         return 0;
     }
-    long long val = RedisModule_CallReplyInteger(reply);
+    long long val = SiderModule_CallReplyInteger(reply);
     if (val != expected) {
-        RedisModule_Log(ctx,"warning",
+        SiderModule_Log(ctx,"warning",
             "Unexpected integer reply '%lld' (instead of '%lld')",
             val, expected);
         return 0;
@@ -817,20 +817,20 @@ int TestAssertIntegerReply(RedisModuleCtx *ctx, RedisModuleCallReply *reply, lon
 
 #define T(name,...) \
     do { \
-        RedisModule_Log(ctx,"warning","Testing %s", name); \
-        reply = RedisModule_Call(ctx,name,__VA_ARGS__); \
+        SiderModule_Log(ctx,"warning","Testing %s", name); \
+        reply = SiderModule_Call(ctx,name,__VA_ARGS__); \
     } while (0)
 
 /* TEST.BASICS -- Run all the tests.
  * Note: it is useful to run these tests from the module rather than TCL
  * since it's easier to check the reply types like that (make a distinction
  * between 0 and "0", etc. */
-int TestBasics(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int TestBasics(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    RedisModule_AutoMemory(ctx);
-    RedisModuleCallReply *reply;
+    SiderModule_AutoMemory(ctx);
+    SiderModuleCallReply *reply;
 
     /* Make sure the DB is empty before to proceed. */
     T("dbsize","");
@@ -894,10 +894,10 @@ int TestBasics(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     if (!TestAssertStringReply(ctx,reply,"OK",2)) goto fail;
 
     T("test.callreplywitharrayreply", "");
-    if (RedisModule_CallReplyType(reply) != REDISMODULE_REPLY_ARRAY) goto fail;
-    if (RedisModule_CallReplyLength(reply) != 2) goto fail;
-    if (!TestAssertStringReply(ctx,RedisModule_CallReplyArrayElement(reply, 0),"test",4)) goto fail;
-    if (!TestAssertStringReply(ctx,RedisModule_CallReplyArrayElement(reply, 1),"1234",4)) goto fail;
+    if (SiderModule_CallReplyType(reply) != REDISMODULE_REPLY_ARRAY) goto fail;
+    if (SiderModule_CallReplyLength(reply) != 2) goto fail;
+    if (!TestAssertStringReply(ctx,SiderModule_CallReplyArrayElement(reply, 0),"test",4)) goto fail;
+    if (!TestAssertStringReply(ctx,SiderModule_CallReplyArrayElement(reply, 1),"1234",4)) goto fail;
 
     T("foo", "E");
     if (!TestAssertErrorReply(ctx,reply,"ERR unknown command 'foo', with args beginning with: ",53)) goto fail;
@@ -911,140 +911,140 @@ int TestBasics(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     T("set", "WEcc", "x", "1");
     if (!TestAssertErrorReply(ctx,reply,"ERR Write command 'set' was called while write is not allowed.",62)) goto fail;
 
-    RedisModule_ReplyWithSimpleString(ctx,"ALL TESTS PASSED");
+    SiderModule_ReplyWithSimpleString(ctx,"ALL TESTS PASSED");
     return REDISMODULE_OK;
 
 fail:
-    RedisModule_ReplyWithSimpleString(ctx,
+    SiderModule_ReplyWithSimpleString(ctx,
         "SOME TEST DID NOT PASS! Check server logs");
     return REDISMODULE_OK;
 }
 
-int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int SiderModule_OnLoad(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    if (RedisModule_Init(ctx,"test",1,REDISMODULE_APIVER_1)
+    if (SiderModule_Init(ctx,"test",1,REDISMODULE_APIVER_1)
         == REDISMODULE_ERR) return REDISMODULE_ERR;
 
-    /* Perform RM_Call inside the RedisModule_OnLoad
+    /* Perform RM_Call inside the SiderModule_OnLoad
      * to verify that it works as expected without crashing.
      * The tests will verify it on different configurations
      * options (cluster/no cluster). A simple ping command
      * is enough for this test. */
-    RedisModuleCallReply *reply = RedisModule_Call(ctx, "ping", "");
-    if (RedisModule_CallReplyType(reply) != REDISMODULE_REPLY_STRING) {
-        RedisModule_FreeCallReply(reply);
+    SiderModuleCallReply *reply = SiderModule_Call(ctx, "ping", "");
+    if (SiderModule_CallReplyType(reply) != REDISMODULE_REPLY_STRING) {
+        SiderModule_FreeCallReply(reply);
         return REDISMODULE_ERR;
     }
     size_t len;
-    const char *reply_str = RedisModule_CallReplyStringPtr(reply, &len);
+    const char *reply_str = SiderModule_CallReplyStringPtr(reply, &len);
     if (len != 4) {
-        RedisModule_FreeCallReply(reply);
+        SiderModule_FreeCallReply(reply);
         return REDISMODULE_ERR;
     }
     if (memcmp(reply_str, "PONG", 4) != 0) {
-        RedisModule_FreeCallReply(reply);
+        SiderModule_FreeCallReply(reply);
         return REDISMODULE_ERR;
     }
-    RedisModule_FreeCallReply(reply);
+    SiderModule_FreeCallReply(reply);
 
-    if (RedisModule_CreateCommand(ctx,"test.call",
+    if (SiderModule_CreateCommand(ctx,"test.call",
         TestCall,"write deny-oom",1,1,1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    if (RedisModule_CreateCommand(ctx,"test.callresp3map",
+    if (SiderModule_CreateCommand(ctx,"test.callresp3map",
         TestCallResp3Map,"write deny-oom",1,1,1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    if (RedisModule_CreateCommand(ctx,"test.callresp3attribute",
+    if (SiderModule_CreateCommand(ctx,"test.callresp3attribute",
         TestCallResp3Attribute,"write deny-oom",1,1,1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    if (RedisModule_CreateCommand(ctx,"test.callresp3set",
+    if (SiderModule_CreateCommand(ctx,"test.callresp3set",
         TestCallResp3Set,"write deny-oom",1,1,1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    if (RedisModule_CreateCommand(ctx,"test.callresp3double",
+    if (SiderModule_CreateCommand(ctx,"test.callresp3double",
         TestCallResp3Double,"write deny-oom",1,1,1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    if (RedisModule_CreateCommand(ctx,"test.callresp3bool",
+    if (SiderModule_CreateCommand(ctx,"test.callresp3bool",
         TestCallResp3Bool,"write deny-oom",1,1,1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    if (RedisModule_CreateCommand(ctx,"test.callresp3null",
+    if (SiderModule_CreateCommand(ctx,"test.callresp3null",
         TestCallResp3Null,"write deny-oom",1,1,1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    if (RedisModule_CreateCommand(ctx,"test.callreplywitharrayreply",
+    if (SiderModule_CreateCommand(ctx,"test.callreplywitharrayreply",
         TestCallReplyWithArrayReply,"write deny-oom",1,1,1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    if (RedisModule_CreateCommand(ctx,"test.callreplywithnestedreply",
+    if (SiderModule_CreateCommand(ctx,"test.callreplywithnestedreply",
         TestCallReplyWithNestedReply,"write deny-oom",1,1,1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    if (RedisModule_CreateCommand(ctx,"test.callreplywithbignumberreply",
+    if (SiderModule_CreateCommand(ctx,"test.callreplywithbignumberreply",
         TestCallResp3BigNumber,"write deny-oom",1,1,1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    if (RedisModule_CreateCommand(ctx,"test.callreplywithverbatimstringreply",
+    if (SiderModule_CreateCommand(ctx,"test.callreplywithverbatimstringreply",
         TestCallResp3Verbatim,"write deny-oom",1,1,1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    if (RedisModule_CreateCommand(ctx,"test.string.append",
+    if (SiderModule_CreateCommand(ctx,"test.string.append",
         TestStringAppend,"write deny-oom",1,1,1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    if (RedisModule_CreateCommand(ctx,"test.string.trim",
+    if (SiderModule_CreateCommand(ctx,"test.string.trim",
         TestTrimString,"write deny-oom",1,1,1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    if (RedisModule_CreateCommand(ctx,"test.string.append.am",
+    if (SiderModule_CreateCommand(ctx,"test.string.append.am",
         TestStringAppendAM,"write deny-oom",1,1,1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    if (RedisModule_CreateCommand(ctx,"test.string.truncate",
+    if (SiderModule_CreateCommand(ctx,"test.string.truncate",
         TestStringTruncate,"write deny-oom",1,1,1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    if (RedisModule_CreateCommand(ctx,"test.string.printf",
+    if (SiderModule_CreateCommand(ctx,"test.string.printf",
         TestStringPrintf,"write deny-oom",1,1,1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    if (RedisModule_CreateCommand(ctx,"test.ctxflags",
+    if (SiderModule_CreateCommand(ctx,"test.ctxflags",
         TestCtxFlags,"readonly",1,1,1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    if (RedisModule_CreateCommand(ctx,"test.unlink",
+    if (SiderModule_CreateCommand(ctx,"test.unlink",
         TestUnlink,"write deny-oom",1,1,1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    if (RedisModule_CreateCommand(ctx,"test.nestedcallreplyarray",
+    if (SiderModule_CreateCommand(ctx,"test.nestedcallreplyarray",
         TestNestedCallReplyArrayElement,"write deny-oom",1,1,1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    if (RedisModule_CreateCommand(ctx,"test.basics",
+    if (SiderModule_CreateCommand(ctx,"test.basics",
         TestBasics,"write",1,1,1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
     /* the following commands are used by an external test and should not be added to TestBasics */
-    if (RedisModule_CreateCommand(ctx,"test.rmcallautomode",
+    if (SiderModule_CreateCommand(ctx,"test.rmcallautomode",
         TestCallRespAutoMode,"write",1,1,1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    if (RedisModule_CreateCommand(ctx,"test.getresp",
+    if (SiderModule_CreateCommand(ctx,"test.getresp",
         TestGetResp,"readonly",1,1,1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    RedisModule_SubscribeToKeyspaceEvents(ctx,
+    SiderModule_SubscribeToKeyspaceEvents(ctx,
                                             REDISMODULE_NOTIFY_HASH |
                                             REDISMODULE_NOTIFY_SET |
                                             REDISMODULE_NOTIFY_STRING |
                                             REDISMODULE_NOTIFY_KEY_MISS,
                                         NotifyCallback);
-    if (RedisModule_CreateCommand(ctx,"test.notify",
+    if (SiderModule_CreateCommand(ctx,"test.notify",
         TestNotifications,"write deny-oom",1,1,1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 

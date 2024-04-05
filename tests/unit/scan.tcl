@@ -109,7 +109,7 @@ start_server {tags {"scan network"}} {
 
         after 2
 
-        # TODO: remove this in redis 8.0
+        # TODO: remove this in sider 8.0
         set cur 0
         set keys {}
         while 1 {
@@ -124,7 +124,7 @@ start_server {tags {"scan network"}} {
         # make sure that expired key have been removed by scan command
         assert_equal 1000 [scan [regexp -inline {keys\=([\d]*)} [r info keyspace]] keys=%d]
 
-        # TODO: uncomment in redis 8.0
+        # TODO: uncomment in sider 8.0
         #assert_error "*unknown type name*" {r scan 0 type "string1"}
         # expired key will be no touched by scan command
         #assert_equal 1001 [scan [regexp -inline {keys\=([\d]*)} [r info keyspace]] keys=%d]
@@ -193,7 +193,7 @@ start_server {tags {"scan network"}} {
 
         # make sure that expired key have been removed by scan command
         assert_equal 1000 [scan [regexp -inline {keys\=([\d]*)} [r info keyspace]] keys=%d]
-        # TODO: uncomment in redis 8.0
+        # TODO: uncomment in sider 8.0
         # make sure that only the expired key in the type match will been removed by scan command
         #assert_equal 1001 [scan [regexp -inline {keys\=([\d]*)} [r info keyspace]] keys=%d]
 

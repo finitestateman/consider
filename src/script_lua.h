@@ -1,16 +1,16 @@
 /*
- * Copyright (c) 2009-2021, Redis Ltd.
+ * Copyright (c) 2009-2021, Sider Ltd.
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -38,14 +38,14 @@
  *   the top of the Lua stack. In addition, parsing the execution
  *   result and convert it to the resp and reply ot the client.
  *
- * * Run Redis commands from within the Lua code (Including
+ * * Run Sider commands from within the Lua code (Including
  *   parsing the reply and create a Lua object out of it).
  *
- * * Register Redis API to the Lua interpreter. Only shared
+ * * Register Sider API to the Lua interpreter. Only shared
  *   API are registered (API that is only relevant on eval.c
  *   (like debugging) are registered on eval.c).
  *
- * Uses script.c for interaction back with Redis.
+ * Uses script.c for interaction back with Sider.
  */
 
 #include "server.h"
@@ -56,7 +56,7 @@
 
 #define REGISTRY_RUN_CTX_NAME "__RUN_CTX__"
 #define REGISTRY_SET_GLOBALS_PROTECTION_NAME "__GLOBAL_PROTECTION__"
-#define REDIS_API_NAME "redis"
+#define REDIS_API_NAME "sider"
 
 typedef struct errorInfo {
     sds msg;
@@ -65,7 +65,7 @@ typedef struct errorInfo {
     int ignore_err_stats_update;
 }errorInfo;
 
-void luaRegisterRedisAPI(lua_State* lua);
+void luaRegisterSiderAPI(lua_State* lua);
 sds luaGetStringSds(lua_State *lua, int index);
 void luaRegisterGlobalProtectionFunction(lua_State *lua);
 void luaSetErrorMetatable(lua_State *lua);

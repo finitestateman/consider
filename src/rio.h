@@ -3,15 +3,15 @@
  * Copyright (c) 2009-2019, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -175,8 +175,8 @@ size_t rioWriteBulkString(rio *r, const char *buf, size_t len);
 size_t rioWriteBulkLongLong(rio *r, long long l);
 size_t rioWriteBulkDouble(rio *r, double d);
 
-struct redisObject;
-int rioWriteBulkObject(rio *r, struct redisObject *obj);
+struct siderObject;
+int rioWriteBulkObject(rio *r, struct siderObject *obj);
 
 void rioGenericUpdateChecksum(rio *r, const void *buf, size_t len);
 void rioSetAutoSync(rio *r, off_t bytes);

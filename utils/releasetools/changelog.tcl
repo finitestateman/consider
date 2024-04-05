@@ -15,7 +15,7 @@ if {[llength $::argv] == 3} {
 
 set template {
 ================================================================================
-Redis %ver%     Released %date%
+Sider %ver%     Released %date%
 ================================================================================
 
 Upgrade urgency <URGENCY>: <DESCRIPTION>
@@ -30,6 +30,6 @@ append template [exec git log $branch~$count..$branch "--format=format:%an in co
 
 #Older, more verbose version.
 #
-#append template [exec git log $branch~30..$branch "--format=format:+-------------------------------------------------------------------------------%n| %s%n| By %an, %ai%n+--------------------------------------------------------------------------------%nhttps://github.com/redis/redis/commit/%H%n%n%b" --stat]
+#append template [exec git log $branch~30..$branch "--format=format:+-------------------------------------------------------------------------------%n| %s%n| By %an, %ai%n+--------------------------------------------------------------------------------%nhttps://github.com/sider/sider/commit/%H%n%n%b" --stat]
 
 puts $template

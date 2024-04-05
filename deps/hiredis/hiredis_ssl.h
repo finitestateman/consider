@@ -1,18 +1,18 @@
 
 /*
- * Copyright (c) 2019, Redis Labs
+ * Copyright (c) 2019, Sider Labs
  *
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -44,10 +44,10 @@ struct ssl_st;
 /* A wrapper around OpenSSL SSL_CTX to allow easy SSL use without directly
  * calling OpenSSL.
  */
-typedef struct redisSSLContext redisSSLContext;
+typedef struct siderSSLContext siderSSLContext;
 
 /**
- * Initialization errors that redisCreateSSLContext() may return.
+ * Initialization errors that siderCreateSSLContext() may return.
  */
 
 typedef enum {
@@ -60,11 +60,11 @@ typedef enum {
     REDIS_SSL_CTX_PRIVATE_KEY_LOAD_FAILED,      /* Failed to load private key */
     REDIS_SSL_CTX_OS_CERTSTORE_OPEN_FAILED,     /* Failed to open system certificate store */
     REDIS_SSL_CTX_OS_CERT_ADD_FAILED            /* Failed to add CA certificates obtained from system to the SSL context */
-} redisSSLContextError;
+} siderSSLContextError;
 
 /* Constants that mirror OpenSSL's verify modes. By default,
- * REDIS_SSL_VERIFY_PEER is used with redisCreateSSLContext().
- * Some Redis clients disable peer verification if there are no
+ * REDIS_SSL_VERIFY_PEER is used with siderCreateSSLContext().
+ * Some Sider clients disable peer verification if there are no
  * certificates specified.
  */
 #define REDIS_SSL_VERIFY_NONE 0x00
@@ -81,13 +81,13 @@ typedef struct {
     const char *private_key_filename;
     const char *server_name;
     int verify_mode;
-} redisSSLOptions;
+} siderSSLOptions;
 
 /**
  * Return the error message corresponding with the specified error code.
  */
 
-const char *redisSSLContextGetError(redisSSLContextError error);
+const char *siderSSLContextGetError(siderSSLContextError error);
 
 /**
  * Helper function to initialize the OpenSSL library.
@@ -96,7 +96,7 @@ const char *redisSSLContextGetError(redisSSLContextError error);
  * call this function only once, and only if OpenSSL is not directly initialized
  * elsewhere.
  */
-int redisInitOpenSSL(void);
+int siderInitOpenSSL(void);
 
 /**
  * Helper function to initialize an OpenSSL context that can be used
@@ -119,42 +119,42 @@ int redisInitOpenSSL(void);
  * (returning a NULL).
  */
 
-redisSSLContext *redisCreateSSLContext(const char *cacert_filename, const char *capath,
+siderSSLContext *siderCreateSSLContext(const char *cacert_filename, const char *capath,
         const char *cert_filename, const char *private_key_filename,
-        const char *server_name, redisSSLContextError *error);
+        const char *server_name, siderSSLContextError *error);
 
 /**
   * Helper function to initialize an OpenSSL context that can be used
-  * to initiate SSL connections. This is a more extensible version of redisCreateSSLContext().
+  * to initiate SSL connections. This is a more extensible version of siderCreateSSLContext().
   *
   * options contains a structure of SSL options to use.
   *
   * If error is non-null, it will be populated in case the context creation fails
   * (returning a NULL).
 */
-redisSSLContext *redisCreateSSLContextWithOptions(redisSSLOptions *options,
-        redisSSLContextError *error);
+siderSSLContext *siderCreateSSLContextWithOptions(siderSSLOptions *options,
+        siderSSLContextError *error);
 
 /**
  * Free a previously created OpenSSL context.
  */
-void redisFreeSSLContext(redisSSLContext *redis_ssl_ctx);
+void siderFreeSSLContext(siderSSLContext *sider_ssl_ctx);
 
 /**
- * Initiate SSL on an existing redisContext.
+ * Initiate SSL on an existing siderContext.
  *
- * This is similar to redisInitiateSSL() but does not require the caller
- * to directly interact with OpenSSL, and instead uses a redisSSLContext
- * previously created using redisCreateSSLContext().
+ * This is similar to siderInitiateSSL() but does not require the caller
+ * to directly interact with OpenSSL, and instead uses a siderSSLContext
+ * previously created using siderCreateSSLContext().
  */
 
-int redisInitiateSSLWithContext(redisContext *c, redisSSLContext *redis_ssl_ctx);
+int siderInitiateSSLWithContext(siderContext *c, siderSSLContext *sider_ssl_ctx);
 
 /**
  * Initiate SSL/TLS negotiation on a provided OpenSSL SSL object.
  */
 
-int redisInitiateSSL(redisContext *c, struct ssl_st *ssl);
+int siderInitiateSSL(siderContext *c, struct ssl_st *ssl);
 
 #ifdef __cplusplus
 }

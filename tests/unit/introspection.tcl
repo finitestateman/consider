@@ -1,8 +1,8 @@
 start_server {tags {"introspection"}} {
     test "PING" {
         assert_equal {PONG} [r ping]
-        assert_equal {redis} [r ping redis]
-        assert_error {*wrong number of arguments for 'ping' command} {r ping hello redis}
+        assert_equal {sider} [r ping sider]
+        assert_error {*wrong number of arguments for 'ping' command} {r ping hello sider}
     }
 
     test {CLIENT LIST} {
@@ -36,16 +36,16 @@ start_server {tags {"introspection"}} {
 
     test {CLIENT KILL SKIPME YES/NO will kill all clients} {
         # Kill all clients except `me`
-        set rd1 [redis_deferring_client]
-        set rd2 [redis_deferring_client]
+        set rd1 [sider_deferring_client]
+        set rd2 [sider_deferring_client]
         set connected_clients [s connected_clients]
         assert {$connected_clients >= 3}
         set res [r client kill skipme yes]
         assert {$res == $connected_clients - 1}
 
         # Kill all clients, including `me`
-        set rd3 [redis_deferring_client]
-        set rd4 [redis_deferring_client]
+        set rd3 [sider_deferring_client]
+        set rd4 [sider_deferring_client]
         set connected_clients [s connected_clients]
         assert {$connected_clients == 3}
         set res [r client kill skipme no]
@@ -95,7 +95,7 @@ start_server {tags {"introspection"}} {
     } {} {needs:save}
 
     test "CLIENT REPLY OFF/ON: disable all commands reply" {
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
 
         # These replies were silenced.
         $rd client reply off
@@ -111,7 +111,7 @@ start_server {tags {"introspection"}} {
     }
 
     test "CLIENT REPLY SKIP: skip the next command reply" {
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
 
         # The first pong reply was silenced.
         $rd client reply skip
@@ -124,7 +124,7 @@ start_server {tags {"introspection"}} {
     }
 
     test "CLIENT REPLY ON: unset SKIP flag" {
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
 
         $rd client reply skip
         $rd client reply on
@@ -137,7 +137,7 @@ start_server {tags {"introspection"}} {
     }
 
     test {MONITOR can log executed commands} {
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
         $rd monitor
         assert_match {*OK*} [$rd read]
         r set foo bar
@@ -148,10 +148,10 @@ start_server {tags {"introspection"}} {
     } {*"set" "foo"*"get" "foo"*}
 
     test {MONITOR can log commands issued by the scripting engine} {
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
         $rd monitor
         $rd read ;# Discard the OK
-        r eval {redis.call('set',KEYS[1],ARGV[1])} 1 foo bar
+        r eval {sider.call('set',KEYS[1],ARGV[1])} 1 foo bar
         assert_match {*eval*} [$rd read]
         assert_match {*lua*"set"*"foo"*"bar"*} [$rd read]
         $rd close
@@ -159,9 +159,9 @@ start_server {tags {"introspection"}} {
 
     test {MONITOR can log commands issued by functions} {
         r function load replace {#!lua name=test
-            redis.register_function('test', function() return redis.call('set', 'foo', 'bar') end)
+            sider.register_function('test', function() return sider.call('set', 'foo', 'bar') end)
         }
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
         $rd monitor
         $rd read ;# Discard the OK
         r fcall test 0
@@ -171,7 +171,7 @@ start_server {tags {"introspection"}} {
     }
 
     test {MONITOR supports redacting command arguments} {
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
         $rd monitor
         $rd read ; # Discard the OK
 
@@ -200,7 +200,7 @@ start_server {tags {"introspection"}} {
     } {0} {needs:repl}
 
     test {MONITOR correctly handles multi-exec cases} {
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
         $rd monitor
         $rd read ; # Discard the OK
 
@@ -229,8 +229,8 @@ start_server {tags {"introspection"}} {
         # need to reconnect in order to reset the clients state
         reconnect
         
-        set rd [redis_deferring_client]
-        set bc [redis_deferring_client]
+        set rd [sider_deferring_client]
+        set bc [sider_deferring_client]
         r del mylist
         
         $rd monitor
@@ -291,7 +291,7 @@ start_server {tags {"introspection"}} {
     } {*name=someothername*}
 
     test {After CLIENT SETNAME, connection can still be closed} {
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
         $rd client setname foobar
         assert_equal [$rd read] "OK"
         assert_match {*foobar*} [r client list]
@@ -305,24 +305,24 @@ start_server {tags {"introspection"}} {
     }
 
     test {CLIENT SETINFO can set a library name to this connection} {
-        r CLIENT SETINFO lib-name redis.py
+        r CLIENT SETINFO lib-name sider.py
         r CLIENT SETINFO lib-ver 1.2.3
         r client info
-    } {*lib-name=redis.py lib-ver=1.2.3*}
+    } {*lib-name=sider.py lib-ver=1.2.3*}
 
     test {CLIENT SETINFO invalid args} {
         assert_error {*wrong number of arguments*} {r CLIENT SETINFO lib-name}
-        assert_error {*cannot contain spaces*} {r CLIENT SETINFO lib-name "redis py"}
-        assert_error {*newlines*} {r CLIENT SETINFO lib-name "redis.py\n"}
+        assert_error {*cannot contain spaces*} {r CLIENT SETINFO lib-name "sider py"}
+        assert_error {*newlines*} {r CLIENT SETINFO lib-name "sider.py\n"}
         assert_error {*Unrecognized*} {r CLIENT SETINFO badger hamster}
         # test that all of these didn't affect the previously set values
         r client info
-    } {*lib-name=redis.py lib-ver=1.2.3*}
+    } {*lib-name=sider.py lib-ver=1.2.3*}
 
     test {RESET does NOT clean library name} {
         r reset
         r client info
-    } {*lib-name=redis.py*} {needs:reset}
+    } {*lib-name=sider.py*} {needs:reset}
 
     test {CLIENT SETINFO can clear library name} {
         r CLIENT SETINFO lib-name ""
@@ -536,7 +536,7 @@ start_server {tags {"introspection"}} {
     }
 
     test {CONFIG SET rollback on apply error} {
-        # This test tries to configure a used port number in redis. This is expected
+        # This test tries to configure a used port number in sider. This is expected
         # to pass the `CONFIG SET` validity checking implementation but fail on 
         # actual "apply" of the setting. This will validate that after an "apply"
         # failure we rollback to the previous values.
@@ -569,7 +569,7 @@ start_server {tags {"introspection"}} {
         set used_port [find_available_port $::baseport $::portcount]
         dict set some_configs port $used_port
 
-        # Run a dummy server on used_port so we know we can't configure redis to 
+        # Run a dummy server on used_port so we know we can't configure sider to 
         # use it. It's ok for this to fail because that means used_port is invalid 
         # anyway
         catch {socket -server dummy_accept -myaddr 127.0.0.1 $used_port} e
@@ -591,7 +591,7 @@ start_server {tags {"introspection"}} {
         }
 
         # Make sure we can still communicate with the server (on the original port)
-        set r1 [redis_client]
+        set r1 [sider_client]
         assert_equal [$r1 ping] "PONG"
         $r1 close
     }
@@ -630,57 +630,57 @@ start_server {tags {"introspection"}} {
         assert {[dict exists $res bind]}  
     }
 
-    test {redis-server command line arguments - error cases} {
+    test {sider-server command line arguments - error cases} {
         # Take '--invalid' as the option.
-        catch {exec src/redis-server --invalid} err
+        catch {exec src/sider-server --invalid} err
         assert_match {*Bad directive or wrong number of arguments*} $err
 
-        catch {exec src/redis-server --port} err
+        catch {exec src/sider-server --port} err
         assert_match {*'port'*wrong number of arguments*} $err
 
-        catch {exec src/redis-server --port 6380 --loglevel} err
+        catch {exec src/sider-server --port 6380 --loglevel} err
         assert_match {*'loglevel'*wrong number of arguments*} $err
 
         # Take `6379` and `6380` as the port option value.
-        catch {exec src/redis-server --port 6379 6380} err
+        catch {exec src/sider-server --port 6379 6380} err
         assert_match {*'port "6379" "6380"'*wrong number of arguments*} $err
 
         # Take `--loglevel` and `verbose` as the port option value.
-        catch {exec src/redis-server --port --loglevel verbose} err
+        catch {exec src/sider-server --port --loglevel verbose} err
         assert_match {*'port "--loglevel" "verbose"'*wrong number of arguments*} $err
 
         # Take `--bla` as the port option value.
-        catch {exec src/redis-server --port --bla --loglevel verbose} err
+        catch {exec src/sider-server --port --bla --loglevel verbose} err
         assert_match {*'port "--bla"'*argument couldn't be parsed into an integer*} $err
 
         # Take `--bla` as the loglevel option value.
-        catch {exec src/redis-server --logfile --my--log--file --loglevel --bla} err
+        catch {exec src/sider-server --logfile --my--log--file --loglevel --bla} err
         assert_match {*'loglevel "--bla"'*argument(s) must be one of the following*} $err
 
         # Using MULTI_ARG's own check, empty option value
-        catch {exec src/redis-server --shutdown-on-sigint} err
+        catch {exec src/sider-server --shutdown-on-sigint} err
         assert_match {*'shutdown-on-sigint'*argument(s) must be one of the following*} $err
-        catch {exec src/redis-server --shutdown-on-sigint "now force" --shutdown-on-sigterm} err
+        catch {exec src/sider-server --shutdown-on-sigint "now force" --shutdown-on-sigterm} err
         assert_match {*'shutdown-on-sigterm'*argument(s) must be one of the following*} $err
 
-        # Something like `redis-server --some-config --config-value1 --config-value2 --loglevel debug` would break,
+        # Something like `sider-server --some-config --config-value1 --config-value2 --loglevel debug` would break,
         # because if you want to pass a value to a config starting with `--`, it can only be a single value.
-        catch {exec src/redis-server --replicaof 127.0.0.1 abc} err
+        catch {exec src/sider-server --replicaof 127.0.0.1 abc} err
         assert_match {*'replicaof "127.0.0.1" "abc"'*Invalid master port*} $err
-        catch {exec src/redis-server --replicaof --127.0.0.1 abc} err
+        catch {exec src/sider-server --replicaof --127.0.0.1 abc} err
         assert_match {*'replicaof "--127.0.0.1" "abc"'*Invalid master port*} $err
-        catch {exec src/redis-server --replicaof --127.0.0.1 --abc} err
+        catch {exec src/sider-server --replicaof --127.0.0.1 --abc} err
         assert_match {*'replicaof "--127.0.0.1"'*wrong number of arguments*} $err
     } {} {external:skip}
 
-    test {redis-server command line arguments - allow passing option name and option value in the same arg} {
+    test {sider-server command line arguments - allow passing option name and option value in the same arg} {
         start_server {config "default.conf" args {"--maxmemory 700mb" "--maxmemory-policy volatile-lru"}} {
             assert_match [r config get maxmemory] {maxmemory 734003200}
             assert_match [r config get maxmemory-policy] {maxmemory-policy volatile-lru}
         }
     } {} {external:skip}
 
-    test {redis-server command line arguments - wrong usage that we support anyway} {
+    test {sider-server command line arguments - wrong usage that we support anyway} {
         start_server {config "default.conf" args {loglevel verbose "--maxmemory '700mb'" "--maxmemory-policy 'volatile-lru'"}} {
             assert_match [r config get loglevel] {loglevel verbose}
             assert_match [r config get maxmemory] {maxmemory 734003200}
@@ -688,21 +688,21 @@ start_server {tags {"introspection"}} {
         }
     } {} {external:skip}
 
-    test {redis-server command line arguments - allow option value to use the `--` prefix} {
+    test {sider-server command line arguments - allow option value to use the `--` prefix} {
         start_server {config "default.conf" args {--proc-title-template --my--title--template --loglevel verbose}} {
             assert_match [r config get proc-title-template] {proc-title-template --my--title--template}
             assert_match [r config get loglevel] {loglevel verbose}
         }
     } {} {external:skip}
 
-    test {redis-server command line arguments - option name and option value in the same arg and `--` prefix} {
+    test {sider-server command line arguments - option name and option value in the same arg and `--` prefix} {
         start_server {config "default.conf" args {"--proc-title-template --my--title--template" "--loglevel verbose"}} {
             assert_match [r config get proc-title-template] {proc-title-template --my--title--template}
             assert_match [r config get loglevel] {loglevel verbose}
         }
     } {} {external:skip}
 
-    test {redis-server command line arguments - save with empty input} {
+    test {sider-server command line arguments - save with empty input} {
         start_server {config "default.conf" args {--save --loglevel verbose}} {
             assert_match [r config get save] {save {}}
             assert_match [r config get loglevel] {loglevel verbose}
@@ -731,7 +731,7 @@ start_server {tags {"introspection"}} {
 
     } {} {external:skip}
 
-    test {redis-server command line arguments - take one bulk string with spaces for MULTI_ARG configs parsing} {
+    test {sider-server command line arguments - take one bulk string with spaces for MULTI_ARG configs parsing} {
         start_server {config "default.conf" args {--shutdown-on-sigint nosave force now --shutdown-on-sigterm "nosave force"}} {
             assert_match [r config get shutdown-on-sigint] {shutdown-on-sigint {nosave now force}}
             assert_match [r config get shutdown-on-sigterm] {shutdown-on-sigterm {nosave force}}

@@ -3,15 +3,15 @@
  *
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -32,41 +32,41 @@
 #define __HIREDIS_AE_H__
 #include <sys/types.h>
 #include <ae.h>
-#include "../hiredis.h"
+#include "../hisider.h"
 #include "../async.h"
 
-typedef struct redisAeEvents {
-    redisAsyncContext *context;
+typedef struct siderAeEvents {
+    siderAsyncContext *context;
     aeEventLoop *loop;
     int fd;
     int reading, writing;
-} redisAeEvents;
+} siderAeEvents;
 
-static void redisAeReadEvent(aeEventLoop *el, int fd, void *privdata, int mask) {
+static void siderAeReadEvent(aeEventLoop *el, int fd, void *privdata, int mask) {
     ((void)el); ((void)fd); ((void)mask);
 
-    redisAeEvents *e = (redisAeEvents*)privdata;
-    redisAsyncHandleRead(e->context);
+    siderAeEvents *e = (siderAeEvents*)privdata;
+    siderAsyncHandleRead(e->context);
 }
 
-static void redisAeWriteEvent(aeEventLoop *el, int fd, void *privdata, int mask) {
+static void siderAeWriteEvent(aeEventLoop *el, int fd, void *privdata, int mask) {
     ((void)el); ((void)fd); ((void)mask);
 
-    redisAeEvents *e = (redisAeEvents*)privdata;
-    redisAsyncHandleWrite(e->context);
+    siderAeEvents *e = (siderAeEvents*)privdata;
+    siderAsyncHandleWrite(e->context);
 }
 
-static void redisAeAddRead(void *privdata) {
-    redisAeEvents *e = (redisAeEvents*)privdata;
+static void siderAeAddRead(void *privdata) {
+    siderAeEvents *e = (siderAeEvents*)privdata;
     aeEventLoop *loop = e->loop;
     if (!e->reading) {
         e->reading = 1;
-        aeCreateFileEvent(loop,e->fd,AE_READABLE,redisAeReadEvent,e);
+        aeCreateFileEvent(loop,e->fd,AE_READABLE,siderAeReadEvent,e);
     }
 }
 
-static void redisAeDelRead(void *privdata) {
-    redisAeEvents *e = (redisAeEvents*)privdata;
+static void siderAeDelRead(void *privdata) {
+    siderAeEvents *e = (siderAeEvents*)privdata;
     aeEventLoop *loop = e->loop;
     if (e->reading) {
         e->reading = 0;
@@ -74,17 +74,17 @@ static void redisAeDelRead(void *privdata) {
     }
 }
 
-static void redisAeAddWrite(void *privdata) {
-    redisAeEvents *e = (redisAeEvents*)privdata;
+static void siderAeAddWrite(void *privdata) {
+    siderAeEvents *e = (siderAeEvents*)privdata;
     aeEventLoop *loop = e->loop;
     if (!e->writing) {
         e->writing = 1;
-        aeCreateFileEvent(loop,e->fd,AE_WRITABLE,redisAeWriteEvent,e);
+        aeCreateFileEvent(loop,e->fd,AE_WRITABLE,siderAeWriteEvent,e);
     }
 }
 
-static void redisAeDelWrite(void *privdata) {
-    redisAeEvents *e = (redisAeEvents*)privdata;
+static void siderAeDelWrite(void *privdata) {
+    siderAeEvents *e = (siderAeEvents*)privdata;
     aeEventLoop *loop = e->loop;
     if (e->writing) {
         e->writing = 0;
@@ -92,23 +92,23 @@ static void redisAeDelWrite(void *privdata) {
     }
 }
 
-static void redisAeCleanup(void *privdata) {
-    redisAeEvents *e = (redisAeEvents*)privdata;
-    redisAeDelRead(privdata);
-    redisAeDelWrite(privdata);
+static void siderAeCleanup(void *privdata) {
+    siderAeEvents *e = (siderAeEvents*)privdata;
+    siderAeDelRead(privdata);
+    siderAeDelWrite(privdata);
     hi_free(e);
 }
 
-static int redisAeAttach(aeEventLoop *loop, redisAsyncContext *ac) {
-    redisContext *c = &(ac->c);
-    redisAeEvents *e;
+static int siderAeAttach(aeEventLoop *loop, siderAsyncContext *ac) {
+    siderContext *c = &(ac->c);
+    siderAeEvents *e;
 
     /* Nothing should be attached when something is already attached */
     if (ac->ev.data != NULL)
         return REDIS_ERR;
 
     /* Create container for context and r/w events */
-    e = (redisAeEvents*)hi_malloc(sizeof(*e));
+    e = (siderAeEvents*)hi_malloc(sizeof(*e));
     if (e == NULL)
         return REDIS_ERR;
 
@@ -118,11 +118,11 @@ static int redisAeAttach(aeEventLoop *loop, redisAsyncContext *ac) {
     e->reading = e->writing = 0;
 
     /* Register functions to start/stop listening for events */
-    ac->ev.addRead = redisAeAddRead;
-    ac->ev.delRead = redisAeDelRead;
-    ac->ev.addWrite = redisAeAddWrite;
-    ac->ev.delWrite = redisAeDelWrite;
-    ac->ev.cleanup = redisAeCleanup;
+    ac->ev.addRead = siderAeAddRead;
+    ac->ev.delRead = siderAeDelRead;
+    ac->ev.addWrite = siderAeAddWrite;
+    ac->ev.delWrite = siderAeDelWrite;
+    ac->ev.cleanup = siderAeCleanup;
     ac->ev.data = e;
 
     return REDIS_OK;

@@ -1,13 +1,13 @@
-#include "redismodule.h"
+#include "sidermodule.h"
 #include <strings.h>
 #include <assert.h>
 #include <unistd.h>
 #include <errno.h>
 
 /* A sample with declarable channels, that are used to validate against ACLs */
-int getChannels_subscribe(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int getChannels_subscribe(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     if ((argc - 1) % 3 != 0) {
-        RedisModule_WrongArity(ctx);
+        SiderModule_WrongArity(ctx);
         return REDISMODULE_OK;
     }
     char *err = NULL;
@@ -16,8 +16,8 @@ int getChannels_subscribe(RedisModuleCtx *ctx, RedisModuleString **argv, int arg
      * This command marks the given channel is accessed based on the
      * provided modifiers. */
     for (int i = 1; i < argc; i += 3) {
-        const char *operation = RedisModule_StringPtrLen(argv[i], NULL);
-        const char *type = RedisModule_StringPtrLen(argv[i+1], NULL);
+        const char *operation = SiderModule_StringPtrLen(argv[i], NULL);
+        const char *type = SiderModule_StringPtrLen(argv[i+1], NULL);
         int flags = 0;
 
         if (!strcasecmp(operation, "subscribe")) {
@@ -39,30 +39,30 @@ int getChannels_subscribe(RedisModuleCtx *ctx, RedisModuleString **argv, int arg
             err = "Invalid channel type";
             break;
         }
-        if (RedisModule_IsChannelsPositionRequest(ctx)) {
-            RedisModule_ChannelAtPosWithFlags(ctx, i+2, flags);
+        if (SiderModule_IsChannelsPositionRequest(ctx)) {
+            SiderModule_ChannelAtPosWithFlags(ctx, i+2, flags);
         }
     }
 
-    if (!RedisModule_IsChannelsPositionRequest(ctx)) {
+    if (!SiderModule_IsChannelsPositionRequest(ctx)) {
         if (err) {
-            RedisModule_ReplyWithError(ctx, err);
+            SiderModule_ReplyWithError(ctx, err);
         } else {
             /* Normal implementation would go here, but for tests just return okay */
-            RedisModule_ReplyWithSimpleString(ctx, "OK");
+            SiderModule_ReplyWithSimpleString(ctx, "OK");
         }
     }
 
     return REDISMODULE_OK;
 }
 
-int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int SiderModule_OnLoad(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
-    if (RedisModule_Init(ctx, "getchannels", 1, REDISMODULE_APIVER_1) == REDISMODULE_ERR)
+    if (SiderModule_Init(ctx, "getchannels", 1, REDISMODULE_APIVER_1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    if (RedisModule_CreateCommand(ctx, "getchannels.command", getChannels_subscribe, "getchannels-api", 0, 0, 0) == REDISMODULE_ERR)
+    if (SiderModule_CreateCommand(ctx, "getchannels.command", getChannels_subscribe, "getchannels-api", 0, 0, 0) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
     return REDISMODULE_OK;

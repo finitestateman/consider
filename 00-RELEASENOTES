@@ -1,4 +1,4 @@
-Redis 7.2 release notes
+Sider 7.2 release notes
 =======================
 
 --------------------------------------------------------------------------------
@@ -13,14 +13,14 @@ SECURITY: There are security fixes in the release.
 
 
 ================================================================================
-Redis 7.2.4    Released Tue 09 Jan 2024 10:45:52 IST
+Sider 7.2.4    Released Tue 09 Jan 2024 10:45:52 IST
 ================================================================================
 
 Upgrade urgency SECURITY: See security fixes below.
 
 Security fixes
 ==============
-* (CVE-2023-41056) In some cases, Redis may incorrectly handle resizing of memory
+* (CVE-2023-41056) In some cases, Sider may incorrectly handle resizing of memory
   buffers which can result in incorrect accounting of buffer sizes and lead to
   heap overflow and potential remote code execution.
 
@@ -29,11 +29,11 @@ Bug fixes
 
 * Fix crashes of cluster commands clusters with mixed versions of 7.0 and 7.2 (#12805, #12832)
 * Fix slot ownership not being properly handled when deleting a slot from a node (#12564)
-* Fix atomicity issues with the RedisModuleEvent_Key module API event (#12733)
+* Fix atomicity issues with the SiderModuleEvent_Key module API event (#12733)
 
 
 ================================================================================
-Redis 7.2.3    Released Wed 01 Nov 2023 12:00:00 IST
+Sider 7.2.3    Released Wed 01 Nov 2023 12:00:00 IST
 ================================================================================
 
 Upgrade urgency: HIGH, Fixes critical bugs affecting most users.
@@ -47,7 +47,7 @@ Bug fixes
 
 
 ================================================================================
-Redis 7.2.2    Released Wed 18 Oct 2023 10:33:40 IDT
+Sider 7.2.2    Released Wed 18 Oct 2023 10:33:40 IDT
 ================================================================================
 
 Upgrade urgency SECURITY: See security fixes below.
@@ -71,7 +71,7 @@ Bug fixes
 * WAITAOF could timeout in the absence of write traffic in case a new AOF is
   created and an AOF rewrite can't immediately start (#12620)
 
-Redis cluster
+Sider cluster
 =============
 
 * Fix crash when running rebalance command in a mixed cluster of 7.0 and 7.2
@@ -84,7 +84,7 @@ Redis cluster
 Changes in CLI tools
 ====================
 
-* redis-cli, fix crash on reconnect when in SUBSCRIBE mode (#12571)
+* sider-cli, fix crash on reconnect when in SUBSCRIBE mode (#12571)
 
 Module API changes
 ==================
@@ -93,7 +93,7 @@ Module API changes
 
 
 ================================================================================
-Redis 7.2.1    Released Wed 06 Sep 2023 15:00:00 IDT
+Sider 7.2.1    Released Wed 06 Sep 2023 15:00:00 IDT
 ================================================================================
 
 Upgrade urgency SECURITY: See security fixes below.
@@ -101,7 +101,7 @@ Upgrade urgency SECURITY: See security fixes below.
 Security Fixes
 ==============
 
-* (CVE-2023-41053) Redis does not correctly identify keys accessed by SORT_RO and,
+* (CVE-2023-41053) Sider does not correctly identify keys accessed by SORT_RO and,
   as a result, may grant users executing this command access to keys that are not
   explicitly authorized by the ACL configuration.
 
@@ -109,27 +109,27 @@ Security Fixes
 Bug Fixes
 =========
 
-* Fix crashes when joining a node to an existing 7.0 Redis Cluster (#12538)
+* Fix crashes when joining a node to an existing 7.0 Sider Cluster (#12538)
 * Correct request_policy and response_policy command tips on for some admin /
   configuration commands (#12545, #12530)
 
 
 ================================================================================
-Redis 7.2.0 GA   Released Tue Aug 15 12:00:00 IDT 2023
+Sider 7.2.0 GA   Released Tue Aug 15 12:00:00 IDT 2023
 ================================================================================
 
-Upgrade urgency LOW: This is the first stable Release for Redis 7.2.
+Upgrade urgency LOW: This is the first stable Release for Sider 7.2.
 
 Bug Fixes
 =========
 
-* redis-cli in cluster mode handles `unknown-endpoint` (#12273)
+* sider-cli in cluster mode handles `unknown-endpoint` (#12273)
 * Update request / response policy hints for a few commands (#12417)
 * Ensure that the function load timeout is disabled during loading from RDB/AOF and on replicas. (#12451)
 * Fix false success and a memory leak for ACL selector with bad parenthesis combination (#12452)
 * Fix the assertion when script timeout occurs after it signaled a blocked client (#12459)
 
-Fixes for issues in previous releases of Redis 7.2
+Fixes for issues in previous releases of Sider 7.2
 --------------------------------------------------
 
 * Update MONITOR client's memory correctly for INFO and client-eviction (#12420)
@@ -137,17 +137,17 @@ Fixes for issues in previous releases of Redis 7.2
   hostname was present. (#12411)
 
 ================================================================================
-Redis 7.2 RC3   Released Mon July 10 12:00:00 IDT 2023
+Sider 7.2 RC3   Released Mon July 10 12:00:00 IDT 2023
 ================================================================================
 
-Upgrade urgency LOW: This is the third Release Candidate for Redis 7.2.
+Upgrade urgency LOW: This is the third Release Candidate for Sider 7.2.
 Upgrade urgency SECURITY: If you're using a previous release candidate of 7.2.
 
 Security Fixes:
-* (CVE-2022-24834) A specially crafted Lua script executing in Redis can trigger
+* (CVE-2022-24834) A specially crafted Lua script executing in Sider can trigger
   a heap overflow in the cjson and cmsgpack libraries, and result in heap
   corruption and potentially remote code execution. The problem exists in all
-  versions of Redis with Lua scripting support, starting from 2.6, and affects
+  versions of Sider with Lua scripting support, starting from 2.6, and affects
   only authenticated and authorized users.
 * (CVE-2023-36824) Extracting key names from a command and a list of arguments
   may, in some cases, trigger a heap overflow and result in reading random heap
@@ -202,8 +202,8 @@ Performance and resource utilization improvements
 Changes in CLI tools
 ====================
 
-* redis-cli: Handle RESP3 double responses that contain a NaN (#12254)
-* redis-cli: Support URIs with IPv6 (#11834)
+* sider-cli: Handle RESP3 double responses that contain a NaN (#12254)
+* sider-cli: Support URIs with IPv6 (#11834)
 
 Module API changes
 ==================
@@ -224,7 +224,7 @@ Bug Fixes
 * Improve fairness issue in RANDOMKEY, HRANDFIELD, SRANDMEMBER, ZRANDMEMBER, SPOP, and eviction (#12276)
 * Cluster: fix a race condition where a slot migration may revert on a subsequent failover or node joining (#12344)
 
-Fixes for issues in previous releases of Redis 7.2
+Fixes for issues in previous releases of Sider 7.2
 --------------------------------------------------
 
 * Fix XREADGROUP BLOCK with ">" from hanging (#12301)
@@ -232,10 +232,10 @@ Fixes for issues in previous releases of Redis 7.2
 * Fix use after free on a blocking RM_Call. (#12342)
 
 ================================================================================
-Redis 7.2 RC2   Released Mon May 15 12:00:00 IST 2023
+Sider 7.2 RC2   Released Mon May 15 12:00:00 IST 2023
 ================================================================================
 
-Upgrade urgency LOW: This is the second Release Candidate for Redis 7.2.
+Upgrade urgency LOW: This is the second Release Candidate for Sider 7.2.
 
 INFO fields and introspection changes
 =====================================
@@ -258,9 +258,9 @@ Platform / toolchain support related changes
 Changes in CLI tools
 ====================
 
-* redis-cli: Reimplement and improve help hints based on actual command arg docs (#10515)
-* redis-cli: Add option --count for tuning SCAN based features (#12042)
-* redis-benchmark: Add --seed option to seed the random number generator (#11945)
+* sider-cli: Reimplement and improve help hints based on actual command arg docs (#10515)
+* sider-cli: Add option --count for tuning SCAN based features (#12042)
+* sider-benchmark: Add --seed option to seed the random number generator (#11945)
 
 Module API changes
 ==================
@@ -280,44 +280,44 @@ Bug Fixes
 * ACL: Disconnect pub-sub subscribers when revoking allchannels permission (#11992)
 * Add a missing fsync of AOF file in rare cases (#11973)
 
-Fixes for issues in previous releases of Redis 7.2
+Fixes for issues in previous releases of Sider 7.2
 --------------------------------------------------
 
 * Fix tracking of command duration metrics for MULTI, EVAL, WAIT and modules (#11970)
 
 ================================================================================
-Redis 7.2 RC1   Released Wed Mar 22 12:00:00 IST 2023
+Sider 7.2 RC1   Released Wed Mar 22 12:00:00 IST 2023
 ================================================================================
 
-Upgrade urgency LOW: This is the first Release Candidate for Redis 7.2.
+Upgrade urgency LOW: This is the first Release Candidate for Sider 7.2.
 
-Redis Release Candidate (RC) versions are early versions that are made available
+Sider Release Candidate (RC) versions are early versions that are made available
 for early adopters in the community to test them. We do not consider
 them suitable for production environments.
 
-Introduction to the Redis 7.2 release
+Introduction to the Sider 7.2 release
 =====================================
 
-Redis 7.2 includes optimizations, several new commands, some improvements,
+Sider 7.2 includes optimizations, several new commands, some improvements,
 bug fixes, and several new module APIs.
 
 In particular, users should be aware of the following changes:
 
-1. Redis 7.2 uses a new format (version 11) for RDB files, which is incompatible
+1. Sider 7.2 uses a new format (version 11) for RDB files, which is incompatible
    with older versions.
 2. See section about breaking changes mentioned below.
 3. If you use modules, see the module API breaking changes section below.
 
 Here is a comprehensive list of changes in this release compared to 7.0.10.
 Each one includes the PR number that added it so that you can get more details
-at https://github.com/redis/redis/pull/<number>
+at https://github.com/sider/sider/pull/<number>
 
 New Features
 ============
 
 * Introduce WAITAOF command, to block the client until a specified number
-  of Redises have synced all previous write commands to the AOF on disk,
-  see https://redis.io/commands/waitaof/
+  of Sideres have synced all previous write commands to the AOF on disk,
+  see https://sider.io/commands/waitaof/
 
 New user commands or command arguments
 --------------------------------------
@@ -328,7 +328,7 @@ New user commands or command arguments
 New administrative and introspection commands and command arguments
 -------------------------------------------------------------------
 
-* CLIENT SETINFO lets client library report name and version Redis (#11758)
+* CLIENT SETINFO lets client library report name and version Sider (#11758)
 * CLIENT NO-TOUCH for clients to run commands without affecting LRU/LFU of keys (#11483)
 * Introduce Shard IDs to logically group nodes in cluster mode based on
   replication. Shard IDs are automatically assigned and visible via
@@ -388,7 +388,7 @@ Performance and resource utilization improvements
 Changes in CLI tools
 ====================
 
-* redis-cli accepts commands in subscribed mode (#11873)
+* sider-cli accepts commands in subscribed mode (#11873)
 
 Other General Improvements
 ==========================
@@ -430,11 +430,11 @@ Module API changes
 * Make it possible for module commands to be part of ACL categories (#11708)
 * Add K flag to RM_Call to allow running blocking commands and set a callback to get the response (#11568)
 * Add RM_AddPostNotificationJob to allow writes after keyspace notification hooks (#11199)
-* RedisModule_Event_Key to notify about keys being unlinked together with reason and value (#9406)
+* SiderModule_Event_Key to notify about keys being unlinked together with reason and value (#9406)
 * Add RM_BlockClient[Set|Get]PrivateData to associate a module data with the blocked client (#11568)
 * APIs to allow modules to participate / handle AUTH validation (#11659)
 * RM_GetContextFlags supports a new flag: REDISMODULE_CTX_FLAGS_SERVER_STARTUP (#9320)
-* Add REDISMODULE_OPTIONS_ALLOW_NESTED_KEYSPACE_NOTIFICATIONS and RedisModule_GetModuleOptionsAll (#11199)
+* Add REDISMODULE_OPTIONS_ALLOW_NESTED_KEYSPACE_NOTIFICATIONS and SiderModule_GetModuleOptionsAll (#11199)
 * RM_BlockClientOnKeysWithFlags allows module to request being unblocked when the key is deleted (#11310)
 * Introduce aux_save2 makes it possible to skip saving that field in the RDB and
   enable loading the file in the absence of the module (#11374)

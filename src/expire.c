@@ -5,15 +5,15 @@
  * Copyright (c) 2009-2016, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -42,7 +42,7 @@
 
 /* Helper function for the activeExpireCycle() function.
  * This function will try to expire the key that is stored in the hash table
- * entry 'de' of the 'expires' hash table of a Redis database.
+ * entry 'de' of the 'expires' hash table of a Sider database.
  *
  * If the key is found to be expired, it is removed from the database and
  * 1 is returned. Otherwise no operation is performed and 0 is returned.
@@ -51,7 +51,7 @@
  *
  * The parameter 'now' is the current time in milliseconds as is passed
  * to the function to avoid too many gettimeofday() syscalls. */
-int activeExpireCycleTryExpire(redisDb *db, dictEntry *de, long long now) {
+int activeExpireCycleTryExpire(siderDb *db, dictEntry *de, long long now) {
     long long t = dictGetSignedIntegerVal(de);
     if (now > t) {
         enterExecutionUnit(1, 0);
@@ -114,7 +114,7 @@ int activeExpireCycleTryExpire(redisDb *db, dictEntry *de, long long now) {
 
 /* Data used by the expire dict scan callback. */
 typedef struct {
-    redisDb *db;
+    siderDb *db;
     long long now;
     unsigned long sampled; /* num keys checked */
     unsigned long expired; /* num keys expired */
@@ -218,7 +218,7 @@ void activeExpireCycle(int type) {
         /* Scan callback data including expired and checked count per iteration. */
         expireScanData data;
 
-        redisDb *db = server.db+(current_db % server.dbnum);
+        siderDb *db = server.db+(current_db % server.dbnum);
         data.db = db;
 
         /* Increment the DB now so we are sure if we run out of time
@@ -229,7 +229,7 @@ void activeExpireCycle(int type) {
         /* Continue to expire if at the end of the cycle there are still
          * a big percentage of keys to expire, compared to the number of keys
          * we scanned. The percentage, stored in config_cycle_acceptable_stale
-         * is not fixed, but depends on the Redis configured "expire effort". */
+         * is not fixed, but depends on the Sider configured "expire effort". */
         do {
             unsigned long num, slots;
             iteration++;
@@ -379,7 +379,7 @@ void expireSlaveKeys(void) {
         int dbid = 0;
         while(dbids && dbid < server.dbnum) {
             if ((dbids & 1) != 0) {
-                redisDb *db = server.db+dbid;
+                siderDb *db = server.db+dbid;
                 dictEntry *expire = dictFind(db->expires,keyname);
                 int expired = 0;
 
@@ -424,7 +424,7 @@ void expireSlaveKeys(void) {
 
 /* Track keys that received an EXPIRE or similar command in the context
  * of a writable slave. */
-void rememberSlaveKeyWithExpire(redisDb *db, robj *key) {
+void rememberSlaveKeyWithExpire(siderDb *db, robj *key) {
     if (slaveKeysWithExpire == NULL) {
         static dictType dt = {
             dictSdsHash,                /* hash function */

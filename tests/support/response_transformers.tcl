@@ -1,6 +1,6 @@
-# Tcl client library - used by the Redis test
-# Copyright (C) 2009-2023 Redis Ltd.
-# Released under the BSD license like Redis itself
+# Tcl client library - used by the Sider test
+# Copyright (C) 2009-2023 Sider Ltd.
+# Released under the BSD license like Sider itself
 #
 # This file contains a bunch of commands whose purpose is to transform
 # a RESP3 response to RESP2
@@ -90,7 +90,7 @@ set ::trasformer_funcs {
 }
 
 proc ::response_transformers::transform_response_if_needed {id argv response} {
-    if {![::redis::should_transform_to_resp2 $id] || $::redis::readraw($id)} {
+    if {![::sider::should_transform_to_resp2 $id] || $::sider::readraw($id)} {
         return $response
     }
 

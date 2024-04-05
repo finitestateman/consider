@@ -9,7 +9,7 @@ proc latency_percentiles_usec {cmd} {
 start_server {tags {"modules"}} {
     r module load $testmodule
 
-    test { blocked clients time tracking - check blocked command that uses RedisModule_BlockedClientMeasureTimeStart() is tracking background time} {
+    test { blocked clients time tracking - check blocked command that uses SiderModule_BlockedClientMeasureTimeStart() is tracking background time} {
         r slowlog reset
         r config set slowlog-log-slower-than 200000
         if {!$::no_latency} {
@@ -37,7 +37,7 @@ start_server {tags {"modules"}} {
         assert {$p50 >= 100000}
     }
 
-    test { blocked clients time tracking - check blocked command that uses RedisModule_BlockedClientMeasureTimeStart() is tracking background time even in timeout } {
+    test { blocked clients time tracking - check blocked command that uses SiderModule_BlockedClientMeasureTimeStart() is tracking background time even in timeout } {
         r slowlog reset
         r config set slowlog-log-slower-than 200000
         if {!$::no_latency} {
@@ -60,7 +60,7 @@ start_server {tags {"modules"}} {
         assert {$usec_per_call >= 250000}
     }
 
-    test { blocked clients time tracking - check blocked command with multiple calls RedisModule_BlockedClientMeasureTimeStart()  is tracking the total background time } {
+    test { blocked clients time tracking - check blocked command with multiple calls SiderModule_BlockedClientMeasureTimeStart()  is tracking the total background time } {
         r slowlog reset
         r config set slowlog-log-slower-than 200000
         if {!$::no_latency} {
@@ -82,7 +82,7 @@ start_server {tags {"modules"}} {
         assert {$usec_per_call >= 60000}
     }
 
-    test { blocked clients time tracking - check blocked command without calling RedisModule_BlockedClientMeasureTimeStart() is not reporting background time } {
+    test { blocked clients time tracking - check blocked command without calling SiderModule_BlockedClientMeasureTimeStart() is not reporting background time } {
         r slowlog reset
         r config set slowlog-log-slower-than 200000
         if {!$::no_latency} {
@@ -96,7 +96,7 @@ start_server {tags {"modules"}} {
     }
 
     test "client unblock works only for modules with timeout support" {
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
         $rd client id
         set id [$rd read]
 

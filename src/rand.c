@@ -16,15 +16,15 @@
  * Copyright (c) 2010-2012, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -68,12 +68,12 @@
 static uint32_t x[3] = { X0, X1, X2 }, a[3] = { A0, A1, A2 }, c = C;
 static void next(void);
 
-int32_t redisLrand48(void) {
+int32_t siderLrand48(void) {
     next();
     return (((int32_t)x[2] << (N - 1)) + (x[1] >> 1));
 }
 
-void redisSrand48(int32_t seedval) {
+void siderSrand48(int32_t seedval) {
     SEED(X0, LOW(seedval), HIGH(seedval));
 }
 

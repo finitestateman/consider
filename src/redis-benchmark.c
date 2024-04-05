@@ -1,17 +1,17 @@
-/* Redis benchmark utility.
+/* Sider benchmark utility.
  *
  * Copyright (c) 2009-2012, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -43,14 +43,14 @@
 #include <math.h>
 #include <pthread.h>
 
-#include <sdscompat.h> /* Use hiredis' sds compat header that maps sds calls to their hi_ variants */
-#include <sds.h> /* Use hiredis sds. */
+#include <sdscompat.h> /* Use hisider' sds compat header that maps sds calls to their hi_ variants */
+#include <sds.h> /* Use hisider sds. */
 #include "ae.h"
-#include <hiredis.h>
+#include <hisider.h>
 #ifdef USE_OPENSSL
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-#include <hiredis_ssl.h>
+#include <hisider_ssl.h>
 #endif
 #include "adlist.h"
 #include "dict.h"
@@ -77,7 +77,7 @@
 
 struct benchmarkThread;
 struct clusterNode;
-struct redisConfig;
+struct siderConfig;
 
 static struct config {
     aeEventLoop *el;
@@ -86,11 +86,11 @@ static struct config {
     int tls;
     struct cliSSLconfig sslconfig;
     int numclients;
-    redisAtomic int liveclients;
+    siderAtomic int liveclients;
     int requests;
-    redisAtomic int requests_issued;
-    redisAtomic int requests_finished;
-    redisAtomic int previous_requests_finished;
+    siderAtomic int requests_issued;
+    siderAtomic int requests_finished;
+    siderAtomic int previous_requests_finished;
     int last_printed_bytes;
     long long previous_tick;
     int keysize;
@@ -116,12 +116,12 @@ static struct config {
     int cluster_mode;
     int cluster_node_count;
     struct clusterNode **cluster_nodes;
-    struct redisConfig *redis_config;
+    struct siderConfig *sider_config;
     struct hdr_histogram* latency_histogram;
     struct hdr_histogram* current_sec_latency_histogram;
-    redisAtomic int is_fetching_slots;
-    redisAtomic int is_updating_slots;
-    redisAtomic int slots_last_update;
+    siderAtomic int is_fetching_slots;
+    siderAtomic int is_updating_slots;
+    siderAtomic int slots_last_update;
     int enable_tracking;
     pthread_mutex_t liveclients_mutex;
     pthread_mutex_t is_updating_slots_mutex;
@@ -129,7 +129,7 @@ static struct config {
 } config;
 
 typedef struct _client {
-    redisContext *context;
+    siderContext *context;
     sds obuf;
     char **randptr;         /* Pointers to :rand: strings inside the command buf */
     size_t randlen;         /* Number of pointers in client->randptr */
@@ -177,17 +177,17 @@ typedef struct clusterNode {
                      * strings are the source node IDs. */
     int migrating_count; /* Length of the migrating array (migrating slots*2) */
     int importing_count; /* Length of the importing array (importing slots*2) */
-    struct redisConfig *redis_config;
+    struct siderConfig *sider_config;
 } clusterNode;
 
-typedef struct redisConfig {
+typedef struct siderConfig {
     sds save;
     sds appendonly;
-} redisConfig;
+} siderConfig;
 
 /* Prototypes */
-char *redisGitSHA1(void);
-char *redisGitDirty(void);
+char *siderGitSHA1(void);
+char *siderGitDirty(void);
 static void writeHandler(aeEventLoop *el, int fd, void *privdata, int mask);
 static void createMissingClients(client c);
 static benchmarkThread *createBenchmarkThread(int index);
@@ -195,11 +195,11 @@ static void freeBenchmarkThread(benchmarkThread *thread);
 static void freeBenchmarkThreads(void);
 static void *execBenchmarkThread(void *ptr);
 static clusterNode *createClusterNode(char *ip, int port);
-static redisConfig *getRedisConfig(const char *ip, int port,
+static siderConfig *getSiderConfig(const char *ip, int port,
                                    const char *hostsocket);
-static redisContext *getRedisContext(const char *ip, int port,
+static siderContext *getSiderContext(const char *ip, int port,
                                      const char *hostsocket);
-static void freeRedisConfig(redisConfig *cfg);
+static void freeSiderConfig(siderConfig *cfg);
 static int fetchClusterSlotsConfiguration(client c);
 static void updateClusterSlotsConfiguration(void);
 int showThroughput(struct aeEventLoop *eventLoop, long long id,
@@ -210,9 +210,9 @@ static sds benchmarkVersion(void) {
     version = sdscatprintf(sdsempty(), "%s", REDIS_VERSION);
 
     /* Add git commit and working tree status when available */
-    if (strtoll(redisGitSHA1(),NULL,16)) {
-        version = sdscatprintf(version, " (git:%s", redisGitSHA1());
-        if (strtoll(redisGitDirty(),NULL,10))
+    if (strtoll(siderGitSHA1(),NULL,16)) {
+        version = sdscatprintf(version, " (git:%s", siderGitSHA1());
+        if (strtoll(siderGitDirty(),NULL,10))
             version = sdscatprintf(version, "-dirty");
         version = sdscat(version, ")");
     }
@@ -253,17 +253,17 @@ static int dictSdsKeyCompare(dict *d, const void *key1, const void *key2)
     return memcmp(key1, key2, l1) == 0;
 }
 
-static redisContext *getRedisContext(const char *ip, int port,
+static siderContext *getSiderContext(const char *ip, int port,
                                      const char *hostsocket)
 {
-    redisContext *ctx = NULL;
-    redisReply *reply =  NULL;
+    siderContext *ctx = NULL;
+    siderReply *reply =  NULL;
     if (hostsocket == NULL)
-        ctx = redisConnect(ip, port);
+        ctx = siderConnect(ip, port);
     else
-        ctx = redisConnectUnix(hostsocket);
+        ctx = siderConnectUnix(hostsocket);
     if (ctx == NULL || ctx->err) {
-        fprintf(stderr,"Could not connect to Redis at ");
+        fprintf(stderr,"Could not connect to Sider at ");
         char *err = (ctx != NULL ? ctx->errstr : "");
         if (hostsocket == NULL)
             fprintf(stderr,"%s:%d: %s\n",ip,port,err);
@@ -281,9 +281,9 @@ static redisContext *getRedisContext(const char *ip, int port,
     if (config.conn_info.auth == NULL)
         return ctx;
     if (config.conn_info.user == NULL)
-        reply = redisCommand(ctx,"AUTH %s", config.conn_info.auth);
+        reply = siderCommand(ctx,"AUTH %s", config.conn_info.auth);
     else
-        reply = redisCommand(ctx,"AUTH %s %s", config.conn_info.user, config.conn_info.auth);
+        reply = siderCommand(ctx,"AUTH %s %s", config.conn_info.user, config.conn_info.auth);
     if (reply != NULL) {
         if (reply->type == REDIS_REPLY_ERROR) {
             if (hostsocket == NULL)
@@ -291,7 +291,7 @@ static redisContext *getRedisContext(const char *ip, int port,
             else
                 fprintf(stderr, "Node %s replied with error:\n%s\n", hostsocket, reply->str);
             freeReplyObject(reply);
-            redisFree(ctx);
+            siderFree(ctx);
             exit(1);
         }
         freeReplyObject(reply);
@@ -304,33 +304,33 @@ static redisContext *getRedisContext(const char *ip, int port,
         fprintf(stderr, "%s\n", hostsocket);
 cleanup:
     freeReplyObject(reply);
-    redisFree(ctx);
+    siderFree(ctx);
     return NULL;
 }
 
 
 
-static redisConfig *getRedisConfig(const char *ip, int port,
+static siderConfig *getSiderConfig(const char *ip, int port,
                                    const char *hostsocket)
 {
-    redisConfig *cfg = zcalloc(sizeof(*cfg));
+    siderConfig *cfg = zcalloc(sizeof(*cfg));
     if (!cfg) return NULL;
-    redisContext *c = NULL;
-    redisReply *reply = NULL, *sub_reply = NULL;
-    c = getRedisContext(ip, port, hostsocket);
+    siderContext *c = NULL;
+    siderReply *reply = NULL, *sub_reply = NULL;
+    c = getSiderContext(ip, port, hostsocket);
     if (c == NULL) {
-        freeRedisConfig(cfg);
+        freeSiderConfig(cfg);
         exit(1);
     }
-    redisAppendCommand(c, "CONFIG GET %s", "save");
-    redisAppendCommand(c, "CONFIG GET %s", "appendonly");
+    siderAppendCommand(c, "CONFIG GET %s", "save");
+    siderAppendCommand(c, "CONFIG GET %s", "appendonly");
     int abort_test = 0;
     int i = 0;
     void *r = NULL;
     for (; i < 2; i++) {
-        int res = redisGetReply(c, &r);
+        int res = siderGetReply(c, &r);
         if (reply) freeReplyObject(reply);
-        reply = res == REDIS_OK ? ((redisReply *) r) : NULL;
+        reply = res == REDIS_OK ? ((siderReply *) r) : NULL;
         if (res != REDIS_OK || !r) goto fail;
         if (reply->type == REDIS_REPLY_ERROR) {
             goto fail;
@@ -345,7 +345,7 @@ static redisConfig *getRedisConfig(const char *ip, int port,
         }
     }
     freeReplyObject(reply);
-    redisFree(c);
+    siderFree(c);
     return cfg;
 fail:
     if (reply && reply->type == REDIS_REPLY_ERROR &&
@@ -357,12 +357,12 @@ fail:
         abort_test = 1;
     }
     freeReplyObject(reply);
-    redisFree(c);
-    freeRedisConfig(cfg);
+    siderFree(c);
+    freeSiderConfig(cfg);
     if (abort_test) exit(1);
     return NULL;
 }
-static void freeRedisConfig(redisConfig *cfg) {
+static void freeSiderConfig(siderConfig *cfg) {
     if (cfg->save) sdsfree(cfg->save);
     if (cfg->appendonly) sdsfree(cfg->appendonly);
     zfree(cfg);
@@ -380,7 +380,7 @@ static void freeClient(client c) {
             aeStop(el);
         }
     }
-    redisFree(c->context);
+    siderFree(c->context);
     sdsfree(c->obuf);
     zfree(c->randptr);
     zfree(c->stagptr);
@@ -489,12 +489,12 @@ static void readHandler(aeEventLoop *el, int fd, void *privdata, int mask) {
      * is not part of the latency, so calculate it only once, here. */
     if (c->latency < 0) c->latency = ustime()-(c->start);
 
-    if (redisBufferRead(c->context) != REDIS_OK) {
+    if (siderBufferRead(c->context) != REDIS_OK) {
         fprintf(stderr,"Error: %s\n",c->context->errstr);
         exit(1);
     } else {
         while(c->pending) {
-            if (redisGetReply(c->context,&reply) != REDIS_OK) {
+            if (siderGetReply(c->context,&reply) != REDIS_OK) {
                 fprintf(stderr,"Error: %s\n",c->context->errstr);
                 exit(1);
             }
@@ -503,7 +503,7 @@ static void readHandler(aeEventLoop *el, int fd, void *privdata, int mask) {
                     fprintf(stderr,"Unexpected error reply, exiting...\n");
                     exit(1);
                 }
-                redisReply *r = reply;
+                siderReply *r = reply;
                 if (r->type == REDIS_REPLY_ERROR) {
                     /* Try to update slots configuration if reply error is
                     * MOVED/ASK/CLUSTERDOWN and the key(s) used by the command
@@ -684,12 +684,12 @@ static client createClient(char *cmd, size_t len, client from, int thread_id) {
             port = node->port;
             c->cluster_node = node;
         }
-        c->context = redisConnectNonBlock(ip,port);
+        c->context = siderConnectNonBlock(ip,port);
     } else {
-        c->context = redisConnectUnixNonBlock(config.hostsocket);
+        c->context = siderConnectUnixNonBlock(config.hostsocket);
     }
     if (c->context->err) {
-        fprintf(stderr,"Could not connect to Redis at ");
+        fprintf(stderr,"Could not connect to Sider at ");
         if (config.hostsocket == NULL || is_cluster_client)
             fprintf(stderr,"%s:%d: %s\n",ip,port,c->context->errstr);
         else
@@ -704,7 +704,7 @@ static client createClient(char *cmd, size_t len, client from, int thread_id) {
         }
     }
     c->thread_id = thread_id;
-    /* Suppress hiredis cleanup of unused buffers for max speed. */
+    /* Suppress hisider cleanup of unused buffers for max speed. */
     c->context->reader->maxbuf = 0;
 
     /* Build the request buffer:
@@ -719,9 +719,9 @@ static client createClient(char *cmd, size_t len, client from, int thread_id) {
         char *buf = NULL;
         int len;
         if (config.conn_info.user == NULL)
-            len = redisFormatCommand(&buf, "AUTH %s", config.conn_info.auth);
+            len = siderFormatCommand(&buf, "AUTH %s", config.conn_info.auth);
         else
-            len = redisFormatCommand(&buf, "AUTH %s %s",
+            len = siderFormatCommand(&buf, "AUTH %s %s",
                                      config.conn_info.user, config.conn_info.auth);
         c->obuf = sdscatlen(c->obuf, buf, len);
         free(buf);
@@ -730,7 +730,7 @@ static client createClient(char *cmd, size_t len, client from, int thread_id) {
 
     if (config.enable_tracking) {
         char *buf = NULL;
-        int len = redisFormatCommand(&buf, "CLIENT TRACKING on");
+        int len = siderFormatCommand(&buf, "CLIENT TRACKING on");
         c->obuf = sdscatlen(c->obuf, buf, len);
         free(buf);
         c->prefix_pending++;
@@ -748,7 +748,7 @@ static client createClient(char *cmd, size_t len, client from, int thread_id) {
 
     if (config.resp3) {
         char *buf = NULL;
-        int len = redisFormatCommand(&buf, "HELLO 3");
+        int len = siderFormatCommand(&buf, "HELLO 3");
         c->obuf = sdscatlen(c->obuf, buf, len);
         free(buf);
         c->prefix_pending++;
@@ -889,7 +889,7 @@ static void showLatencyReport(void) {
             int m ;
             for (m = 0; m < config.cluster_node_count; m++) {
                 clusterNode *node =  config.cluster_nodes[m];
-                redisConfig *cfg = node->redis_config;
+                siderConfig *cfg = node->sider_config;
                 if (cfg == NULL) continue;
                 printf("  node [%d] configuration:\n",m );
                 printf("    save: %s\n",
@@ -897,11 +897,11 @@ static void showLatencyReport(void) {
                 printf("    appendonly: %s\n", cfg->appendonly);
             }
         } else {
-            if (config.redis_config) {
+            if (config.sider_config) {
                 printf("  host configuration \"save\": %s\n",
-                       config.redis_config->save);
+                       config.sider_config->save);
                 printf("  host configuration \"appendonly\": %s\n",
-                       config.redis_config->appendonly);
+                       config.sider_config->appendonly);
             }
         }
         printf("  multi-thread: %s\n", (config.num_threads ? "yes" : "no"));
@@ -1071,7 +1071,7 @@ static clusterNode *createClusterNode(char *ip, int port) {
     node->importing = NULL;
     node->migrating_count = 0;
     node->importing_count = 0;
-    node->redis_config = NULL;
+    node->sider_config = NULL;
     return node;
 }
 
@@ -1091,7 +1091,7 @@ static void freeClusterNode(clusterNode *node) {
      * config.conn_info.hostip and config.conn_info.hostport, then the node ip has been
      * allocated by fetchClusterConfiguration, so it must be freed. */
     if (node->ip && strcmp(node->ip, config.conn_info.hostip) != 0) sdsfree(node->ip);
-    if (node->redis_config != NULL) freeRedisConfig(node->redis_config);
+    if (node->sider_config != NULL) freeSiderConfig(node->sider_config);
     zfree(node->slots);
     zfree(node);
 }
@@ -1120,16 +1120,16 @@ static clusterNode **addClusterNode(clusterNode *node) {
  */
 static int fetchClusterConfiguration(void) {
     int success = 1;
-    redisContext *ctx = NULL;
-    redisReply *reply =  NULL;
-    ctx = getRedisContext(config.conn_info.hostip, config.conn_info.hostport, config.hostsocket);
+    siderContext *ctx = NULL;
+    siderReply *reply =  NULL;
+    ctx = getSiderContext(config.conn_info.hostip, config.conn_info.hostport, config.hostsocket);
     if (ctx == NULL) {
         exit(1);
     }
     clusterNode *firstNode = createClusterNode((char *) config.conn_info.hostip,
                                                config.conn_info.hostport);
     if (!firstNode) {success = 0; goto cleanup;}
-    reply = redisCommand(ctx, "CLUSTER NODES");
+    reply = siderCommand(ctx, "CLUSTER NODES");
     success = (reply != NULL);
     if (!success) goto cleanup;
     success = (reply->type != REDIS_REPLY_ERROR);
@@ -1276,7 +1276,7 @@ static int fetchClusterConfiguration(void) {
         }
     }
 cleanup:
-    if (ctx) redisFree(ctx);
+    if (ctx) siderFree(ctx);
     if (!success) {
         if (config.cluster_nodes) freeClusterNodes();
     }
@@ -1295,7 +1295,7 @@ static int fetchClusterSlotsConfiguration(client c) {
         c->slots_last_update = last_update;
         return -1;
     }
-    redisReply *reply = NULL;
+    siderReply *reply = NULL;
     atomicGetIncr(config.is_fetching_slots, is_fetching_slots, 1);
     if (is_fetching_slots) return -1; //TODO: use other codes || errno ?
     atomicSet(config.is_fetching_slots, 1);
@@ -1313,7 +1313,7 @@ static int fetchClusterSlotsConfiguration(client c) {
     };
     /* printf("[%d] fetchClusterSlotsConfiguration\n", c->thread_id); */
     dict *masters = dictCreate(&dtype);
-    redisContext *ctx = NULL;
+    siderContext *ctx = NULL;
     for (i = 0; i < (size_t) config.cluster_node_count; i++) {
         clusterNode *node = config.cluster_nodes[i];
         assert(node->ip != NULL);
@@ -1321,7 +1321,7 @@ static int fetchClusterSlotsConfiguration(client c) {
         assert(node->port);
         /* Use first node as entry point to connect to. */
         if (ctx == NULL) {
-            ctx = getRedisContext(node->ip, node->port, NULL);
+            ctx = getSiderContext(node->ip, node->port, NULL);
             if (!ctx) {
                 success = 0;
                 goto cleanup;
@@ -1333,7 +1333,7 @@ static int fetchClusterSlotsConfiguration(client c) {
         node->updated_slots_count = 0;
         dictReplace(masters, node->name, node) ;
     }
-    reply = redisCommand(ctx, "CLUSTER SLOTS");
+    reply = siderCommand(ctx, "CLUSTER SLOTS");
     if (reply == NULL || reply->type == REDIS_REPLY_ERROR) {
         success = 0;
         if (reply)
@@ -1342,13 +1342,13 @@ static int fetchClusterSlotsConfiguration(client c) {
     }
     assert(reply->type == REDIS_REPLY_ARRAY);
     for (i = 0; i < reply->elements; i++) {
-        redisReply *r = reply->element[i];
+        siderReply *r = reply->element[i];
         assert(r->type == REDIS_REPLY_ARRAY);
         assert(r->elements >= 3);
         int from, to, slot;
         from = r->element[0]->integer;
         to = r->element[1]->integer;
-        redisReply *nr =  r->element[2];
+        siderReply *nr =  r->element[2];
         assert(nr->type == REDIS_REPLY_ARRAY && nr->elements >= 3);
         assert(nr->element[2]->str != NULL);
         sds name =  sdsnew(nr->element[2]->str);
@@ -1370,7 +1370,7 @@ static int fetchClusterSlotsConfiguration(client c) {
     updateClusterSlotsConfiguration();
 cleanup:
     freeReplyObject(reply);
-    redisFree(ctx);
+    siderFree(ctx);
     dictRelease(masters);
     atomicSet(config.is_fetching_slots, 0);
     return success;
@@ -1398,7 +1398,7 @@ static void updateClusterSlotsConfiguration(void) {
     pthread_mutex_unlock(&config.is_updating_slots_mutex);
 }
 
-/* Generate random data for redis benchmark. See #7196. */
+/* Generate random data for sider benchmark. See #7196. */
 static void genBenchmarkRandomData(char *data, int count) {
     static uint32_t state = 1234;
     int i = 0;
@@ -1424,7 +1424,7 @@ int parseOptions(int argc, char **argv) {
             config.numclients = atoi(argv[++i]);
         } else if (!strcmp(argv[i],"-v") || !strcmp(argv[i], "--version")) {
             sds version = benchmarkVersion();
-            printf("redis-benchmark %s\n", version);
+            printf("sider-benchmark %s\n", version);
             sdsfree(version);
             exit(0);
         } else if (!strcmp(argv[i],"-n")) {
@@ -1456,7 +1456,7 @@ int parseOptions(int argc, char **argv) {
             if (lastarg) goto invalid;
             config.conn_info.user = sdsnew(argv[++i]);
         } else if (!strcmp(argv[i],"-u") && !lastarg) {
-            parseRedisUri(argv[++i],"redis-benchmark",&config.conn_info,&config.tls);
+            parseSiderUri(argv[++i],"sider-benchmark",&config.conn_info,&config.tls);
             if (config.conn_info.hostport < 0 || config.conn_info.hostport > 65535) {
                 fprintf(stderr, "Invalid server port.\n");
                 exit(1);
@@ -1606,12 +1606,12 @@ usage:
 
     printf(
 "%s%s%s", /* Split to avoid strings longer than 4095 (-Woverlength-strings). */
-"Usage: redis-benchmark [OPTIONS] [COMMAND ARGS...]\n\n"
+"Usage: sider-benchmark [OPTIONS] [COMMAND ARGS...]\n\n"
 "Options:\n"
 " -h <hostname>      Server hostname (default 127.0.0.1)\n"
 " -p <port>          Server port (default 6379)\n"
 " -s <socket>        Server socket (overrides host and port)\n"
-" -a <password>      Password for Redis Auth\n"
+" -a <password>      Password for Sider Auth\n"
 " --user <username>  Used to send ACL style 'AUTH username pass'. Needs -a.\n"
 " -u <uri>           Server URI.\n"
 " -c <clients>       Number of parallel connections (default 50).\n"
@@ -1655,17 +1655,17 @@ tls_usage,
 " --version          Output version and exit.\n\n"
 "Examples:\n\n"
 " Run the benchmark with the default configuration against 127.0.0.1:6379:\n"
-"   $ redis-benchmark\n\n"
+"   $ sider-benchmark\n\n"
 " Use 20 parallel clients, for a total of 100k requests, against 192.168.1.1:\n"
-"   $ redis-benchmark -h 192.168.1.1 -p 6379 -n 100000 -c 20\n\n"
+"   $ sider-benchmark -h 192.168.1.1 -p 6379 -n 100000 -c 20\n\n"
 " Fill 127.0.0.1:6379 with about 1 million keys only using the SET test:\n"
-"   $ redis-benchmark -t set -n 1000000 -r 100000000\n\n"
+"   $ sider-benchmark -t set -n 1000000 -r 100000000\n\n"
 " Benchmark 127.0.0.1:6379 for a few commands producing CSV output:\n"
-"   $ redis-benchmark -t ping,set,get -n 100000 --csv\n\n"
+"   $ sider-benchmark -t ping,set,get -n 100000 --csv\n\n"
 " Benchmark a specific command line:\n"
-"   $ redis-benchmark -r 10000 -n 10000 eval 'return redis.call(\"ping\")' 0\n\n"
+"   $ sider-benchmark -r 10000 -n 10000 eval 'return sider.call(\"ping\")' 0\n\n"
 " Fill a list with 10000 random elements:\n"
-"   $ redis-benchmark -r 10000 -n 10000 lpush mylist __rand_int__\n\n"
+"   $ sider-benchmark -r 10000 -n 10000 lpush mylist __rand_int__\n\n"
 " On user specified command lines __rand_int__ is replaced with a random integer\n"
 " with a range of values selected by the -r option.\n"
     );
@@ -1771,7 +1771,7 @@ int main(int argc, char **argv) {
     config.cluster_mode = 0;
     config.cluster_node_count = 0;
     config.cluster_nodes = NULL;
-    config.redis_config = NULL;
+    config.sider_config = NULL;
     config.is_fetching_slots = 0;
     config.is_updating_slots = 0;
     config.slots_last_update = 0;
@@ -1821,8 +1821,8 @@ int main(int argc, char **argv) {
             printf("Master %d: ", i);
             if (node->name) printf("%s ", node->name);
             printf("%s:%d\n", node->ip, node->port);
-            node->redis_config = getRedisConfig(node->ip, node->port, NULL);
-            if (node->redis_config == NULL) {
+            node->sider_config = getSiderConfig(node->ip, node->port, NULL);
+            if (node->sider_config == NULL) {
                 fprintf(stderr, "WARNING: Could not fetch node CONFIG %s:%d\n",
                         node->ip, node->port);
             }
@@ -1833,9 +1833,9 @@ int main(int argc, char **argv) {
         if (config.num_threads == 0)
             config.num_threads = config.cluster_node_count;
     } else {
-        config.redis_config =
-            getRedisConfig(config.conn_info.hostip, config.conn_info.hostport, config.hostsocket);
-        if (config.redis_config == NULL) {
+        config.sider_config =
+            getSiderConfig(config.conn_info.hostip, config.conn_info.hostport, config.hostsocket);
+        if (config.sider_config == NULL) {
             fprintf(stderr, "WARNING: Could not fetch server CONFIG\n");
         }
     }
@@ -1889,7 +1889,7 @@ int main(int argc, char **argv) {
             argc++;
         }
         do {
-            len = redisFormatCommandArgv(&cmd,argc,(const char**)sds_args,NULL);
+            len = siderFormatCommandArgv(&cmd,argc,(const char**)sds_args,NULL);
             // adjust the datasize to the parsed command
             config.datasize = len;
             benchmark(title,cmd,len);
@@ -1898,7 +1898,7 @@ int main(int argc, char **argv) {
         sdsfreesplitres(sds_args, argc);
 
         sdsfree(title);
-        if (config.redis_config != NULL) freeRedisConfig(config.redis_config);
+        if (config.sider_config != NULL) freeSiderConfig(config.sider_config);
         return 0;
     }
 
@@ -1912,69 +1912,69 @@ int main(int argc, char **argv) {
             benchmark("PING_INLINE","PING\r\n",6);
 
         if (test_is_selected("ping_mbulk") || test_is_selected("ping")) {
-            len = redisFormatCommand(&cmd,"PING");
+            len = siderFormatCommand(&cmd,"PING");
             benchmark("PING_MBULK",cmd,len);
             free(cmd);
         }
 
         if (test_is_selected("set")) {
-            len = redisFormatCommand(&cmd,"SET key%s:__rand_int__ %s",tag,data);
+            len = siderFormatCommand(&cmd,"SET key%s:__rand_int__ %s",tag,data);
             benchmark("SET",cmd,len);
             free(cmd);
         }
 
         if (test_is_selected("get")) {
-            len = redisFormatCommand(&cmd,"GET key%s:__rand_int__",tag);
+            len = siderFormatCommand(&cmd,"GET key%s:__rand_int__",tag);
             benchmark("GET",cmd,len);
             free(cmd);
         }
 
         if (test_is_selected("incr")) {
-            len = redisFormatCommand(&cmd,"INCR counter%s:__rand_int__",tag);
+            len = siderFormatCommand(&cmd,"INCR counter%s:__rand_int__",tag);
             benchmark("INCR",cmd,len);
             free(cmd);
         }
 
         if (test_is_selected("lpush")) {
-            len = redisFormatCommand(&cmd,"LPUSH mylist%s %s",tag,data);
+            len = siderFormatCommand(&cmd,"LPUSH mylist%s %s",tag,data);
             benchmark("LPUSH",cmd,len);
             free(cmd);
         }
 
         if (test_is_selected("rpush")) {
-            len = redisFormatCommand(&cmd,"RPUSH mylist%s %s",tag,data);
+            len = siderFormatCommand(&cmd,"RPUSH mylist%s %s",tag,data);
             benchmark("RPUSH",cmd,len);
             free(cmd);
         }
 
         if (test_is_selected("lpop")) {
-            len = redisFormatCommand(&cmd,"LPOP mylist%s",tag);
+            len = siderFormatCommand(&cmd,"LPOP mylist%s",tag);
             benchmark("LPOP",cmd,len);
             free(cmd);
         }
 
         if (test_is_selected("rpop")) {
-            len = redisFormatCommand(&cmd,"RPOP mylist%s",tag);
+            len = siderFormatCommand(&cmd,"RPOP mylist%s",tag);
             benchmark("RPOP",cmd,len);
             free(cmd);
         }
 
         if (test_is_selected("sadd")) {
-            len = redisFormatCommand(&cmd,
+            len = siderFormatCommand(&cmd,
                 "SADD myset%s element:__rand_int__",tag);
             benchmark("SADD",cmd,len);
             free(cmd);
         }
 
         if (test_is_selected("hset")) {
-            len = redisFormatCommand(&cmd,
+            len = siderFormatCommand(&cmd,
                 "HSET myhash%s element:__rand_int__ %s",tag,data);
             benchmark("HSET",cmd,len);
             free(cmd);
         }
 
         if (test_is_selected("spop")) {
-            len = redisFormatCommand(&cmd,"SPOP myset%s",tag);
+            len = siderFormatCommand(&cmd,"SPOP myset%s",tag);
             benchmark("SPOP",cmd,len);
             free(cmd);
         }
@@ -1982,14 +1982,14 @@ int main(int argc, char **argv) {
         if (test_is_selected("zadd")) {
             char *score = "0";
             if (config.randomkeys) score = "__rand_int__";
-            len = redisFormatCommand(&cmd,
+            len = siderFormatCommand(&cmd,
                 "ZADD myzset%s %s element:__rand_int__",tag,score);
             benchmark("ZADD",cmd,len);
             free(cmd);
         }
 
         if (test_is_selected("zpopmin")) {
-            len = redisFormatCommand(&cmd,"ZPOPMIN myzset%s",tag);
+            len = siderFormatCommand(&cmd,"ZPOPMIN myzset%s",tag);
             benchmark("ZPOPMIN",cmd,len);
             free(cmd);
         }
@@ -2000,31 +2000,31 @@ int main(int argc, char **argv) {
             test_is_selected("lrange_500") ||
             test_is_selected("lrange_600"))
         {
-            len = redisFormatCommand(&cmd,"LPUSH mylist%s %s",tag,data);
+            len = siderFormatCommand(&cmd,"LPUSH mylist%s %s",tag,data);
             benchmark("LPUSH (needed to benchmark LRANGE)",cmd,len);
             free(cmd);
         }
 
         if (test_is_selected("lrange") || test_is_selected("lrange_100")) {
-            len = redisFormatCommand(&cmd,"LRANGE mylist%s 0 99",tag);
+            len = siderFormatCommand(&cmd,"LRANGE mylist%s 0 99",tag);
             benchmark("LRANGE_100 (first 100 elements)",cmd,len);
             free(cmd);
         }
 
         if (test_is_selected("lrange") || test_is_selected("lrange_300")) {
-            len = redisFormatCommand(&cmd,"LRANGE mylist%s 0 299",tag);
+            len = siderFormatCommand(&cmd,"LRANGE mylist%s 0 299",tag);
             benchmark("LRANGE_300 (first 300 elements)",cmd,len);
             free(cmd);
         }
 
         if (test_is_selected("lrange") || test_is_selected("lrange_500")) {
-            len = redisFormatCommand(&cmd,"LRANGE mylist%s 0 499",tag);
+            len = siderFormatCommand(&cmd,"LRANGE mylist%s 0 499",tag);
             benchmark("LRANGE_500 (first 500 elements)",cmd,len);
             free(cmd);
         }
 
         if (test_is_selected("lrange") || test_is_selected("lrange_600")) {
-            len = redisFormatCommand(&cmd,"LRANGE mylist%s 0 599",tag);
+            len = siderFormatCommand(&cmd,"LRANGE mylist%s 0 599",tag);
             benchmark("LRANGE_600 (first 600 elements)",cmd,len);
             free(cmd);
         }
@@ -2037,14 +2037,14 @@ int main(int argc, char **argv) {
                 cmd_argv[i] = key_placeholder;
                 cmd_argv[i+1] = data;
             }
-            len = redisFormatCommandArgv(&cmd,21,cmd_argv,NULL);
+            len = siderFormatCommandArgv(&cmd,21,cmd_argv,NULL);
             benchmark("MSET (10 keys)",cmd,len);
             free(cmd);
             sdsfree(key_placeholder);
         }
 
         if (test_is_selected("xadd")) {
-            len = redisFormatCommand(&cmd,"XADD mystream%s * myfield %s", tag, data);
+            len = siderFormatCommand(&cmd,"XADD mystream%s * myfield %s", tag, data);
             benchmark("XADD",cmd,len);
             free(cmd); 
         }        
@@ -2054,7 +2054,7 @@ int main(int argc, char **argv) {
 
     zfree(data);
     freeCliConnInfo(config.conn_info);
-    if (config.redis_config != NULL) freeRedisConfig(config.redis_config);
+    if (config.sider_config != NULL) freeSiderConfig(config.sider_config);
 
     return 0;
 }

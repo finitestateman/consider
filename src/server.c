@@ -2,15 +2,15 @@
  * Copyright (c) 2009-2016, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -82,7 +82,7 @@ double R_Zero, R_PosInf, R_NegInf, R_Nan;
 /*================================= Globals ================================= */
 
 /* Global vars */
-struct redisServer server; /* Server global state */
+struct siderServer server; /* Server global state */
 
 /*============================ Internal prototypes ========================== */
 
@@ -98,7 +98,7 @@ const char *replstateToString(int replstate);
     ((server.current_client && server.current_client->id == CLIENT_ID_AOF) ? 1 : 0)
 
 /* We use a private localtime implementation which is fork-safe. The logging
- * function of Redis may be called from other threads. */
+ * function of Sider may be called from other threads. */
 void nolocks_localtime(struct tm *tmp, time_t t, time_t tz, int dst);
 
 /* Low level logging. To use only for very big messages, otherwise
@@ -164,7 +164,7 @@ void _serverLog(int level, const char *fmt, ...) {
  * safe to call from a signal handler.
  *
  * We actually use this only for signals that are not fatal from the point
- * of view of Redis. Signals that are going to kill the server anyway and
+ * of view of Sider. Signals that are going to kill the server anyway and
  * where we need printf-alike features are served by serverLog(). */
 void serverLogFromHandler(int level, const char *msg) {
     int fd;
@@ -241,7 +241,7 @@ void exitFromChild(int retcode) {
 /*====================== Hash table type implementation  ==================== */
 
 /* This is a hash table type that uses the SDS dynamic strings library as
- * keys and redis objects as values (objects can hold SDS strings,
+ * keys and sider objects as values (objects can hold SDS strings,
  * lists, sets). */
 
 void dictVanillaFree(dict *d, void *val)
@@ -380,10 +380,10 @@ uint64_t dictEncObjHash(const void *key) {
 }
 
 /* Return 1 if currently we allow dict to expand. Dict may allocate huge
- * memory to contain hash buckets when dict expands, that may lead redis
+ * memory to contain hash buckets when dict expands, that may lead sider
  * rejects user's requests or evicts some keys, we can stop dict to expand
  * provisionally if used memory will be over maxmemory after dict expands,
- * but to guarantee the performance of redis, we still allow dict to expand
+ * but to guarantee the performance of sider, we still allow dict to expand
  * if dict load factor exceeds HASHTABLE_MAX_LOAD_FACTOR. */
 int dictExpandAllowed(size_t moreMem, double usedRatio) {
     if (usedRatio <= HASHTABLE_MAX_LOAD_FACTOR) {
@@ -414,7 +414,7 @@ void dbDictAfterReplaceEntry(dict *d, dictEntry *de) {
     if (server.cluster_enabled) slotToKeyReplaceEntry(d, de);
 }
 
-/* Generic hash table type where keys are Redis Objects, Values
+/* Generic hash table type where keys are Sider Objects, Values
  * dummy pointers. */
 dictType objectKeyPointerValueDictType = {
     dictEncObjHash,            /* hash function */
@@ -460,7 +460,7 @@ dictType zsetDictType = {
     NULL                       /* allow to expand */
 };
 
-/* Db->dict, keys are sds strings, vals are Redis objects. */
+/* Db->dict, keys are sds strings, vals are Sider objects. */
 dictType dbDictType = {
     dictSdsHash,                /* hash function */
     NULL,                       /* key dup */
@@ -518,7 +518,7 @@ dictType sdsReplyDictType = {
     NULL                        /* allow to expand */
 };
 
-/* Keylist hash table type has unencoded redis objects as keys and
+/* Keylist hash table type has unencoded sider objects as keys and
  * lists as values. It's used for blocking operations (BLPOP) and to
  * map swapped keys to a list of clients waiting for this keys to be loaded. */
 dictType keylistDictType = {
@@ -532,7 +532,7 @@ dictType keylistDictType = {
 };
 
 /* Modules system dictionary type. Keys are module name,
- * values are pointer to RedisModule struct. */
+ * values are pointer to SiderModule struct. */
 dictType modulesDictType = {
     dictSdsCaseHash,            /* hash function */
     NULL,                       /* key dup */
@@ -972,7 +972,7 @@ void getExpansiveClientsInfo(size_t *in_usage, size_t *out_usage) {
  * commands.
  *
  * It is very important for this function, and the functions it calls, to be
- * very fast: sometimes Redis has tens of hundreds of connected clients, and the
+ * very fast: sometimes Sider has tens of hundreds of connected clients, and the
  * default server.hz value is 10, so sometimes here we need to process thousands
  * of clients per second, turning this function into a source of latency.
  */
@@ -1043,7 +1043,7 @@ void clientsCron(void) {
 }
 
 /* This function handles 'background' operations we are required to do
- * incrementally in Redis databases, such as active key expiring, resizing,
+ * incrementally in Sider databases, such as active key expiring, resizing,
  * rehashing. */
 void databasesCron(void) {
     /* Expire keys by random sampling. Not required for slaves
@@ -1316,7 +1316,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
      *
      * Note that even if the counter wraps it's not a big problem,
      * everything will still work but some object will appear younger
-     * to Redis. However for this to happen a given object should never be
+     * to Sider. However for this to happen a given object should never be
      * touched for all the time needed to the counter to wrap, which is
      * not likely.
      *
@@ -1373,7 +1373,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     /* We need to do a few operations on clients asynchronously. */
     clientsCron();
 
-    /* Handle background operations on Redis databases. */
+    /* Handle background operations on Sider databases. */
     databasesCron();
 
     /* Start a scheduled AOF rewrite if this was requested by the user while
@@ -1461,7 +1461,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     /* Replication cron function -- used to reconnect to master,
      * detect transfer failures, start background RDB transfers and so forth. 
      * 
-     * If Redis is trying to failover then run the replication cron faster so
+     * If Sider is trying to failover then run the replication cron faster so
      * progress on the handshake happens more quickly. */
     if (server.failover_state != NO_FAILOVER) {
         run_with_period(100) replicationCron();
@@ -1469,7 +1469,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
         run_with_period(1000) replicationCron();
     }
 
-    /* Run the Redis Cluster cron. */
+    /* Run the Sider Cluster cron. */
     run_with_period(100) {
         if (server.cluster_enabled) clusterCron();
     }
@@ -1514,7 +1514,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     }
 
     /* Fire the cron loop modules event. */
-    RedisModuleCronLoopV1 ei = {REDISMODULE_CRON_LOOP_VERSION,server.hz};
+    SiderModuleCronLoopV1 ei = {REDISMODULE_CRON_LOOP_VERSION,server.hz};
     moduleFireServerEvent(REDISMODULE_EVENT_CRON_LOOP,
                           0,
                           &ei);
@@ -1608,7 +1608,7 @@ static void sendGetackToReplicas(void) {
 
 extern int ProcessingEventsWhileBlocked;
 
-/* This function gets called every time Redis is entering the
+/* This function gets called every time Sider is entering the
  * main loop of the event driven library, that is, before to sleep
  * for ready file descriptors.
  *
@@ -1655,8 +1655,8 @@ void beforeSleep(struct aeEventLoop *eventLoop) {
     /* If any connection type(typical TLS) still has pending unread data don't sleep at all. */
     aeSetDontWait(server.el, connTypeHasPendingData());
 
-    /* Call the Redis Cluster before sleep function. Note that this function
-     * may change the state of Redis Cluster (from ok to fail or vice versa),
+    /* Call the Sider Cluster before sleep function. Note that this function
+     * may change the state of Sider Cluster (from ok to fail or vice versa),
      * so it's a good idea to call it before serving the unblocked clients
      * later in this function, must be done before blockedBeforeSleep. */
     if (server.cluster_enabled) clusterBeforeSleep();
@@ -1771,7 +1771,7 @@ void beforeSleep(struct aeEventLoop *eventLoop) {
     }
 
     /* Before we are going to sleep, let the threads access the dataset by
-     * releasing the GIL. Redis main thread will not touch anything at this
+     * releasing the GIL. Sider main thread will not touch anything at this
      * time. */
     if (moduleCount()) moduleReleaseGIL();
     /********************* WARNING ********************
@@ -1780,7 +1780,7 @@ void beforeSleep(struct aeEventLoop *eventLoop) {
 }
 
 /* This function is called immediately after the event loop multiplexing
- * API returned, and the control is going to soon return to Redis by invoking
+ * API returned, and the control is going to soon return to Sider by invoking
  * the different events callbacks. */
 void afterSleep(struct aeEventLoop *eventLoop) {
     UNUSED(eventLoop);
@@ -1849,17 +1849,17 @@ void createSharedObjects(void) {
     shared.noscripterr = createObject(OBJ_STRING,sdsnew(
         "-NOSCRIPT No matching script. Please use EVAL.\r\n"));
     shared.loadingerr = createObject(OBJ_STRING,sdsnew(
-        "-LOADING Redis is loading the dataset in memory\r\n"));
+        "-LOADING Sider is loading the dataset in memory\r\n"));
     shared.slowevalerr = createObject(OBJ_STRING,sdsnew(
-        "-BUSY Redis is busy running a script. You can only call SCRIPT KILL or SHUTDOWN NOSAVE.\r\n"));
+        "-BUSY Sider is busy running a script. You can only call SCRIPT KILL or SHUTDOWN NOSAVE.\r\n"));
     shared.slowscripterr = createObject(OBJ_STRING,sdsnew(
-        "-BUSY Redis is busy running a script. You can only call FUNCTION KILL or SHUTDOWN NOSAVE.\r\n"));
+        "-BUSY Sider is busy running a script. You can only call FUNCTION KILL or SHUTDOWN NOSAVE.\r\n"));
     shared.slowmoduleerr = createObject(OBJ_STRING,sdsnew(
-        "-BUSY Redis is busy running a module command.\r\n"));
+        "-BUSY Sider is busy running a module command.\r\n"));
     shared.masterdownerr = createObject(OBJ_STRING,sdsnew(
         "-MASTERDOWN Link with MASTER is down and replica-serve-stale-data is set to 'no'.\r\n"));
     shared.bgsaveerr = createObject(OBJ_STRING,sdsnew(
-        "-MISCONF Redis is configured to save RDB snapshots, but it's currently unable to persist to disk. Commands that may modify the data set are disabled, because this instance is configured to report errors during writes if RDB snapshotting fails (stop-writes-on-bgsave-error option). Please check the Redis logs for details about the RDB error.\r\n"));
+        "-MISCONF Sider is configured to save RDB snapshots, but it's currently unable to persist to disk. Commands that may modify the data set are disabled, because this instance is configured to report errors during writes if RDB snapshotting fails (stop-writes-on-bgsave-error option). Please check the Sider logs for details about the RDB error.\r\n"));
     shared.roslaveerr = createObject(OBJ_STRING,sdsnew(
         "-READONLY You can't write against a read only replica.\r\n"));
     shared.noautherr = createObject(OBJ_STRING,sdsnew(
@@ -2118,7 +2118,7 @@ void initServerConfig(void) {
 
     /* Command table -- we initialize it here as it is part of the
      * initial configuration, since command names may be changed via
-     * redis.conf using the rename-command directive. */
+     * sider.conf using the rename-command directive. */
     server.commands = dictCreate(&commandTableDictType);
     server.orig_commands = dictCreate(&commandTableDictType);
     populateCommandTable();
@@ -2174,7 +2174,7 @@ int restartServer(int flags, mstime_t delay) {
     }
 
     /* Close all file descriptors, with the exception of stdin, stdout, stderr
-     * which are useful if we restart a Redis server which is not daemonized. */
+     * which are useful if we restart a Sider server which is not daemonized. */
     for (j = 3; j < (int)server.maxclients + 1024; j++) {
         /* Test the descriptor validity before closing it, otherwise
          * Valgrind issues a warning on close(). */
@@ -2207,13 +2207,13 @@ int setOOMScoreAdj(int process_class) {
     serverAssert(process_class >= 0 && process_class < CONFIG_OOM_COUNT);
 
 #ifdef HAVE_PROC_OOM_SCORE_ADJ
-    /* The following statics are used to indicate Redis has changed the process's oom score.
+    /* The following statics are used to indicate Sider has changed the process's oom score.
      * And to save the original score so we can restore it later if needed.
      * We need this so when we disabled oom-score-adj (also during configuration rollback
      * when another configuration parameter was invalid and causes a rollback after
      * applying a new oom-score) we can return to the oom-score value from before our
      * adjustments. */
-    static int oom_score_adjusted_by_redis = 0;
+    static int oom_score_adjusted_by_sider = 0;
     static int oom_score_adj_base = 0;
 
     int fd;
@@ -2221,9 +2221,9 @@ int setOOMScoreAdj(int process_class) {
     char buf[64];
 
     if (server.oom_score_adj != OOM_SCORE_ADJ_NO) {
-        if (!oom_score_adjusted_by_redis) {
-            oom_score_adjusted_by_redis = 1;
-            /* Backup base value before enabling Redis control over oom score */
+        if (!oom_score_adjusted_by_sider) {
+            oom_score_adjusted_by_sider = 1;
+            /* Backup base value before enabling Sider control over oom score */
             fd = open("/proc/self/oom_score_adj", O_RDONLY);
             if (fd < 0 || read(fd, buf, sizeof(buf)) < 0) {
                 serverLog(LL_WARNING, "Unable to read oom_score_adj: %s", strerror(errno));
@@ -2239,8 +2239,8 @@ int setOOMScoreAdj(int process_class) {
             val += oom_score_adj_base;
         if (val > 1000) val = 1000;
         if (val < -1000) val = -1000;
-    } else if (oom_score_adjusted_by_redis) {
-        oom_score_adjusted_by_redis = 0;
+    } else if (oom_score_adjusted_by_sider) {
+        oom_score_adjusted_by_sider = 0;
         val = oom_score_adj_base;
     }
     else {
@@ -2425,7 +2425,7 @@ int createSocketAcceptHandler(connListener *sfd, aeFileProc *accept_handler) {
 }
 
 /* Initialize a set of file descriptors to listen to the specified 'port'
- * binding the addresses specified in the Redis server configuration.
+ * binding the addresses specified in the Sider server configuration.
  *
  * The listening file descriptors are stored in the integer array 'fds'
  * and their number is set in '*count'. Actually @sfd should be 'listener',
@@ -2626,9 +2626,9 @@ void initServer(void) {
             strerror(errno));
         exit(1);
     }
-    server.db = zmalloc(sizeof(redisDb)*server.dbnum);
+    server.db = zmalloc(sizeof(siderDb)*server.dbnum);
 
-    /* Create the Redis databases, and initialize other internal state. */
+    /* Create the Sider databases, and initialize other internal state. */
     for (j = 0; j < server.dbnum; j++) {
         server.db[j].dict = dictCreate(&dbDictType);
         server.db[j].expires = dictCreate(&dbExpiresDictType);
@@ -2729,7 +2729,7 @@ void initServer(void) {
     /* 32 bit instances are limited to 4GB of address space, so if there is
      * no explicit limit in the user provided configuration we set a limit
      * at 3 GB using maxmemory with 'noeviction' policy'. This avoids
-     * useless crashes of the Redis instance for out of memory. */
+     * useless crashes of the Sider instance for out of memory. */
     if (server.arch_bits == 32 && server.maxmemory == 0) {
         serverLog(LL_WARNING,"Warning: 32 bit instance detected but no memory limit set. Setting 3 GB maxmemory limit with 'noeviction' policy now.");
         server.maxmemory = 3072LL*(1024*1024); /* 3 GB */
@@ -2851,7 +2851,7 @@ void InitServerLast(void) {
  * 3. The order of the range specs must be ascending (i.e.
  *    lastkey of spec[i] == firstkey-1 of spec[i+1]).
  *
- * This function will succeed on all native Redis commands and may
+ * This function will succeed on all native Sider commands and may
  * fail on module commands, even if it only has "range" specs that
  * could actually be "glued", in the following cases:
  * 1. The order of "range" specs is not ascending (e.g. the spec for
@@ -2864,11 +2864,11 @@ void InitServerLast(void) {
  * because anyway the legacy (first,last,step) spec is to be deprecated
  * and one should use the new key specs scheme.
  */
-void populateCommandLegacyRangeSpec(struct redisCommand *c) {
+void populateCommandLegacyRangeSpec(struct siderCommand *c) {
     memset(&c->legacy_range_key_spec, 0, sizeof(c->legacy_range_key_spec));
 
     /* Set the movablekeys flag if we have a GETKEYS flag for modules.
-     * Note that for native redis commands, we always have keyspecs,
+     * Note that for native sider commands, we always have keyspecs,
      * with enough information to rely on for movablekeys. */
     if (c->flags & CMD_MODULE_GETKEYS)
         c->flags |= CMD_MOVABLE_KEYS;
@@ -2943,7 +2943,7 @@ sds catSubCommandFullname(const char *parent_name, const char *sub_name) {
     return sdscatfmt(sdsempty(), "%s|%s", parent_name, sub_name);
 }
 
-void commandAddSubcommand(struct redisCommand *parent, struct redisCommand *subcommand, const char *declared_name) {
+void commandAddSubcommand(struct siderCommand *parent, struct siderCommand *subcommand, const char *declared_name) {
     if (!parent->subcommands_dict)
         parent->subcommands_dict = dictCreate(&commandTableDictType);
 
@@ -2954,8 +2954,8 @@ void commandAddSubcommand(struct redisCommand *parent, struct redisCommand *subc
 }
 
 /* Set implicit ACl categories (see comment above the definition of
- * struct redisCommand). */
-void setImplicitACLCategories(struct redisCommand *c) {
+ * struct siderCommand). */
+void setImplicitACLCategories(struct siderCommand *c) {
     if (c->flags & CMD_WRITE)
         c->acl_categories |= ACL_CATEGORY_WRITE;
     /* Exclude scripting commands from the RO category. */
@@ -2979,7 +2979,7 @@ void setImplicitACLCategories(struct redisCommand *c) {
  *
  * On success, the function return C_OK. Otherwise C_ERR is returned and we won't
  * add this command in the commands dict. */
-int populateCommandStructure(struct redisCommand *c) {
+int populateCommandStructure(struct siderCommand *c) {
     /* If the command marks with CMD_SENTINEL, it exists in sentinel. */
     if (!(c->flags & CMD_SENTINEL) && server.sentinel_mode)
         return C_ERR;
@@ -3005,7 +3005,7 @@ int populateCommandStructure(struct redisCommand *c) {
     /* Handle subcommands */
     if (c->subcommands) {
         for (int j = 0; c->subcommands[j].declared_name; j++) {
-            struct redisCommand *sub = c->subcommands+j;
+            struct siderCommand *sub = c->subcommands+j;
 
             sub->fullname = catSubCommandFullname(c->declared_name, sub->declared_name);
             if (populateCommandStructure(sub) == C_ERR)
@@ -3018,16 +3018,16 @@ int populateCommandStructure(struct redisCommand *c) {
     return C_OK;
 }
 
-extern struct redisCommand redisCommandTable[];
+extern struct siderCommand siderCommandTable[];
 
-/* Populates the Redis Command Table dict from the static table in commands.c
+/* Populates the Sider Command Table dict from the static table in commands.c
  * which is auto generated from the json files in the commands folder. */
 void populateCommandTable(void) {
     int j;
-    struct redisCommand *c;
+    struct siderCommand *c;
 
     for (j = 0;; j++) {
-        c = redisCommandTable + j;
+        c = siderCommandTable + j;
         if (c->declared_name == NULL)
             break;
 
@@ -3039,20 +3039,20 @@ void populateCommandTable(void) {
 
         retval1 = dictAdd(server.commands, sdsdup(c->fullname), c);
         /* Populate an additional dictionary that will be unaffected
-         * by rename-command statements in redis.conf. */
+         * by rename-command statements in sider.conf. */
         retval2 = dictAdd(server.orig_commands, sdsdup(c->fullname), c);
         serverAssert(retval1 == DICT_OK && retval2 == DICT_OK);
     }
 }
 
 void resetCommandTableStats(dict* commands) {
-    struct redisCommand *c;
+    struct siderCommand *c;
     dictEntry *de;
     dictIterator *di;
 
     di = dictGetSafeIterator(commands);
     while((de = dictNext(di)) != NULL) {
-        c = (struct redisCommand *) dictGetVal(de);
+        c = (struct siderCommand *) dictGetVal(de);
         c->microseconds = 0;
         c->calls = 0;
         c->rejected_calls = 0;
@@ -3072,10 +3072,10 @@ void resetErrorTableStats(void) {
     server.errors = raxNew();
 }
 
-/* ========================== Redis OP Array API ============================ */
+/* ========================== Sider OP Array API ============================ */
 
-int redisOpArrayAppend(redisOpArray *oa, int dbid, robj **argv, int argc, int target) {
-    redisOp *op;
+int siderOpArrayAppend(siderOpArray *oa, int dbid, robj **argv, int argc, int target) {
+    siderOp *op;
     int prev_capacity = oa->capacity;
 
     if (oa->numops == 0) {
@@ -3085,7 +3085,7 @@ int redisOpArrayAppend(redisOpArray *oa, int dbid, robj **argv, int argc, int ta
     }
 
     if (prev_capacity != oa->capacity)
-        oa->ops = zrealloc(oa->ops,sizeof(redisOp)*oa->capacity);
+        oa->ops = zrealloc(oa->ops,sizeof(siderOp)*oa->capacity);
     op = oa->ops+oa->numops;
     op->dbid = dbid;
     op->argv = argv;
@@ -3095,10 +3095,10 @@ int redisOpArrayAppend(redisOpArray *oa, int dbid, robj **argv, int argc, int ta
     return oa->numops;
 }
 
-void redisOpArrayFree(redisOpArray *oa) {
+void siderOpArrayFree(siderOpArray *oa) {
     while(oa->numops) {
         int j;
-        redisOp *op;
+        siderOp *op;
 
         oa->numops--;
         op = oa->ops+oa->numops;
@@ -3113,12 +3113,12 @@ void redisOpArrayFree(redisOpArray *oa) {
 /* ====================== Commands lookup and execution ===================== */
 
 int isContainerCommandBySds(sds s) {
-    struct redisCommand *base_cmd = dictFetchValue(server.commands, s);
+    struct siderCommand *base_cmd = dictFetchValue(server.commands, s);
     int has_subcommands = base_cmd && base_cmd->subcommands_dict;
     return has_subcommands;
 }
 
-struct redisCommand *lookupSubcommand(struct redisCommand *container, sds sub_name) {
+struct siderCommand *lookupSubcommand(struct siderCommand *container, sds sub_name) {
     return dictFetchValue(container->subcommands_dict, sub_name);
 }
 
@@ -3130,8 +3130,8 @@ struct redisCommand *lookupSubcommand(struct redisCommand *container, sds sub_na
  * name (e.g. in COMMAND INFO) rather than to find the command
  * a user requested to execute (in processCommand).
  */
-struct redisCommand *lookupCommandLogic(dict *commands, robj **argv, int argc, int strict) {
-    struct redisCommand *base_cmd = dictFetchValue(commands, argv[0]->ptr);
+struct siderCommand *lookupCommandLogic(dict *commands, robj **argv, int argc, int strict) {
+    struct siderCommand *base_cmd = dictFetchValue(commands, argv[0]->ptr);
     int has_subcommands = base_cmd && base_cmd->subcommands_dict;
     if (argc == 1 || !has_subcommands) {
         if (strict && argc != 1)
@@ -3146,11 +3146,11 @@ struct redisCommand *lookupCommandLogic(dict *commands, robj **argv, int argc, i
     }
 }
 
-struct redisCommand *lookupCommand(robj **argv, int argc) {
+struct siderCommand *lookupCommand(robj **argv, int argc) {
     return lookupCommandLogic(server.commands,argv,argc,0);
 }
 
-struct redisCommand *lookupCommandBySdsLogic(dict *commands, sds s) {
+struct siderCommand *lookupCommandBySdsLogic(dict *commands, sds s) {
     int argc, j;
     sds *strings = sdssplitlen(s,sdslen(s),"|",1,&argc);
     if (strings == NULL)
@@ -3169,17 +3169,17 @@ struct redisCommand *lookupCommandBySdsLogic(dict *commands, sds s) {
         argv[j] = &objects[j];
     }
 
-    struct redisCommand *cmd = lookupCommandLogic(commands,argv,argc,1);
+    struct siderCommand *cmd = lookupCommandLogic(commands,argv,argc,1);
     sdsfreesplitres(strings,argc);
     return cmd;
 }
 
-struct redisCommand *lookupCommandBySds(sds s) {
+struct siderCommand *lookupCommandBySds(sds s) {
     return lookupCommandBySdsLogic(server.commands,s);
 }
 
-struct redisCommand *lookupCommandByCStringLogic(dict *commands, const char *s) {
-    struct redisCommand *cmd;
+struct siderCommand *lookupCommandByCStringLogic(dict *commands, const char *s) {
+    struct siderCommand *cmd;
     sds name = sdsnew(s);
 
     cmd = lookupCommandBySdsLogic(commands,name);
@@ -3187,19 +3187,19 @@ struct redisCommand *lookupCommandByCStringLogic(dict *commands, const char *s) 
     return cmd;
 }
 
-struct redisCommand *lookupCommandByCString(const char *s) {
+struct siderCommand *lookupCommandByCString(const char *s) {
     return lookupCommandByCStringLogic(server.commands,s);
 }
 
 /* Lookup the command in the current table, if not found also check in
  * the original table containing the original command names unaffected by
- * redis.conf rename-command statement.
+ * sider.conf rename-command statement.
  *
  * This is used by functions rewriting the argument vector such as
  * rewriteClientCommandVector() in order to set client->cmd pointer
  * correctly even if the command was renamed. */
-struct redisCommand *lookupCommandOrOriginal(robj **argv ,int argc) {
-    struct redisCommand *cmd = lookupCommandLogic(server.commands, argv, argc, 0);
+struct siderCommand *lookupCommandOrOriginal(robj **argv ,int argc) {
+    struct siderCommand *cmd = lookupCommandLogic(server.commands, argv, argc, 0);
 
     if (!cmd) cmd = lookupCommandLogic(server.orig_commands, argv, argc, 0);
     return cmd;
@@ -3260,7 +3260,7 @@ static void propagateNow(int dbid, robj **argv, int argc, int target) {
  * after the current command is propagated to AOF / Replication.
  *
  * dbid is the database ID the command should be propagated into.
- * Arguments of the command to propagate are passed as an array of redis
+ * Arguments of the command to propagate are passed as an array of sider
  * objects pointers of len 'argc', using the 'argv' vector.
  *
  * The function does not take a reference to the passed 'argv' vector,
@@ -3279,11 +3279,11 @@ void alsoPropagate(int dbid, robj **argv, int argc, int target) {
         argvcopy[j] = argv[j];
         incrRefCount(argv[j]);
     }
-    redisOpArrayAppend(&server.also_propagate,dbid,argvcopy,argc,target);
+    siderOpArrayAppend(&server.also_propagate,dbid,argvcopy,argc,target);
 }
 
 /* It is possible to call the function forceCommandPropagation() inside a
- * Redis command implementation in order to to force the propagation of a
+ * Sider command implementation in order to to force the propagation of a
  * specific command execution into AOF / Replication. */
 void forceCommandPropagation(client *c, int flags) {
     serverAssert(c->cmd->flags & (CMD_WRITE | CMD_MAY_REPLICATE));
@@ -3309,7 +3309,7 @@ void preventCommandReplication(client *c) {
 }
 
 /* Log the last command a client executed into the slowlog. */
-void slowlogPushCurrentCommand(client *c, struct redisCommand *cmd, ustime_t duration) {
+void slowlogPushCurrentCommand(client *c, struct siderCommand *cmd, ustime_t duration) {
     /* Some commands may contain sensitive data that should not be available in the slowlog. */
     if (cmd->flags & CMD_SKIP_SLOWLOG)
         return;
@@ -3342,7 +3342,7 @@ static void propagatePendingCommands(void) {
         return;
 
     int j;
-    redisOp *rop;
+    siderOp *rop;
 
     /* If we got here it means we have finished an execution-unit.
      * If that unit has caused propagation of multiple commands, they
@@ -3376,12 +3376,12 @@ static void propagatePendingCommands(void) {
         propagateNow(-1,&shared.exec,1,PROPAGATE_AOF|PROPAGATE_REPL);
     }
 
-    redisOpArrayFree(&server.also_propagate);
+    siderOpArrayFree(&server.also_propagate);
 }
 
 /* Performs operations that should be performed after an execution unit ends.
  * Execution unit is a code that should be done atomically.
- * Execution units can be nested and are not necessarily starts with Redis command.
+ * Execution units can be nested and are not necessarily starts with Sider command.
  *
  * For example the following is a logical unit:
  *   active expire ->
@@ -3416,7 +3416,7 @@ void postExecutionUnitOperations(void) {
  * twice, its possible to pass a NULL cmd value to indicate that the error was counted elsewhere.
  *
  * The function returns true if stats was updated and false if not. */
-int incrCommandStatsOnError(struct redisCommand *cmd, int flags) {
+int incrCommandStatsOnError(struct siderCommand *cmd, int flags) {
     /* hold the prev error count captured on the last command execution */
     static long long prev_err_count = 0;
     int res = 0;
@@ -3435,7 +3435,7 @@ int incrCommandStatsOnError(struct redisCommand *cmd, int flags) {
     return res;
 }
 
-/* Call() is the core of Redis execution of a command.
+/* Call() is the core of Sider execution of a command.
  *
  * The following flags can be passed:
  * CMD_CALL_NONE        No flags.
@@ -3473,7 +3473,7 @@ int incrCommandStatsOnError(struct redisCommand *cmd, int flags) {
 void call(client *c, int flags) {
     long long dirty;
     uint64_t client_old_flags = c->flags;
-    struct redisCommand *real_cmd = c->realcmd;
+    struct siderCommand *real_cmd = c->realcmd;
     client *prev_client = server.executing_client;
     server.executing_client = c;
 
@@ -3491,7 +3491,7 @@ void call(client *c, int flags) {
      * demand, and initialize the array for additional commands propagation. */
     c->flags &= ~(CLIENT_FORCE_AOF|CLIENT_FORCE_REPL|CLIENT_PREVENT_PROP);
 
-    /* Redis core is in charge of propagation when the first entry point
+    /* Sider core is in charge of propagation when the first entry point
      * of call() is processCommand().
      * The only other option to get to call() without having processCommand
      * as an entry point is if a module triggers RM_Call outside of call()
@@ -4168,7 +4168,7 @@ int processCommand(client *c) {
 /* ====================== Error lookup and execution ===================== */
 
 void incrementErrorCount(const char *fullerr, size_t namelen) {
-    struct redisError *error = raxFind(server.errors,(unsigned char*)fullerr,namelen);
+    struct siderError *error = raxFind(server.errors,(unsigned char*)fullerr,namelen);
     if (error == raxNotFound) {
         error = zmalloc(sizeof(*error));
         error->count = 0;
@@ -4240,7 +4240,7 @@ int prepareForShutdown(int flags) {
 
     serverLog(LL_NOTICE,"User requested shutdown...");
     if (server.supervised_mode == SUPERVISED_SYSTEMD)
-        redisCommunicateSystemd("STOPPING=1\n");
+        siderCommunicateSystemd("STOPPING=1\n");
 
     /* If we have any replicas, let them catch up the replication offset before
      * we shut down, to avoid data loss. */
@@ -4354,7 +4354,7 @@ int finishShutdown(void) {
          * doing it's cleanup, but in this case this code will not be reached,
          * so we need to call rdbRemoveTempFile which will close fd(in order
          * to unlink file actually) in background thread.
-         * The temp rdb file fd may won't be closed when redis exits quickly,
+         * The temp rdb file fd may won't be closed when sider exits quickly,
          * but OS will close this fd when process exits. */
         rdbRemoveTempFile(server.child_pid, 0);
     }
@@ -4376,7 +4376,7 @@ int finishShutdown(void) {
             } else {
                 serverLog(LL_WARNING, "Writing initial AOF, can't exit.");
                 if (server.supervised_mode == SUPERVISED_SYSTEMD)
-                    redisCommunicateSystemd("STATUS=Writing initial AOF, can't exit.\n");
+                    siderCommunicateSystemd("STATUS=Writing initial AOF, can't exit.\n");
                 goto error;
             }
         }
@@ -4388,7 +4388,7 @@ int finishShutdown(void) {
         /* Append only file: flush buffers and fsync() the AOF at exit */
         serverLog(LL_NOTICE,"Calling fsync() on the AOF file.");
         flushAppendOnlyFile(1);
-        if (redis_fsync(server.aof_fd) == -1) {
+        if (sider_fsync(server.aof_fd) == -1) {
             serverLog(LL_WARNING,"Fail to fsync the AOF file: %s.",
                                  strerror(errno));
         }
@@ -4398,7 +4398,7 @@ int finishShutdown(void) {
     if ((server.saveparamslen > 0 && !nosave) || save) {
         serverLog(LL_NOTICE,"Saving the final RDB snapshot before exiting.");
         if (server.supervised_mode == SUPERVISED_SYSTEMD)
-            redisCommunicateSystemd("STATUS=Saving the final RDB snapshot\n");
+            siderCommunicateSystemd("STATUS=Saving the final RDB snapshot\n");
         /* Snapshotting. Perform a SYNC SAVE and exit */
         rdbSaveInfo rsi, *rsiptr;
         rsiptr = rdbPopulateSaveInfo(&rsi);
@@ -4406,7 +4406,7 @@ int finishShutdown(void) {
         if (rdbSave(SLAVE_REQ_NONE,server.rdb_filename,rsiptr,RDBFLAGS_KEEP_CACHE) != C_OK) {
             /* Ooops.. error saving! The best we can do is to continue
              * operating. Note that if there was a background saving process,
-             * in the next cron() Redis will be notified that the background
+             * in the next cron() Sider will be notified that the background
              * saving aborted, handling special stuff like slaves pending for
              * synchronization... */
             if (force) {
@@ -4414,7 +4414,7 @@ int finishShutdown(void) {
             } else {
                 serverLog(LL_WARNING,"Error trying to save the DB, can't exit.");
                 if (server.supervised_mode == SUPERVISED_SYSTEMD)
-                    redisCommunicateSystemd("STATUS=Error trying to save the DB, can't exit.\n");
+                    siderCommunicateSystemd("STATUS=Error trying to save the DB, can't exit.\n");
                 goto error;
             }
         }
@@ -4448,7 +4448,7 @@ int finishShutdown(void) {
 
 
     serverLog(LL_WARNING,"%s is now ready to exit, bye bye...",
-        server.sentinel_mode ? "Sentinel" : "Redis");
+        server.sentinel_mode ? "Sentinel" : "Sider");
     return C_OK;
 
 error:
@@ -4459,8 +4459,8 @@ error:
 
 /*================================== Commands =============================== */
 
-/* Sometimes Redis cannot accept write commands because there is a persistence
- * error with the RDB or AOF file, and Redis is configured in order to stop
+/* Sometimes Sider cannot accept write commands because there is a persistence
+ * error with the RDB or AOF file, and Sider is configured in order to stop
  * accepting writes in such situation. This function returns if such a
  * condition is active, and the type of the condition.
  *
@@ -4562,7 +4562,7 @@ void addReplyCommandFlags(client *c, uint64_t flags, replyFlagNames *replyFlags)
     }
 }
 
-void addReplyFlagsForCommand(client *c, struct redisCommand *cmd) {
+void addReplyFlagsForCommand(client *c, struct siderCommand *cmd) {
     replyFlagNames flagNames[] = {
         {CMD_WRITE,             "write"},
         {CMD_READONLY,          "readonly"},
@@ -4594,7 +4594,7 @@ void addReplyFlagsForCommand(client *c, struct redisCommand *cmd) {
     addReplyCommandFlags(c, cmd->flags, flagNames);
 }
 
-void addReplyDocFlagsForCommand(client *c, struct redisCommand *cmd) {
+void addReplyDocFlagsForCommand(client *c, struct siderCommand *cmd) {
     replyFlagNames docFlagNames[] = {
         {CMD_DOC_DEPRECATED,         "deprecated"},
         {CMD_DOC_SYSCMD,             "syscmd"},
@@ -4621,7 +4621,7 @@ void addReplyFlagsForKeyArgs(client *c, uint64_t flags) {
     addReplyCommandFlags(c, flags, docFlagNames);
 }
 
-/* Must match redisCommandArgType */
+/* Must match siderCommandArgType */
 const char *ARG_TYPE_STR[] = {
     "string",
     "integer",
@@ -4644,7 +4644,7 @@ void addReplyFlagsForArg(client *c, uint64_t flags) {
     addReplyCommandFlags(c, flags, argFlagNames);
 }
 
-void addReplyCommandArgList(client *c, struct redisCommandArg *args, int num_args) {
+void addReplyCommandArgList(client *c, struct siderCommandArg *args, int num_args) {
     addReplyArrayLen(c, num_args);
     for (int j = 0; j<num_args; j++) {
         /* Count our reply len so we don't have to use deferred reply. */
@@ -4740,7 +4740,7 @@ void addReplyJson(client *c, struct jsonObject *rs) {
 
 #endif
 
-void addReplyCommandHistory(client *c, struct redisCommand *cmd) {
+void addReplyCommandHistory(client *c, struct siderCommand *cmd) {
     addReplySetLen(c, cmd->num_history);
     for (int j = 0; j<cmd->num_history; j++) {
         addReplyArrayLen(c, 2);
@@ -4749,14 +4749,14 @@ void addReplyCommandHistory(client *c, struct redisCommand *cmd) {
     }
 }
 
-void addReplyCommandTips(client *c, struct redisCommand *cmd) {
+void addReplyCommandTips(client *c, struct siderCommand *cmd) {
     addReplySetLen(c, cmd->num_tips);
     for (int j = 0; j<cmd->num_tips; j++) {
         addReplyBulkCString(c, cmd->tips[j]);
     }
 }
 
-void addReplyCommandKeySpecs(client *c, struct redisCommand *cmd) {
+void addReplyCommandKeySpecs(client *c, struct siderCommand *cmd) {
     addReplySetLen(c, cmd->key_specs_num);
     for (int i = 0; i < cmd->key_specs_num; i++) {
         int maplen = 3;
@@ -4853,7 +4853,7 @@ void addReplyCommandKeySpecs(client *c, struct redisCommand *cmd) {
 }
 
 /* Reply with an array of sub-command using the provided reply callback. */
-void addReplyCommandSubCommands(client *c, struct redisCommand *cmd, void (*reply_function)(client*, struct redisCommand*), int use_map) {
+void addReplyCommandSubCommands(client *c, struct siderCommand *cmd, void (*reply_function)(client*, struct siderCommand*), int use_map) {
     if (!cmd->subcommands_dict) {
         addReplySetLen(c, 0);
         return;
@@ -4866,7 +4866,7 @@ void addReplyCommandSubCommands(client *c, struct redisCommand *cmd, void (*repl
     dictEntry *de;
     dictIterator *di = dictGetSafeIterator(cmd->subcommands_dict);
     while((de = dictNext(di)) != NULL) {
-        struct redisCommand *sub = (struct redisCommand *)dictGetVal(de);
+        struct siderCommand *sub = (struct siderCommand *)dictGetVal(de);
         if (use_map)
             addReplyBulkCBuffer(c, sub->fullname, sdslen(sub->fullname));
         reply_function(c, sub);
@@ -4874,8 +4874,8 @@ void addReplyCommandSubCommands(client *c, struct redisCommand *cmd, void (*repl
     dictReleaseIterator(di);
 }
 
-/* Output the representation of a Redis command. Used by the COMMAND command and COMMAND INFO. */
-void addReplyCommandInfo(client *c, struct redisCommand *cmd) {
+/* Output the representation of a Sider command. Used by the COMMAND command and COMMAND INFO. */
+void addReplyCommandInfo(client *c, struct siderCommand *cmd) {
     if (!cmd) {
         addReplyNull(c);
     } else {
@@ -4902,8 +4902,8 @@ void addReplyCommandInfo(client *c, struct redisCommand *cmd) {
     }
 }
 
-/* Output the representation of a Redis command. Used by the COMMAND DOCS. */
-void addReplyCommandDocs(client *c, struct redisCommand *cmd) {
+/* Output the representation of a Sider command. Used by the COMMAND DOCS. */
+void addReplyCommandDocs(client *c, struct siderCommand *cmd) {
     /* Count our reply len so we don't have to use deferred reply. */
     long maplen = 1;
     if (cmd->summary) maplen++;
@@ -4976,7 +4976,7 @@ void addReplyCommandDocs(client *c, struct redisCommand *cmd) {
 
 /* Helper for COMMAND GETKEYS and GETKEYSANDFLAGS */
 void getKeysSubcommandImpl(client *c, int with_flags) {
-    struct redisCommand *cmd = lookupCommand(c->argv+2,c->argc-2);
+    struct siderCommand *cmd = lookupCommand(c->argv+2,c->argc-2);
     getKeysResult result = GETKEYS_RESULT_INIT;
     int j;
 
@@ -5060,7 +5060,7 @@ typedef struct {
     } cache;
 } commandListFilter;
 
-int shouldFilterFromCommandList(struct redisCommand *cmd, commandListFilter *filter) {
+int shouldFilterFromCommandList(struct siderCommand *cmd, commandListFilter *filter) {
     switch (filter->type) {
         case (COMMAND_LIST_FILTER_MODULE):
             if (!filter->cache.valid) {
@@ -5092,7 +5092,7 @@ void commandListWithFilter(client *c, dict *commands, commandListFilter filter, 
     dictIterator *di = dictGetIterator(commands);
 
     while ((de = dictNext(di)) != NULL) {
-        struct redisCommand *cmd = dictGetVal(de);
+        struct siderCommand *cmd = dictGetVal(de);
         if (!shouldFilterFromCommandList(cmd,&filter)) {
             addReplyBulkCBuffer(c, cmd->fullname, sdslen(cmd->fullname));
             (*numcmds)++;
@@ -5111,7 +5111,7 @@ void commandListWithoutFilter(client *c, dict *commands, int *numcmds) {
     dictIterator *di = dictGetIterator(commands);
 
     while ((de = dictNext(di)) != NULL) {
-        struct redisCommand *cmd = dictGetVal(de);
+        struct siderCommand *cmd = dictGetVal(de);
         addReplyBulkCBuffer(c, cmd->fullname, sdslen(cmd->fullname));
         (*numcmds)++;
 
@@ -5195,7 +5195,7 @@ void commandDocsCommand(client *c) {
         addReplyMapLen(c, dictSize(server.commands));
         di = dictGetIterator(server.commands);
         while ((de = dictNext(di)) != NULL) {
-            struct redisCommand *cmd = dictGetVal(de);
+            struct siderCommand *cmd = dictGetVal(de);
             addReplyBulkCBuffer(c, cmd->fullname, sdslen(cmd->fullname));
             addReplyCommandDocs(c, cmd);
         }
@@ -5205,7 +5205,7 @@ void commandDocsCommand(client *c) {
         int numcmds = 0;
         void *replylen = addReplyDeferredLen(c);
         for (i = 2; i < c->argc; i++) {
-            struct redisCommand *cmd = lookupCommandBySds(c->argv[i]->ptr);
+            struct siderCommand *cmd = lookupCommandBySds(c->argv[i]->ptr);
             if (!cmd)
                 continue;
             addReplyBulkCBuffer(c, cmd->fullname, sdslen(cmd->fullname));
@@ -5225,23 +5225,23 @@ void commandGetKeysCommand(client *c) {
 void commandHelpCommand(client *c) {
     const char *help[] = {
 "(no subcommand)",
-"    Return details about all Redis commands.",
+"    Return details about all Sider commands.",
 "COUNT",
-"    Return the total number of commands in this Redis server.",
+"    Return the total number of commands in this Sider server.",
 "LIST",
-"    Return a list of all commands in this Redis server.",
+"    Return a list of all commands in this Sider server.",
 "INFO [<command-name> ...]",
-"    Return details about multiple Redis commands.",
+"    Return details about multiple Sider commands.",
 "    If no command names are given, documentation details for all",
 "    commands are returned.",
 "DOCS [<command-name> ...]",
-"    Return documentation details about multiple Redis commands.",
+"    Return documentation details about multiple Sider commands.",
 "    If no command names are given, documentation details for all",
 "    commands are returned.",
 "GETKEYS <full-command>",
-"    Return the keys from a full Redis command.",
+"    Return the keys from a full Sider command.",
 "GETKEYSANDFLAGS <full-command>",
-"    Return the keys and the access flags from a full Redis command.",
+"    Return the keys and the access flags from a full Sider command.",
 NULL
     };
 
@@ -5326,14 +5326,14 @@ const char *getSafeInfoString(const char *s, size_t len, char **tmp) {
                        sizeof(unsafe_info_chars)-1);
 }
 
-sds genRedisInfoStringCommandStats(sds info, dict *commands) {
-    struct redisCommand *c;
+sds genSiderInfoStringCommandStats(sds info, dict *commands) {
+    struct siderCommand *c;
     dictEntry *de;
     dictIterator *di;
     di = dictGetSafeIterator(commands);
     while((de = dictNext(di)) != NULL) {
         char *tmpsafe;
-        c = (struct redisCommand *) dictGetVal(de);
+        c = (struct siderCommand *) dictGetVal(de);
         if (c->calls || c->failed_calls || c->rejected_calls) {
             info = sdscatprintf(info,
                 "cmdstat_%s:calls=%lld,usec=%lld,usec_per_call=%.2f"
@@ -5344,7 +5344,7 @@ sds genRedisInfoStringCommandStats(sds info, dict *commands) {
             if (tmpsafe != NULL) zfree(tmpsafe);
         }
         if (c->subcommands_dict) {
-            info = genRedisInfoStringCommandStats(info, c->subcommands_dict);
+            info = genSiderInfoStringCommandStats(info, c->subcommands_dict);
         }
     }
     dictReleaseIterator(di);
@@ -5353,7 +5353,7 @@ sds genRedisInfoStringCommandStats(sds info, dict *commands) {
 }
 
 /* Writes the ACL metrics to the info */
-sds genRedisInfoStringACLStats(sds info) {
+sds genSiderInfoStringACLStats(sds info) {
     info = sdscatprintf(info,
          "acl_access_denied_auth:%lld\r\n"
          "acl_access_denied_cmd:%lld\r\n"
@@ -5366,14 +5366,14 @@ sds genRedisInfoStringACLStats(sds info) {
     return info;
 }
 
-sds genRedisInfoStringLatencyStats(sds info, dict *commands) {
-    struct redisCommand *c;
+sds genSiderInfoStringLatencyStats(sds info, dict *commands) {
+    struct siderCommand *c;
     dictEntry *de;
     dictIterator *di;
     di = dictGetSafeIterator(commands);
     while((de = dictNext(di)) != NULL) {
         char *tmpsafe;
-        c = (struct redisCommand *) dictGetVal(de);
+        c = (struct siderCommand *) dictGetVal(de);
         if (c->latency_histogram) {
             info = fillPercentileDistributionLatencies(info,
                 getSafeInfoString(c->fullname, sdslen(c->fullname), &tmpsafe),
@@ -5381,7 +5381,7 @@ sds genRedisInfoStringLatencyStats(sds info, dict *commands) {
             if (tmpsafe != NULL) zfree(tmpsafe);
         }
         if (c->subcommands_dict) {
-            info = genRedisInfoStringLatencyStats(info, c->subcommands_dict);
+            info = genSiderInfoStringLatencyStats(info, c->subcommands_dict);
         }
     }
     dictReleaseIterator(di);
@@ -5407,7 +5407,7 @@ void releaseInfoSectionDict(dict *sec) {
         dictRelease(sec);
 }
 
-/* Create a dictionary with unique section names to be used by genRedisInfoString.
+/* Create a dictionary with unique section names to be used by genSiderInfoString.
  * 'argv' and 'argc' are list of arguments for INFO.
  * 'defaults' is an optional null terminated list of default sections.
  * 'out_all' and 'out_everything' are optional.
@@ -5452,7 +5452,7 @@ dict *genInfoSectionDict(robj **argv, int argc, char **defaults, int *out_all, i
 /* Create the string returned by the INFO command. This is decoupled
  * by the INFO command itself as we need to report the same information
  * on memory corruption problems. */
-sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
+sds genSiderInfoString(dict *section_dict, int all_sections, int everything) {
     sds info = sdsempty();
     time_t uptime = server.unixtime-server.stat_starttime;
     int j;
@@ -5488,11 +5488,11 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
 
         info = sdscatfmt(info,
             "# Server\r\n"
-            "redis_version:%s\r\n"
-            "redis_git_sha1:%s\r\n"
-            "redis_git_dirty:%i\r\n"
-            "redis_build_id:%s\r\n"
-            "redis_mode:%s\r\n"
+            "sider_version:%s\r\n"
+            "sider_git_sha1:%s\r\n"
+            "sider_git_dirty:%i\r\n"
+            "sider_build_id:%s\r\n"
+            "sider_mode:%s\r\n"
             "os:%s %s %s\r\n"
             "arch_bits:%i\r\n"
             "monotonic_clock:%s\r\n"
@@ -5513,9 +5513,9 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
             "config_file:%s\r\n"
             "io_threads_active:%i\r\n",
             REDIS_VERSION,
-            redisGitSHA1(),
-            strtol(redisGitDirty(),NULL,10) > 0,
-            redisBuildIdString(),
+            siderGitSHA1(),
+            strtol(siderGitDirty(),NULL,10) > 0,
+            siderBuildIdString(),
             mode,
             name.sysname, name.release, name.machine,
             server.arch_bits,
@@ -5597,7 +5597,7 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
         const char *evict_policy = evictPolicyToString();
         long long memory_lua = evalMemory();
         long long memory_functions = functionsMemory();
-        struct redisMemOverhead *mh = getMemoryOverheadData();
+        struct siderMemOverhead *mh = getMemoryOverheadData();
 
         /* Peak memory is updated from time to time by serverCron() so it
          * may happen that the instantaneous value is slightly bigger than
@@ -5991,7 +5991,7 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
             server.duration_stats[EL_DURATION_TYPE_CMD].sum,
             getInstantaneousMetric(STATS_METRIC_EL_CYCLE),
             getInstantaneousMetric(STATS_METRIC_EL_DURATION));
-        info = genRedisInfoStringACLStats(info);
+        info = genSiderInfoStringACLStats(info);
     }
 
     /* Replication */
@@ -6169,7 +6169,7 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
     if (all_sections || (dictFind(section_dict,"commandstats") != NULL)) {
         if (sections++) info = sdscat(info,"\r\n");
         info = sdscatprintf(info, "# Commandstats\r\n");
-        info = genRedisInfoStringCommandStats(info, server.commands);
+        info = genSiderInfoStringCommandStats(info, server.commands);
     }
 
     /* Error statistics */
@@ -6179,10 +6179,10 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
         raxIterator ri;
         raxStart(&ri,server.errors);
         raxSeek(&ri,"^",NULL,0);
-        struct redisError *e;
+        struct siderError *e;
         while(raxNext(&ri)) {
             char *tmpsafe;
-            e = (struct redisError *) ri.data;
+            e = (struct siderError *) ri.data;
             info = sdscatprintf(info,
                 "errorstat_%.*s:count=%lld\r\n",
                 (int)ri.key_len, getSafeInfoString((char *) ri.key, ri.key_len, &tmpsafe), e->count);
@@ -6196,7 +6196,7 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
         if (sections++) info = sdscat(info,"\r\n");
         info = sdscatprintf(info, "# Latencystats\r\n");
         if (server.latency_tracking_enabled) {
-            info = genRedisInfoStringLatencyStats(info, server.commands);
+            info = genSiderInfoStringLatencyStats(info, server.commands);
         }
     }
 
@@ -6267,7 +6267,7 @@ void infoCommand(client *c) {
     int all_sections = 0;
     int everything = 0;
     dict *sections_dict = genInfoSectionDict(c->argv+1, c->argc-1, NULL, &all_sections, &everything);
-    sds info = genRedisInfoString(sections_dict, all_sections, everything);
+    sds info = genSiderInfoString(sections_dict, all_sections, everything);
     addReplyVerbatim(c,info,sdslen(info),"txt");
     sdsfree(info);
     releaseInfoSectionDict(sections_dict);
@@ -6364,7 +6364,7 @@ void daemonize(void) {
     if (fork() != 0) exit(0); /* parent exits */
     setsid(); /* create a new session */
 
-    /* Every output goes to /dev/null. If Redis is daemonized but
+    /* Every output goes to /dev/null. If Sider is daemonized but
      * the 'logfile' is set to 'stdout' in the configuration file
      * it will not log at all. */
     if ((fd = open("/dev/null", O_RDWR, 0)) != -1) {
@@ -6376,38 +6376,38 @@ void daemonize(void) {
 }
 
 void version(void) {
-    printf("Redis server v=%s sha=%s:%d malloc=%s bits=%d build=%llx\n",
+    printf("Sider server v=%s sha=%s:%d malloc=%s bits=%d build=%llx\n",
         REDIS_VERSION,
-        redisGitSHA1(),
-        atoi(redisGitDirty()) > 0,
+        siderGitSHA1(),
+        atoi(siderGitDirty()) > 0,
         ZMALLOC_LIB,
         sizeof(long) == 4 ? 32 : 64,
-        (unsigned long long) redisBuildId());
+        (unsigned long long) siderBuildId());
     exit(0);
 }
 
 void usage(void) {
-    fprintf(stderr,"Usage: ./redis-server [/path/to/redis.conf] [options] [-]\n");
-    fprintf(stderr,"       ./redis-server - (read config from stdin)\n");
-    fprintf(stderr,"       ./redis-server -v or --version\n");
-    fprintf(stderr,"       ./redis-server -h or --help\n");
-    fprintf(stderr,"       ./redis-server --test-memory <megabytes>\n");
-    fprintf(stderr,"       ./redis-server --check-system\n");
+    fprintf(stderr,"Usage: ./sider-server [/path/to/sider.conf] [options] [-]\n");
+    fprintf(stderr,"       ./sider-server - (read config from stdin)\n");
+    fprintf(stderr,"       ./sider-server -v or --version\n");
+    fprintf(stderr,"       ./sider-server -h or --help\n");
+    fprintf(stderr,"       ./sider-server --test-memory <megabytes>\n");
+    fprintf(stderr,"       ./sider-server --check-system\n");
     fprintf(stderr,"\n");
     fprintf(stderr,"Examples:\n");
-    fprintf(stderr,"       ./redis-server (run the server with default conf)\n");
-    fprintf(stderr,"       echo 'maxmemory 128mb' | ./redis-server -\n");
-    fprintf(stderr,"       ./redis-server /etc/redis/6379.conf\n");
-    fprintf(stderr,"       ./redis-server --port 7777\n");
-    fprintf(stderr,"       ./redis-server --port 7777 --replicaof 127.0.0.1 8888\n");
-    fprintf(stderr,"       ./redis-server /etc/myredis.conf --loglevel verbose -\n");
-    fprintf(stderr,"       ./redis-server /etc/myredis.conf --loglevel verbose\n\n");
+    fprintf(stderr,"       ./sider-server (run the server with default conf)\n");
+    fprintf(stderr,"       echo 'maxmemory 128mb' | ./sider-server -\n");
+    fprintf(stderr,"       ./sider-server /etc/sider/6379.conf\n");
+    fprintf(stderr,"       ./sider-server --port 7777\n");
+    fprintf(stderr,"       ./sider-server --port 7777 --replicaof 127.0.0.1 8888\n");
+    fprintf(stderr,"       ./sider-server /etc/mysider.conf --loglevel verbose -\n");
+    fprintf(stderr,"       ./sider-server /etc/mysider.conf --loglevel verbose\n\n");
     fprintf(stderr,"Sentinel mode:\n");
-    fprintf(stderr,"       ./redis-server /etc/sentinel.conf --sentinel\n");
+    fprintf(stderr,"       ./sider-server /etc/sentinel.conf --sentinel\n");
     exit(1);
 }
 
-void redisAsciiArt(void) {
+void siderAsciiArt(void) {
 #include "asciilogo.h"
     char *buf = zmalloc(1024*16);
     char *mode;
@@ -6418,7 +6418,7 @@ void redisAsciiArt(void) {
 
     /* Show the ASCII logo if: log file is stdout AND stdout is a
      * tty AND syslog logging is disabled. Also show logo if the user
-     * forced us to do so via redis.conf. */
+     * forced us to do so via sider.conf. */
     int show_logo = ((!server.syslog_enabled &&
                       server.logfile[0] == '\0' &&
                       isatty(fileno(stdout))) ||
@@ -6432,8 +6432,8 @@ void redisAsciiArt(void) {
     } else {
         snprintf(buf,1024*16,ascii_logo,
             REDIS_VERSION,
-            redisGitSHA1(),
-            strtol(redisGitDirty(),NULL,10) > 0,
+            siderGitSHA1(),
+            strtol(siderGitDirty(),NULL,10) > 0,
             (sizeof(long) == 8) ? "64" : "32",
             mode, server.port ? server.port : server.tls_port,
             (long) getpid()
@@ -6461,7 +6461,7 @@ int changeListener(connListener *listener) {
 
     /* Just close the server if port disabled */
     if (listener->port == 0) {
-        if (server.set_proc_title) redisSetProcTitle(NULL);
+        if (server.set_proc_title) siderSetProcTitle(NULL);
         return C_OK;
     }
 
@@ -6475,7 +6475,7 @@ int changeListener(connListener *listener) {
         serverPanic("Unrecoverable error creating %s accept handler.", listener->ct->get_type(NULL));
     }
 
-    if (server.set_proc_title) redisSetProcTitle(NULL);
+    if (server.set_proc_title) siderSetProcTitle(NULL);
 
     return C_OK;
 }
@@ -6585,7 +6585,7 @@ void closeChildUnusedResourceAfterFork(void) {
 }
 
 /* purpose is one of CHILD_TYPE_ types */
-int redisFork(int purpose) {
+int siderFork(int purpose) {
     if (isMutuallyExclusiveChildType(purpose)) {
         if (hasActiveChildProcess()) {
             errno = EEXIST;
@@ -6748,9 +6748,9 @@ void dismissMemoryInChild(void) {
 void memtest(size_t megabytes, int passes);
 
 /* Returns 1 if there is --sentinel among the arguments or if
- * executable name contains "redis-sentinel". */
+ * executable name contains "sider-sentinel". */
 int checkForSentinelMode(int argc, char **argv, char *exec_name) {
-    if (strstr(exec_name,"redis-sentinel") != NULL) return 1;
+    if (strstr(exec_name,"sider-sentinel") != NULL) return 1;
 
     for (int j = 1; j < argc; j++)
         if (!strcmp(argv[j],"--sentinel")) return 1;
@@ -6829,17 +6829,17 @@ void loadDataFromDisk(void) {
     }
 }
 
-void redisOutOfMemoryHandler(size_t allocation_size) {
+void siderOutOfMemoryHandler(size_t allocation_size) {
     serverLog(LL_WARNING,"Out Of Memory allocating %zu bytes!",
         allocation_size);
-    serverPanic("Redis aborting for OUT OF MEMORY. Allocating %zu bytes!",
+    serverPanic("Sider aborting for OUT OF MEMORY. Allocating %zu bytes!",
         allocation_size);
 }
 
-/* Callback for sdstemplate on proc-title-template. See redis.conf for
+/* Callback for sdstemplate on proc-title-template. See sider.conf for
  * supported variables.
  */
-static sds redisProcTitleGetVariable(const sds varname, void *arg)
+static sds siderProcTitleGetVariable(const sds varname, void *arg)
 {
     if (!strcmp(varname, "title")) {
         return sdsnew(arg);
@@ -6869,7 +6869,7 @@ static sds redisProcTitleGetVariable(const sds varname, void *arg)
 /* Expand the specified proc-title-template string and return a newly
  * allocated sds, or NULL. */
 static sds expandProcTitleTemplate(const char *template, const char *title) {
-    sds res = sdstemplate(template, redisProcTitleGetVariable, (void *) title);
+    sds res = sdstemplate(template, siderProcTitleGetVariable, (void *) title);
     if (!res)
         return NULL;
     return sdstrim(res, " ");
@@ -6885,7 +6885,7 @@ int validateProcTitleTemplate(const char *template) {
     return ok;
 }
 
-int redisSetProcTitle(char *title) {
+int siderSetProcTitle(char *title) {
 #ifdef USE_SETPROCTITLE
     if (!title) title = server.exec_argv[0];
     sds proc_title = expandProcTitleTemplate(server.proc_title_template, title);
@@ -6900,7 +6900,7 @@ int redisSetProcTitle(char *title) {
     return C_OK;
 }
 
-void redisSetCpuAffinity(const char *cpulist) {
+void siderSetCpuAffinity(const char *cpulist) {
 #ifdef USE_SETCPUAFFINITY
     setcpuaffinity(cpulist);
 #else
@@ -6910,7 +6910,7 @@ void redisSetCpuAffinity(const char *cpulist) {
 
 /* Send a notify message to systemd. Returns sd_notify return code which is
  * a positive number on success. */
-int redisCommunicateSystemd(const char *sd_notify_msg) {
+int siderCommunicateSystemd(const char *sd_notify_msg) {
 #ifdef HAVE_LIBSYSTEMD
     int ret = sd_notify(0, sd_notify_msg);
 
@@ -6926,7 +6926,7 @@ int redisCommunicateSystemd(const char *sd_notify_msg) {
 }
 
 /* Attempt to set up upstart supervision. Returns 1 if successful. */
-static int redisSupervisedUpstart(void) {
+static int siderSupervisedUpstart(void) {
     const char *upstart_job = getenv("UPSTART_JOB");
 
     if (!upstart_job) {
@@ -6942,13 +6942,13 @@ static int redisSupervisedUpstart(void) {
 }
 
 /* Attempt to set up systemd supervision. Returns 1 if successful. */
-static int redisSupervisedSystemd(void) {
+static int siderSupervisedSystemd(void) {
 #ifndef HAVE_LIBSYSTEMD
     serverLog(LL_WARNING,
-            "systemd supervision requested or auto-detected, but Redis is compiled without libsystemd support!");
+            "systemd supervision requested or auto-detected, but Sider is compiled without libsystemd support!");
     return 0;
 #else
-    if (redisCommunicateSystemd("STATUS=Redis is loading...\n") <= 0)
+    if (siderCommunicateSystemd("STATUS=Sider is loading...\n") <= 0)
         return 0;
     serverLog(LL_NOTICE,
         "Supervised by systemd. Please make sure you set appropriate values for TimeoutStartSec and TimeoutStopSec in your service unit.");
@@ -6956,7 +6956,7 @@ static int redisSupervisedSystemd(void) {
 #endif
 }
 
-int redisIsSupervised(int mode) {
+int siderIsSupervised(int mode) {
     int ret = 0;
 
     if (mode == SUPERVISED_AUTODETECT) {
@@ -6971,10 +6971,10 @@ int redisIsSupervised(int mode) {
 
     switch (mode) {
         case SUPERVISED_UPSTART:
-            ret = redisSupervisedUpstart();
+            ret = siderSupervisedUpstart();
             break;
         case SUPERVISED_SYSTEMD:
-            ret = redisSupervisedSystemd();
+            ret = siderSupervisedSystemd();
             break;
         default:
             break;
@@ -7001,12 +7001,12 @@ int __test_num = 0;
 /* The flags are the following:
 * --accurate:     Runs tests with more iterations.
 * --large-memory: Enables tests that consume more than 100mb. */
-typedef int redisTestProc(int argc, char **argv, int flags);
-struct redisTest {
+typedef int siderTestProc(int argc, char **argv, int flags);
+struct siderTest {
     char *name;
-    redisTestProc *proc;
+    siderTestProc *proc;
     int failed;
-} redisTests[] = {
+} siderTests[] = {
     {"ziplist", ziplistTest},
     {"quicklist", quicklistTest},
     {"intset", intsetTest},
@@ -7020,11 +7020,11 @@ struct redisTest {
     {"dict", dictTest},
     {"listpack", listpackTest}
 };
-redisTestProc *getTestProcByName(const char *name) {
-    int numtests = sizeof(redisTests)/sizeof(struct redisTest);
+siderTestProc *getTestProcByName(const char *name) {
+    int numtests = sizeof(siderTests)/sizeof(struct siderTest);
     for (int j = 0; j < numtests; j++) {
-        if (!strcasecmp(name,redisTests[j].name)) {
-            return redisTests[j].proc;
+        if (!strcasecmp(name,siderTests[j].name)) {
+            return siderTests[j].proc;
         }
     }
     return NULL;
@@ -7047,19 +7047,19 @@ int main(int argc, char **argv) {
         }
 
         if (!strcasecmp(argv[2], "all")) {
-            int numtests = sizeof(redisTests)/sizeof(struct redisTest);
+            int numtests = sizeof(siderTests)/sizeof(struct siderTest);
             for (j = 0; j < numtests; j++) {
-                redisTests[j].failed = (redisTests[j].proc(argc,argv,flags) != 0);
+                siderTests[j].failed = (siderTests[j].proc(argc,argv,flags) != 0);
             }
 
             /* Report tests result */
             int failed_num = 0;
             for (j = 0; j < numtests; j++) {
-                if (redisTests[j].failed) {
+                if (siderTests[j].failed) {
                     failed_num++;
-                    printf("[failed] Test - %s\n", redisTests[j].name);
+                    printf("[failed] Test - %s\n", siderTests[j].name);
                 } else {
-                    printf("[ok] Test - %s\n", redisTests[j].name);
+                    printf("[ok] Test - %s\n", siderTests[j].name);
                 }
             }
 
@@ -7068,7 +7068,7 @@ int main(int argc, char **argv) {
 
             return failed_num == 0 ? 0 : 1;
         } else {
-            redisTestProc *proc = getTestProcByName(argv[2]);
+            siderTestProc *proc = getTestProcByName(argv[2]);
             if (!proc) return -1; /* test not found */
             return proc(argc,argv,flags);
         }
@@ -7082,7 +7082,7 @@ int main(int argc, char **argv) {
     spt_init(argc, argv);
 #endif
     tzset(); /* Populates 'timezone' global. */
-    zmalloc_set_oom_handler(redisOutOfMemoryHandler);
+    zmalloc_set_oom_handler(siderOutOfMemoryHandler);
 
     /* To achieve entropy, in case of containers, their time() and getpid() can
      * be the same. But value of tv_usec is fast enough to make the difference */
@@ -7126,13 +7126,13 @@ int main(int argc, char **argv) {
         initSentinel();
     }
 
-    /* Check if we need to start in redis-check-rdb/aof mode. We just execute
-     * the program main. However the program is part of the Redis executable
+    /* Check if we need to start in sider-check-rdb/aof mode. We just execute
+     * the program main. However the program is part of the Sider executable
      * so that we can easily execute an RDB check on loading errors. */
-    if (strstr(exec_name,"redis-check-rdb") != NULL)
-        redis_check_rdb_main(argc,argv,NULL);
-    else if (strstr(exec_name,"redis-check-aof") != NULL)
-        redis_check_aof_main(argc,argv);
+    if (strstr(exec_name,"sider-check-rdb") != NULL)
+        sider_check_rdb_main(argc,argv,NULL);
+    else if (strstr(exec_name,"sider-check-aof") != NULL)
+        sider_check_aof_main(argc,argv);
 
     if (argc >= 2) {
         j = 1; /* First option to parse in argv[] */
@@ -7149,7 +7149,7 @@ int main(int argc, char **argv) {
                 exit(0);
             } else {
                 fprintf(stderr,"Please specify the amount of memory to test in megabytes.\n");
-                fprintf(stderr,"Example: ./redis-server --test-memory 4096\n\n");
+                fprintf(stderr,"Example: ./sider-server --test-memory 4096\n\n");
                 exit(1);
             }
         } if (strcmp(argv[1], "--check-system") == 0) {
@@ -7267,7 +7267,7 @@ int main(int argc, char **argv) {
             serverLog(LL_WARNING, "Failed to test the kernel for a bug that could lead to data corruption during background save. "
                                   "Your system could be affected, please report this error.");
         if (!checkIgnoreWarning("ARM64-COW-BUG")) {
-            serverLog(LL_WARNING,"Redis will now exit to prevent data corruption. "
+            serverLog(LL_WARNING,"Sider will now exit to prevent data corruption. "
                                  "Note that it is possible to suppress this warning by setting the following config: ignore-warnings ARM64-COW-BUG");
             exit(1);
         }
@@ -7276,29 +7276,29 @@ int main(int argc, char **argv) {
 #endif /* __linux__ */
 
     /* Daemonize if needed */
-    server.supervised = redisIsSupervised(server.supervised_mode);
+    server.supervised = siderIsSupervised(server.supervised_mode);
     int background = server.daemonize && !server.supervised;
     if (background) daemonize();
 
-    serverLog(LL_NOTICE, "oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo");
+    serverLog(LL_NOTICE, "oO0OoO0OoO0Oo Sider is starting oO0OoO0OoO0Oo");
     serverLog(LL_NOTICE,
-        "Redis version=%s, bits=%d, commit=%s, modified=%d, pid=%d, just started",
+        "Sider version=%s, bits=%d, commit=%s, modified=%d, pid=%d, just started",
             REDIS_VERSION,
             (sizeof(long) == 8) ? 64 : 32,
-            redisGitSHA1(),
-            strtol(redisGitDirty(),NULL,10) > 0,
+            siderGitSHA1(),
+            strtol(siderGitDirty(),NULL,10) > 0,
             (int)getpid());
 
     if (argc == 1) {
-        serverLog(LL_WARNING, "Warning: no config file specified, using the default config. In order to specify a config file use %s /path/to/redis.conf", argv[0]);
+        serverLog(LL_WARNING, "Warning: no config file specified, using the default config. In order to specify a config file use %s /path/to/sider.conf", argv[0]);
     } else {
         serverLog(LL_NOTICE, "Configuration loaded");
     }
 
     initServer();
     if (background || server.pidfile) createPidFile();
-    if (server.set_proc_title) redisSetProcTitle(NULL);
-    redisAsciiArt();
+    if (server.set_proc_title) siderSetProcTitle(NULL);
+    siderAsciiArt();
     checkTcpBacklogSettings();
     if (server.cluster_enabled) {
         clusterInit();
@@ -7335,17 +7335,17 @@ int main(int argc, char **argv) {
 
         if (server.supervised_mode == SUPERVISED_SYSTEMD) {
             if (!server.masterhost) {
-                redisCommunicateSystemd("STATUS=Ready to accept connections\n");
+                siderCommunicateSystemd("STATUS=Ready to accept connections\n");
             } else {
-                redisCommunicateSystemd("STATUS=Ready to accept connections in read-only mode. Waiting for MASTER <-> REPLICA sync\n");
+                siderCommunicateSystemd("STATUS=Ready to accept connections in read-only mode. Waiting for MASTER <-> REPLICA sync\n");
             }
-            redisCommunicateSystemd("READY=1\n");
+            siderCommunicateSystemd("READY=1\n");
         }
     } else {
         sentinelIsRunning();
         if (server.supervised_mode == SUPERVISED_SYSTEMD) {
-            redisCommunicateSystemd("STATUS=Ready to accept connections\n");
-            redisCommunicateSystemd("READY=1\n");
+            siderCommunicateSystemd("STATUS=Ready to accept connections\n");
+            siderCommunicateSystemd("READY=1\n");
         }
     }
 
@@ -7354,7 +7354,7 @@ int main(int argc, char **argv) {
         serverLog(LL_WARNING,"WARNING: You specified a maxmemory value that is less than 1MB (current value is %llu bytes). Are you sure this is what you really want?", server.maxmemory);
     }
 
-    redisSetCpuAffinity(server.server_cpulist);
+    siderSetCpuAffinity(server.server_cpulist);
     setOOMScoreAdj(-1);
 
     aeMain(server.el);

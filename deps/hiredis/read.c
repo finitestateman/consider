@@ -4,15 +4,15 @@
  *
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -50,7 +50,7 @@
 /* Initial size of our nested reply stack and how much we grow it when needd */
 #define REDIS_READER_STACK_SIZE 9
 
-static void __redisReaderSetError(redisReader *r, int type, const char *str) {
+static void __siderReaderSetError(siderReader *r, int type, const char *str) {
     size_t len;
 
     if (r->reply != NULL && r->fn && r->fn->freeObject) {
@@ -98,20 +98,20 @@ static size_t chrtos(char *buf, size_t size, char byte) {
     return len;
 }
 
-static void __redisReaderSetErrorProtocolByte(redisReader *r, char byte) {
+static void __siderReaderSetErrorProtocolByte(siderReader *r, char byte) {
     char cbuf[8], sbuf[128];
 
     chrtos(cbuf,sizeof(cbuf),byte);
     snprintf(sbuf,sizeof(sbuf),
         "Protocol error, got %s as reply type byte", cbuf);
-    __redisReaderSetError(r,REDIS_ERR_PROTOCOL,sbuf);
+    __siderReaderSetError(r,REDIS_ERR_PROTOCOL,sbuf);
 }
 
-static void __redisReaderSetErrorOOM(redisReader *r) {
-    __redisReaderSetError(r,REDIS_ERR_OOM,"Out of memory");
+static void __siderReaderSetErrorOOM(siderReader *r) {
+    __siderReaderSetError(r,REDIS_ERR_OOM,"Out of memory");
 }
 
-static char *readBytes(redisReader *r, unsigned int bytes) {
+static char *readBytes(siderReader *r, unsigned int bytes) {
     char *p;
     if (r->len-r->pos >= bytes) {
         p = r->buf+r->pos;
@@ -222,7 +222,7 @@ static int string2ll(const char *s, size_t slen, long long *value) {
     return REDIS_OK;
 }
 
-static char *readLine(redisReader *r, int *_len) {
+static char *readLine(siderReader *r, int *_len) {
     char *p, *s;
     int len;
 
@@ -237,8 +237,8 @@ static char *readLine(redisReader *r, int *_len) {
     return NULL;
 }
 
-static void moveToNextTask(redisReader *r) {
-    redisReadTask *cur, *prv;
+static void moveToNextTask(siderReader *r) {
+    siderReadTask *cur, *prv;
     while (r->ridx >= 0) {
         /* Return a.s.a.p. when the stack is now empty. */
         if (r->ridx == 0) {
@@ -265,8 +265,8 @@ static void moveToNextTask(redisReader *r) {
     }
 }
 
-static int processLineItem(redisReader *r) {
-    redisReadTask *cur = r->task[r->ridx];
+static int processLineItem(siderReader *r) {
+    siderReadTask *cur = r->task[r->ridx];
     void *obj;
     char *p;
     int len;
@@ -276,7 +276,7 @@ static int processLineItem(redisReader *r) {
             long long v;
 
             if (string2ll(p, len, &v) == REDIS_ERR) {
-                __redisReaderSetError(r,REDIS_ERR_PROTOCOL,
+                __siderReaderSetError(r,REDIS_ERR_PROTOCOL,
                         "Bad integer value");
                 return REDIS_ERR;
             }
@@ -291,7 +291,7 @@ static int processLineItem(redisReader *r) {
             double d;
 
             if ((size_t)len >= sizeof(buf)) {
-                __redisReaderSetError(r,REDIS_ERR_PROTOCOL,
+                __siderReaderSetError(r,REDIS_ERR_PROTOCOL,
                         "Double value is too large");
                 return REDIS_ERR;
             }
@@ -313,7 +313,7 @@ static int processLineItem(redisReader *r) {
                  * etc. We explicity handle our two allowed infinite cases and NaN
                  * above, so strtod() should only result in finite values. */
                 if (buf[0] == '\0' || eptr != &buf[len] || !isfinite(d)) {
-                    __redisReaderSetError(r,REDIS_ERR_PROTOCOL,
+                    __siderReaderSetError(r,REDIS_ERR_PROTOCOL,
                             "Bad double value");
                     return REDIS_ERR;
                 }
@@ -326,7 +326,7 @@ static int processLineItem(redisReader *r) {
             }
         } else if (cur->type == REDIS_REPLY_NIL) {
             if (len != 0) {
-                __redisReaderSetError(r,REDIS_ERR_PROTOCOL,
+                __siderReaderSetError(r,REDIS_ERR_PROTOCOL,
                         "Bad nil value");
                 return REDIS_ERR;
             }
@@ -339,7 +339,7 @@ static int processLineItem(redisReader *r) {
             int bval;
 
             if (len != 1 || !strchr("tTfF", p[0])) {
-                __redisReaderSetError(r,REDIS_ERR_PROTOCOL,
+                __siderReaderSetError(r,REDIS_ERR_PROTOCOL,
                         "Bad bool value");
                 return REDIS_ERR;
             }
@@ -356,7 +356,7 @@ static int processLineItem(redisReader *r) {
                 /* XXX Consider: Allow leading '+'? Error on leading '0's? */
                 if (i == 0 && p[0] == '-') continue;
                 if (p[i] < '0' || p[i] > '9') {
-                    __redisReaderSetError(r,REDIS_ERR_PROTOCOL,
+                    __siderReaderSetError(r,REDIS_ERR_PROTOCOL,
                             "Bad bignum value");
                     return REDIS_ERR;
                 }
@@ -369,7 +369,7 @@ static int processLineItem(redisReader *r) {
             /* Type will be error or status. */
             for (int i = 0; i < len; i++) {
                 if (p[i] == '\r' || p[i] == '\n') {
-                    __redisReaderSetError(r,REDIS_ERR_PROTOCOL,
+                    __siderReaderSetError(r,REDIS_ERR_PROTOCOL,
                             "Bad simple string value");
                     return REDIS_ERR;
                 }
@@ -381,7 +381,7 @@ static int processLineItem(redisReader *r) {
         }
 
         if (obj == NULL) {
-            __redisReaderSetErrorOOM(r);
+            __siderReaderSetErrorOOM(r);
             return REDIS_ERR;
         }
 
@@ -394,8 +394,8 @@ static int processLineItem(redisReader *r) {
     return REDIS_ERR;
 }
 
-static int processBulkItem(redisReader *r) {
-    redisReadTask *cur = r->task[r->ridx];
+static int processBulkItem(siderReader *r) {
+    siderReadTask *cur = r->task[r->ridx];
     void *obj = NULL;
     char *p, *s;
     long long len;
@@ -409,13 +409,13 @@ static int processBulkItem(redisReader *r) {
         bytelen = s-(r->buf+r->pos)+2; /* include \r\n */
 
         if (string2ll(p, bytelen - 2, &len) == REDIS_ERR) {
-            __redisReaderSetError(r,REDIS_ERR_PROTOCOL,
+            __siderReaderSetError(r,REDIS_ERR_PROTOCOL,
                     "Bad bulk string length");
             return REDIS_ERR;
         }
 
         if (len < -1 || (LLONG_MAX > SIZE_MAX && len > (long long)SIZE_MAX)) {
-            __redisReaderSetError(r,REDIS_ERR_PROTOCOL,
+            __siderReaderSetError(r,REDIS_ERR_PROTOCOL,
                     "Bulk string length out of range");
             return REDIS_ERR;
         }
@@ -434,7 +434,7 @@ static int processBulkItem(redisReader *r) {
                 if ((cur->type == REDIS_REPLY_VERB && len < 4) ||
                     (cur->type == REDIS_REPLY_VERB && s[5] != ':'))
                 {
-                    __redisReaderSetError(r,REDIS_ERR_PROTOCOL,
+                    __siderReaderSetError(r,REDIS_ERR_PROTOCOL,
                             "Verbatim string 4 bytes of content type are "
                             "missing or incorrectly encoded.");
                     return REDIS_ERR;
@@ -450,7 +450,7 @@ static int processBulkItem(redisReader *r) {
         /* Proceed when obj was created. */
         if (success) {
             if (obj == NULL) {
-                __redisReaderSetErrorOOM(r);
+                __siderReaderSetErrorOOM(r);
                 return REDIS_ERR;
             }
 
@@ -466,8 +466,8 @@ static int processBulkItem(redisReader *r) {
     return REDIS_ERR;
 }
 
-static int redisReaderGrow(redisReader *r) {
-    redisReadTask **aux;
+static int siderReaderGrow(siderReader *r) {
+    siderReadTask **aux;
     int newlen;
 
     /* Grow our stack size */
@@ -487,26 +487,26 @@ static int redisReaderGrow(redisReader *r) {
 
     return REDIS_OK;
 oom:
-    __redisReaderSetErrorOOM(r);
+    __siderReaderSetErrorOOM(r);
     return REDIS_ERR;
 }
 
 /* Process the array, map and set types. */
-static int processAggregateItem(redisReader *r) {
-    redisReadTask *cur = r->task[r->ridx];
+static int processAggregateItem(siderReader *r) {
+    siderReadTask *cur = r->task[r->ridx];
     void *obj;
     char *p;
     long long elements;
     int root = 0, len;
 
     if (r->ridx == r->tasks - 1) {
-        if (redisReaderGrow(r) == REDIS_ERR)
+        if (siderReaderGrow(r) == REDIS_ERR)
             return REDIS_ERR;
     }
 
     if ((p = readLine(r,&len)) != NULL) {
         if (string2ll(p, len, &elements) == REDIS_ERR) {
-            __redisReaderSetError(r,REDIS_ERR_PROTOCOL,
+            __siderReaderSetError(r,REDIS_ERR_PROTOCOL,
                     "Bad multi-bulk length");
             return REDIS_ERR;
         }
@@ -516,7 +516,7 @@ static int processAggregateItem(redisReader *r) {
         if (elements < -1 || (LLONG_MAX > SIZE_MAX && elements > SIZE_MAX) ||
             (r->maxelements > 0 && elements > r->maxelements))
         {
-            __redisReaderSetError(r,REDIS_ERR_PROTOCOL,
+            __siderReaderSetError(r,REDIS_ERR_PROTOCOL,
                     "Multi-bulk length out of range");
             return REDIS_ERR;
         }
@@ -528,7 +528,7 @@ static int processAggregateItem(redisReader *r) {
                 obj = (void*)REDIS_REPLY_NIL;
 
             if (obj == NULL) {
-                __redisReaderSetErrorOOM(r);
+                __siderReaderSetErrorOOM(r);
                 return REDIS_ERR;
             }
 
@@ -542,7 +542,7 @@ static int processAggregateItem(redisReader *r) {
                 obj = (void*)(uintptr_t)cur->type;
 
             if (obj == NULL) {
-                __redisReaderSetErrorOOM(r);
+                __siderReaderSetErrorOOM(r);
                 return REDIS_ERR;
             }
 
@@ -570,8 +570,8 @@ static int processAggregateItem(redisReader *r) {
     return REDIS_ERR;
 }
 
-static int processItem(redisReader *r) {
-    redisReadTask *cur = r->task[r->ridx];
+static int processItem(siderReader *r) {
+    siderReadTask *cur = r->task[r->ridx];
     char *p;
 
     /* check if we need to read type */
@@ -618,7 +618,7 @@ static int processItem(redisReader *r) {
                 cur->type = REDIS_REPLY_BIGNUM;
                 break;
             default:
-                __redisReaderSetErrorProtocolByte(r,*p);
+                __siderReaderSetErrorProtocolByte(r,*p);
                 return REDIS_ERR;
             }
         } else {
@@ -651,10 +651,10 @@ static int processItem(redisReader *r) {
     }
 }
 
-redisReader *redisReaderCreateWithFunctions(redisReplyObjectFunctions *fn) {
-    redisReader *r;
+siderReader *siderReaderCreateWithFunctions(siderReplyObjectFunctions *fn) {
+    siderReader *r;
 
-    r = hi_calloc(1,sizeof(redisReader));
+    r = hi_calloc(1,sizeof(siderReader));
     if (r == NULL)
         return NULL;
 
@@ -679,11 +679,11 @@ redisReader *redisReaderCreateWithFunctions(redisReplyObjectFunctions *fn) {
 
     return r;
 oom:
-    redisReaderFree(r);
+    siderReaderFree(r);
     return NULL;
 }
 
-void redisReaderFree(redisReader *r) {
+void siderReaderFree(siderReader *r) {
     if (r == NULL)
         return;
 
@@ -703,7 +703,7 @@ void redisReaderFree(redisReader *r) {
     hi_free(r);
 }
 
-int redisReaderFeed(redisReader *r, const char *buf, size_t len) {
+int siderReaderFeed(siderReader *r, const char *buf, size_t len) {
     hisds newbuf;
 
     /* Return early when this reader is in an erroneous state. */
@@ -730,11 +730,11 @@ int redisReaderFeed(redisReader *r, const char *buf, size_t len) {
 
     return REDIS_OK;
 oom:
-    __redisReaderSetErrorOOM(r);
+    __siderReaderSetErrorOOM(r);
     return REDIS_ERR;
 }
 
-int redisReaderGetReply(redisReader *r, void **reply) {
+int siderReaderGetReply(siderReader *r, void **reply) {
     /* Default target pointer to NULL. */
     if (reply != NULL)
         *reply = NULL;

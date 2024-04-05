@@ -35,7 +35,7 @@ test "Manual failover works" {
         }
     }
     set addr [S 0 SENTINEL GET-MASTER-ADDR-BY-NAME mymaster]
-    set master_id [get_instance_id_by_port redis [lindex $addr 1]]
+    set master_id [get_instance_id_by_port sider [lindex $addr 1]]
 }
 
 test "New master [join $addr {:}] role matches" {
@@ -43,12 +43,12 @@ test "New master [join $addr {:}] role matches" {
 }
 
 test "All the other slaves now point to the new master" {
-    foreach_redis_id id {
+    foreach_sider_id id {
         if {$id != $master_id && $id != 0} {
             wait_for_condition 1000 50 {
                 [RI $id master_port] == [lindex $addr 1]
             } else {
-                fail "Redis ID $id not configured to replicate with new master"
+                fail "Sider ID $id not configured to replicate with new master"
             }
         }
     }

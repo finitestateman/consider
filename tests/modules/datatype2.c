@@ -45,7 +45,7 @@
  *                               dict
  * 
  * 
- * Keys in redis database:
+ * Keys in sider database:
  * 
  *                                ┌───────┐
  *                                │ size  │
@@ -64,7 +64,7 @@
  *     │ k3  │  ───┼─┐                             │ k2  │  ───┼─┐
  *     │     │     │ │                             │     │     │ │
  *     └─────┴─────┘ │            ┌───────┐        └─────┴─────┘ │            ┌───────┐
- *      redis db[0]  │            │ size  │          redis db[1] │            │ size  │
+ *      sider db[0]  │            │ size  │          sider db[1] │            │ size  │
  *                   └───────────►│ used  │                      └───────────►│ used  │
  *                                │ mask  │                                   │ mask  │
  *                                └───────┘                                   └───────┘
@@ -72,17 +72,17 @@
  *
  **/
 
-#include "redismodule.h"
+#include "sidermodule.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdint.h>
 
-static RedisModuleType *MemAllocType;
+static SiderModuleType *MemAllocType;
 
 #define MAX_DB 16
-RedisModuleDict *mem_pool[MAX_DB];
+SiderModuleDict *mem_pool[MAX_DB];
 typedef struct MemAllocObject {
     long long size;
     long long used;
@@ -90,7 +90,7 @@ typedef struct MemAllocObject {
 } MemAllocObject;
 
 MemAllocObject *createMemAllocObject(void) {
-    MemAllocObject *o = RedisModule_Calloc(1, sizeof(*o));
+    MemAllocObject *o = SiderModule_Calloc(1, sizeof(*o));
     return o;
 }
 
@@ -104,10 +104,10 @@ struct MemBlock {
 void MemBlockFree(struct MemBlock *head) {
     if (head) {
         struct MemBlock *block = head->next, *next;
-        RedisModule_Free(head);
+        SiderModule_Free(head);
         while (block) {
             next = block->next;
-            RedisModule_Free(block);
+            SiderModule_Free(block);
             block = next;
         }
     }
@@ -117,10 +117,10 @@ struct MemBlock *MemBlockCreate(long long num) {
         return NULL;
     }
 
-    struct MemBlock *head = RedisModule_Calloc(1, sizeof(struct MemBlock));
+    struct MemBlock *head = SiderModule_Calloc(1, sizeof(struct MemBlock));
     struct MemBlock *block = head;
     while (--num) {
-        block->next = RedisModule_Calloc(1, sizeof(struct MemBlock));
+        block->next = SiderModule_Calloc(1, sizeof(struct MemBlock));
         block = block->next;
     }
 
@@ -170,27 +170,27 @@ int MemBlockRead(struct MemBlock *head, long long block_index, char *data, size_
     return r_size;
 }
 
-void MemPoolFreeDb(RedisModuleCtx *ctx, int dbid) {
-    RedisModuleString *key;
+void MemPoolFreeDb(SiderModuleCtx *ctx, int dbid) {
+    SiderModuleString *key;
     void *tdata;
-    RedisModuleDictIter *iter = RedisModule_DictIteratorStartC(mem_pool[dbid], "^", NULL, 0);
-    while((key = RedisModule_DictNext(ctx, iter, &tdata)) != NULL) {
+    SiderModuleDictIter *iter = SiderModule_DictIteratorStartC(mem_pool[dbid], "^", NULL, 0);
+    while((key = SiderModule_DictNext(ctx, iter, &tdata)) != NULL) {
         MemBlockFree((struct MemBlock *)tdata);
     }
-    RedisModule_DictIteratorStop(iter);
-    RedisModule_FreeDict(NULL, mem_pool[dbid]);
-    mem_pool[dbid] = RedisModule_CreateDict(NULL);
+    SiderModule_DictIteratorStop(iter);
+    SiderModule_FreeDict(NULL, mem_pool[dbid]);
+    mem_pool[dbid] = SiderModule_CreateDict(NULL);
 }
 
 struct MemBlock *MemBlockClone(const struct MemBlock *head) {
     struct MemBlock *newhead = NULL;
     if (head) {
-        newhead = RedisModule_Calloc(1, sizeof(struct MemBlock));
+        newhead = SiderModule_Calloc(1, sizeof(struct MemBlock));
         memcpy(newhead->block, head->block, BLOCK_SIZE);
         struct MemBlock *newblock = newhead;
         const struct MemBlock *oldblock = head->next;
         while (oldblock) {
-            newblock->next = RedisModule_Calloc(1, sizeof(struct MemBlock));
+            newblock->next = SiderModule_Calloc(1, sizeof(struct MemBlock));
             newblock = newblock->next;
             memcpy(newblock->block, oldblock->block, BLOCK_SIZE);
             oldblock = oldblock->next;
@@ -201,26 +201,26 @@ struct MemBlock *MemBlockClone(const struct MemBlock *head) {
 }
 
 /*---------------------------- event handler ------------------------------------*/
-void swapDbCallback(RedisModuleCtx *ctx, RedisModuleEvent e, uint64_t sub, void *data) {
+void swapDbCallback(SiderModuleCtx *ctx, SiderModuleEvent e, uint64_t sub, void *data) {
     REDISMODULE_NOT_USED(ctx);
     REDISMODULE_NOT_USED(e);
     REDISMODULE_NOT_USED(sub);
 
-    RedisModuleSwapDbInfo *ei = data;
+    SiderModuleSwapDbInfo *ei = data;
 
     // swap
-    RedisModuleDict *tmp = mem_pool[ei->dbnum_first];
+    SiderModuleDict *tmp = mem_pool[ei->dbnum_first];
     mem_pool[ei->dbnum_first] = mem_pool[ei->dbnum_second];
     mem_pool[ei->dbnum_second] = tmp;
 }
 
-void flushdbCallback(RedisModuleCtx *ctx, RedisModuleEvent e, uint64_t sub, void *data) {
+void flushdbCallback(SiderModuleCtx *ctx, SiderModuleEvent e, uint64_t sub, void *data) {
     REDISMODULE_NOT_USED(ctx);
     REDISMODULE_NOT_USED(e);
     int i;
-    RedisModuleFlushInfo *fi = data;
+    SiderModuleFlushInfo *fi = data;
 
-    RedisModule_AutoMemory(ctx);
+    SiderModule_AutoMemory(ctx);
 
     if (sub == REDISMODULE_SUBEVENT_FLUSHDB_START) {
         if (fi->dbnum != -1) {
@@ -236,71 +236,71 @@ void flushdbCallback(RedisModuleCtx *ctx, RedisModuleEvent e, uint64_t sub, void
 /*---------------------------- command implementation ------------------------------------*/
 
 /* MEM.ALLOC key block_num */
-int MemAlloc_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
-    RedisModule_AutoMemory(ctx);  
+int MemAlloc_SiderCommand(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
+    SiderModule_AutoMemory(ctx);  
 
     if (argc != 3) {
-        return RedisModule_WrongArity(ctx);
+        return SiderModule_WrongArity(ctx);
     }
 
     long long block_num;
-    if ((RedisModule_StringToLongLong(argv[2], &block_num) != REDISMODULE_OK) || block_num <= 0) {
-        return RedisModule_ReplyWithError(ctx, "ERR invalid block_num: must be a value greater than 0");
+    if ((SiderModule_StringToLongLong(argv[2], &block_num) != REDISMODULE_OK) || block_num <= 0) {
+        return SiderModule_ReplyWithError(ctx, "ERR invalid block_num: must be a value greater than 0");
     }
 
-    RedisModuleKey *key = RedisModule_OpenKey(ctx, argv[1], REDISMODULE_READ | REDISMODULE_WRITE);
-    int type = RedisModule_KeyType(key);
-    if (type != REDISMODULE_KEYTYPE_EMPTY && RedisModule_ModuleTypeGetType(key) != MemAllocType) {
-        return RedisModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
+    SiderModuleKey *key = SiderModule_OpenKey(ctx, argv[1], REDISMODULE_READ | REDISMODULE_WRITE);
+    int type = SiderModule_KeyType(key);
+    if (type != REDISMODULE_KEYTYPE_EMPTY && SiderModule_ModuleTypeGetType(key) != MemAllocType) {
+        return SiderModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
     }
 
     MemAllocObject *o;
     if (type == REDISMODULE_KEYTYPE_EMPTY) {
         o = createMemAllocObject();
-        RedisModule_ModuleTypeSetValue(key, MemAllocType, o);
+        SiderModule_ModuleTypeSetValue(key, MemAllocType, o);
     } else {
-        o = RedisModule_ModuleTypeGetValue(key);
+        o = SiderModule_ModuleTypeGetValue(key);
     }
 
     struct MemBlock *mem = MemBlockCreate(block_num);
-    RedisModule_Assert(mem != NULL);
-    RedisModule_DictSet(mem_pool[RedisModule_GetSelectedDb(ctx)], argv[1], mem);
+    SiderModule_Assert(mem != NULL);
+    SiderModule_DictSet(mem_pool[SiderModule_GetSelectedDb(ctx)], argv[1], mem);
     o->size = block_num;
     o->used = 0;
     o->mask = 0;
 
-    RedisModule_ReplyWithLongLong(ctx, block_num);
-    RedisModule_ReplicateVerbatim(ctx);
+    SiderModule_ReplyWithLongLong(ctx, block_num);
+    SiderModule_ReplicateVerbatim(ctx);
     return REDISMODULE_OK;
 }
 
 /* MEM.FREE key */
-int MemFree_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
-    RedisModule_AutoMemory(ctx);  
+int MemFree_SiderCommand(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
+    SiderModule_AutoMemory(ctx);  
 
     if (argc != 2) {
-        return RedisModule_WrongArity(ctx);
+        return SiderModule_WrongArity(ctx);
     }
 
-    RedisModuleKey *key = RedisModule_OpenKey(ctx, argv[1], REDISMODULE_READ);
-    int type = RedisModule_KeyType(key);
-    if (type != REDISMODULE_KEYTYPE_EMPTY && RedisModule_ModuleTypeGetType(key) != MemAllocType) {
-        return RedisModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
+    SiderModuleKey *key = SiderModule_OpenKey(ctx, argv[1], REDISMODULE_READ);
+    int type = SiderModule_KeyType(key);
+    if (type != REDISMODULE_KEYTYPE_EMPTY && SiderModule_ModuleTypeGetType(key) != MemAllocType) {
+        return SiderModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
     }
 
     int ret = 0;
     MemAllocObject *o;
     if (type == REDISMODULE_KEYTYPE_EMPTY) {
-        RedisModule_ReplyWithLongLong(ctx, ret);
+        SiderModule_ReplyWithLongLong(ctx, ret);
         return REDISMODULE_OK;
     } else {
-        o = RedisModule_ModuleTypeGetValue(key);
+        o = SiderModule_ModuleTypeGetValue(key);
     }
 
     int nokey;
-    struct MemBlock *mem = (struct MemBlock *)RedisModule_DictGet(mem_pool[RedisModule_GetSelectedDb(ctx)], argv[1], &nokey);
+    struct MemBlock *mem = (struct MemBlock *)SiderModule_DictGet(mem_pool[SiderModule_GetSelectedDb(ctx)], argv[1], &nokey);
     if (!nokey && mem) {
-        RedisModule_DictDel(mem_pool[RedisModule_GetSelectedDb(ctx)], argv[1], NULL);
+        SiderModule_DictDel(mem_pool[SiderModule_GetSelectedDb(ctx)], argv[1], NULL);
         MemBlockFree(mem);
         o->used = 0;
         o->size = 0;
@@ -308,174 +308,174 @@ int MemFree_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc
         ret = 1;
     }
 
-    RedisModule_ReplyWithLongLong(ctx, ret);
-    RedisModule_ReplicateVerbatim(ctx);
+    SiderModule_ReplyWithLongLong(ctx, ret);
+    SiderModule_ReplicateVerbatim(ctx);
     return REDISMODULE_OK;
 }
 
 /* MEM.WRITE key block_index data */
-int MemWrite_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
-    RedisModule_AutoMemory(ctx);  
+int MemWrite_SiderCommand(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
+    SiderModule_AutoMemory(ctx);  
 
     if (argc != 4) {
-        return RedisModule_WrongArity(ctx);
+        return SiderModule_WrongArity(ctx);
     }
 
     long long block_index;
-    if ((RedisModule_StringToLongLong(argv[2], &block_index) != REDISMODULE_OK) || block_index < 0) {
-        return RedisModule_ReplyWithError(ctx, "ERR invalid block_index: must be a value greater than 0");
+    if ((SiderModule_StringToLongLong(argv[2], &block_index) != REDISMODULE_OK) || block_index < 0) {
+        return SiderModule_ReplyWithError(ctx, "ERR invalid block_index: must be a value greater than 0");
     }
 
-    RedisModuleKey *key = RedisModule_OpenKey(ctx, argv[1], REDISMODULE_READ | REDISMODULE_WRITE);
-    int type = RedisModule_KeyType(key);
-    if (type != REDISMODULE_KEYTYPE_EMPTY && RedisModule_ModuleTypeGetType(key) != MemAllocType) {
-        return RedisModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
+    SiderModuleKey *key = SiderModule_OpenKey(ctx, argv[1], REDISMODULE_READ | REDISMODULE_WRITE);
+    int type = SiderModule_KeyType(key);
+    if (type != REDISMODULE_KEYTYPE_EMPTY && SiderModule_ModuleTypeGetType(key) != MemAllocType) {
+        return SiderModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
     }
 
     MemAllocObject *o;
     if (type == REDISMODULE_KEYTYPE_EMPTY) {
-        return RedisModule_ReplyWithError(ctx, "ERR Memory has not been allocated");
+        return SiderModule_ReplyWithError(ctx, "ERR Memory has not been allocated");
     } else {
-        o = RedisModule_ModuleTypeGetValue(key);
+        o = SiderModule_ModuleTypeGetValue(key);
     }
 
     if (o->mask & (1UL << block_index)) {
-        return RedisModule_ReplyWithError(ctx, "ERR block is busy");
+        return SiderModule_ReplyWithError(ctx, "ERR block is busy");
     }
 
     int ret = 0;
     int nokey;
-    struct MemBlock *mem = (struct MemBlock *)RedisModule_DictGet(mem_pool[RedisModule_GetSelectedDb(ctx)], argv[1], &nokey);
+    struct MemBlock *mem = (struct MemBlock *)SiderModule_DictGet(mem_pool[SiderModule_GetSelectedDb(ctx)], argv[1], &nokey);
     if (!nokey && mem) {
         size_t len;
-        const char *buf = RedisModule_StringPtrLen(argv[3], &len);
+        const char *buf = SiderModule_StringPtrLen(argv[3], &len);
         ret = MemBlockWrite(mem, block_index, buf, len);
         o->mask |= (1UL << block_index);
         o->used++;
     }
 
-    RedisModule_ReplyWithLongLong(ctx, ret);
-    RedisModule_ReplicateVerbatim(ctx);
+    SiderModule_ReplyWithLongLong(ctx, ret);
+    SiderModule_ReplicateVerbatim(ctx);
     return REDISMODULE_OK;
 }
 
 /* MEM.READ key block_index */
-int MemRead_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
-    RedisModule_AutoMemory(ctx);  
+int MemRead_SiderCommand(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
+    SiderModule_AutoMemory(ctx);  
 
     if (argc != 3) {
-        return RedisModule_WrongArity(ctx);
+        return SiderModule_WrongArity(ctx);
     }
 
     long long block_index;
-    if ((RedisModule_StringToLongLong(argv[2], &block_index) != REDISMODULE_OK) || block_index < 0) {
-        return RedisModule_ReplyWithError(ctx, "ERR invalid block_index: must be a value greater than 0");
+    if ((SiderModule_StringToLongLong(argv[2], &block_index) != REDISMODULE_OK) || block_index < 0) {
+        return SiderModule_ReplyWithError(ctx, "ERR invalid block_index: must be a value greater than 0");
     }
 
-    RedisModuleKey *key = RedisModule_OpenKey(ctx, argv[1], REDISMODULE_READ);
-    int type = RedisModule_KeyType(key);
-    if (type != REDISMODULE_KEYTYPE_EMPTY && RedisModule_ModuleTypeGetType(key) != MemAllocType) {
-        return RedisModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
+    SiderModuleKey *key = SiderModule_OpenKey(ctx, argv[1], REDISMODULE_READ);
+    int type = SiderModule_KeyType(key);
+    if (type != REDISMODULE_KEYTYPE_EMPTY && SiderModule_ModuleTypeGetType(key) != MemAllocType) {
+        return SiderModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
     }
 
     MemAllocObject *o;
     if (type == REDISMODULE_KEYTYPE_EMPTY) {
-        return RedisModule_ReplyWithError(ctx, "ERR Memory has not been allocated");
+        return SiderModule_ReplyWithError(ctx, "ERR Memory has not been allocated");
     } else {
-        o = RedisModule_ModuleTypeGetValue(key);
+        o = SiderModule_ModuleTypeGetValue(key);
     }
 
     if (!(o->mask & (1UL << block_index))) {
-        return RedisModule_ReplyWithNull(ctx);
+        return SiderModule_ReplyWithNull(ctx);
     }
 
     int nokey;
-    struct MemBlock *mem = (struct MemBlock *)RedisModule_DictGet(mem_pool[RedisModule_GetSelectedDb(ctx)], argv[1], &nokey);
-    RedisModule_Assert(nokey == 0 && mem != NULL);
+    struct MemBlock *mem = (struct MemBlock *)SiderModule_DictGet(mem_pool[SiderModule_GetSelectedDb(ctx)], argv[1], &nokey);
+    SiderModule_Assert(nokey == 0 && mem != NULL);
      
     char buf[BLOCK_SIZE];
     MemBlockRead(mem, block_index, buf, sizeof(buf));
     
     /* Assuming that the contents are all c-style strings */
-    RedisModule_ReplyWithStringBuffer(ctx, buf, strlen(buf));
+    SiderModule_ReplyWithStringBuffer(ctx, buf, strlen(buf));
     return REDISMODULE_OK;
 }
 
 /* MEM.USAGE dbid */
-int MemUsage_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
-    RedisModule_AutoMemory(ctx);  
+int MemUsage_SiderCommand(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
+    SiderModule_AutoMemory(ctx);  
 
     if (argc != 2) {
-        return RedisModule_WrongArity(ctx);
+        return SiderModule_WrongArity(ctx);
     }
 
     long long dbid;
-    if ((RedisModule_StringToLongLong(argv[1], (long long *)&dbid) != REDISMODULE_OK)) {
-        return RedisModule_ReplyWithError(ctx, "ERR invalid value: must be a integer");
+    if ((SiderModule_StringToLongLong(argv[1], (long long *)&dbid) != REDISMODULE_OK)) {
+        return SiderModule_ReplyWithError(ctx, "ERR invalid value: must be a integer");
     }
 
     if (dbid < 0 || dbid >= MAX_DB) {
-        return RedisModule_ReplyWithError(ctx, "ERR dbid out of range");
+        return SiderModule_ReplyWithError(ctx, "ERR dbid out of range");
     }
 
 
     long long size = 0, used = 0;
 
     void *data;
-    RedisModuleString *key;
-    RedisModuleDictIter *iter = RedisModule_DictIteratorStartC(mem_pool[dbid], "^", NULL, 0);
-    while((key = RedisModule_DictNext(ctx, iter, &data)) != NULL) {
-        int dbbackup = RedisModule_GetSelectedDb(ctx);
-        RedisModule_SelectDb(ctx, dbid);
-        RedisModuleKey *openkey = RedisModule_OpenKey(ctx, key, REDISMODULE_READ);
-        int type = RedisModule_KeyType(openkey);
-        RedisModule_Assert(type != REDISMODULE_KEYTYPE_EMPTY && RedisModule_ModuleTypeGetType(openkey) == MemAllocType);
-        MemAllocObject *o = RedisModule_ModuleTypeGetValue(openkey);
+    SiderModuleString *key;
+    SiderModuleDictIter *iter = SiderModule_DictIteratorStartC(mem_pool[dbid], "^", NULL, 0);
+    while((key = SiderModule_DictNext(ctx, iter, &data)) != NULL) {
+        int dbbackup = SiderModule_GetSelectedDb(ctx);
+        SiderModule_SelectDb(ctx, dbid);
+        SiderModuleKey *openkey = SiderModule_OpenKey(ctx, key, REDISMODULE_READ);
+        int type = SiderModule_KeyType(openkey);
+        SiderModule_Assert(type != REDISMODULE_KEYTYPE_EMPTY && SiderModule_ModuleTypeGetType(openkey) == MemAllocType);
+        MemAllocObject *o = SiderModule_ModuleTypeGetValue(openkey);
         used += o->used;
         size += o->size;
-        RedisModule_CloseKey(openkey);
-        RedisModule_SelectDb(ctx, dbbackup);
+        SiderModule_CloseKey(openkey);
+        SiderModule_SelectDb(ctx, dbbackup);
     }
-    RedisModule_DictIteratorStop(iter);
+    SiderModule_DictIteratorStop(iter);
 
-    RedisModule_ReplyWithArray(ctx, 4);
-    RedisModule_ReplyWithSimpleString(ctx, "total");
-    RedisModule_ReplyWithLongLong(ctx, size);
-    RedisModule_ReplyWithSimpleString(ctx, "used");
-    RedisModule_ReplyWithLongLong(ctx, used);
+    SiderModule_ReplyWithArray(ctx, 4);
+    SiderModule_ReplyWithSimpleString(ctx, "total");
+    SiderModule_ReplyWithLongLong(ctx, size);
+    SiderModule_ReplyWithSimpleString(ctx, "used");
+    SiderModule_ReplyWithLongLong(ctx, used);
     return REDISMODULE_OK;
 }
 
 /* MEM.ALLOCANDWRITE key block_num block_index data block_index data ... */
-int MemAllocAndWrite_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
-    RedisModule_AutoMemory(ctx);  
+int MemAllocAndWrite_SiderCommand(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
+    SiderModule_AutoMemory(ctx);  
 
     if (argc < 3) {
-        return RedisModule_WrongArity(ctx);
+        return SiderModule_WrongArity(ctx);
     }
 
     long long block_num;
-    if ((RedisModule_StringToLongLong(argv[2], &block_num) != REDISMODULE_OK) || block_num <= 0) {
-        return RedisModule_ReplyWithError(ctx, "ERR invalid block_num: must be a value greater than 0");
+    if ((SiderModule_StringToLongLong(argv[2], &block_num) != REDISMODULE_OK) || block_num <= 0) {
+        return SiderModule_ReplyWithError(ctx, "ERR invalid block_num: must be a value greater than 0");
     }
 
-    RedisModuleKey *key = RedisModule_OpenKey(ctx, argv[1], REDISMODULE_READ | REDISMODULE_WRITE);
-    int type = RedisModule_KeyType(key);
-    if (type != REDISMODULE_KEYTYPE_EMPTY && RedisModule_ModuleTypeGetType(key) != MemAllocType) {
-        return RedisModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
+    SiderModuleKey *key = SiderModule_OpenKey(ctx, argv[1], REDISMODULE_READ | REDISMODULE_WRITE);
+    int type = SiderModule_KeyType(key);
+    if (type != REDISMODULE_KEYTYPE_EMPTY && SiderModule_ModuleTypeGetType(key) != MemAllocType) {
+        return SiderModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
     }
 
     MemAllocObject *o;
     if (type == REDISMODULE_KEYTYPE_EMPTY) {
         o = createMemAllocObject();
-        RedisModule_ModuleTypeSetValue(key, MemAllocType, o);
+        SiderModule_ModuleTypeSetValue(key, MemAllocType, o);
     } else {
-        o = RedisModule_ModuleTypeGetValue(key);
+        o = SiderModule_ModuleTypeGetValue(key);
     }
 
     struct MemBlock *mem = MemBlockCreate(block_num);
-    RedisModule_Assert(mem != NULL);
-    RedisModule_DictSet(mem_pool[RedisModule_GetSelectedDb(ctx)], argv[1], mem);
+    SiderModule_Assert(mem != NULL);
+    SiderModule_DictSet(mem_pool[SiderModule_GetSelectedDb(ctx)], argv[1], mem);
     o->used = 0;
     o->mask = 0;
     o->size = block_num;
@@ -484,180 +484,180 @@ int MemAllocAndWrite_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv,
     long long block_index;
     for (; i < argc; i++) {
         /* Security is guaranteed internally, so no security check. */
-        RedisModule_StringToLongLong(argv[i], &block_index);
+        SiderModule_StringToLongLong(argv[i], &block_index);
         size_t len;
-        const char * buf = RedisModule_StringPtrLen(argv[i + 1], &len);
+        const char * buf = SiderModule_StringPtrLen(argv[i + 1], &len);
         MemBlockWrite(mem, block_index, buf, len);
         o->used++;
         o->mask |= (1UL << block_index);
     }
 
-    RedisModule_ReplyWithSimpleString(ctx, "OK");
-    RedisModule_ReplicateVerbatim(ctx);
+    SiderModule_ReplyWithSimpleString(ctx, "OK");
+    SiderModule_ReplicateVerbatim(ctx);
     return REDISMODULE_OK;
 }
 
 /*---------------------------- type callbacks ------------------------------------*/
 
-void *MemAllocRdbLoad(RedisModuleIO *rdb, int encver) {
+void *MemAllocRdbLoad(SiderModuleIO *rdb, int encver) {
     if (encver != 0) {
         return NULL;
     }
 
     MemAllocObject *o = createMemAllocObject();
-    o->size = RedisModule_LoadSigned(rdb);
-    o->used = RedisModule_LoadSigned(rdb);
-    o->mask = RedisModule_LoadUnsigned(rdb);
+    o->size = SiderModule_LoadSigned(rdb);
+    o->used = SiderModule_LoadSigned(rdb);
+    o->mask = SiderModule_LoadUnsigned(rdb);
 
-    const RedisModuleString *key = RedisModule_GetKeyNameFromIO(rdb);
-    int dbid = RedisModule_GetDbIdFromIO(rdb);
+    const SiderModuleString *key = SiderModule_GetKeyNameFromIO(rdb);
+    int dbid = SiderModule_GetDbIdFromIO(rdb);
 
     if (o->size) {
         size_t size;
         char *tmpbuf;
         long long num = o->size;
-        struct MemBlock *head = RedisModule_Calloc(1, sizeof(struct MemBlock));
-        tmpbuf = RedisModule_LoadStringBuffer(rdb, &size);
+        struct MemBlock *head = SiderModule_Calloc(1, sizeof(struct MemBlock));
+        tmpbuf = SiderModule_LoadStringBuffer(rdb, &size);
         memcpy(head->block, tmpbuf, size > BLOCK_SIZE ? BLOCK_SIZE:size);
-        RedisModule_Free(tmpbuf);
+        SiderModule_Free(tmpbuf);
         struct MemBlock *block = head;
         while (--num) {
-            block->next = RedisModule_Calloc(1, sizeof(struct MemBlock));
+            block->next = SiderModule_Calloc(1, sizeof(struct MemBlock));
             block = block->next;
 
-            tmpbuf = RedisModule_LoadStringBuffer(rdb, &size);
+            tmpbuf = SiderModule_LoadStringBuffer(rdb, &size);
             memcpy(block->block, tmpbuf, size > BLOCK_SIZE ? BLOCK_SIZE:size);
-            RedisModule_Free(tmpbuf);
+            SiderModule_Free(tmpbuf);
         }
 
-        RedisModule_DictSet(mem_pool[dbid], (RedisModuleString *)key, head);
+        SiderModule_DictSet(mem_pool[dbid], (SiderModuleString *)key, head);
     }
      
     return o;
 }
 
-void MemAllocRdbSave(RedisModuleIO *rdb, void *value) {
+void MemAllocRdbSave(SiderModuleIO *rdb, void *value) {
     MemAllocObject *o = value;
-    RedisModule_SaveSigned(rdb, o->size);
-    RedisModule_SaveSigned(rdb, o->used);
-    RedisModule_SaveUnsigned(rdb, o->mask);
+    SiderModule_SaveSigned(rdb, o->size);
+    SiderModule_SaveSigned(rdb, o->used);
+    SiderModule_SaveUnsigned(rdb, o->mask);
 
-    const RedisModuleString *key = RedisModule_GetKeyNameFromIO(rdb);
-    int dbid = RedisModule_GetDbIdFromIO(rdb);
+    const SiderModuleString *key = SiderModule_GetKeyNameFromIO(rdb);
+    int dbid = SiderModule_GetDbIdFromIO(rdb);
 
     if (o->size) {
         int nokey;
-        struct MemBlock *mem = (struct MemBlock *)RedisModule_DictGet(mem_pool[dbid], (RedisModuleString *)key, &nokey);
-        RedisModule_Assert(nokey == 0 && mem != NULL);
+        struct MemBlock *mem = (struct MemBlock *)SiderModule_DictGet(mem_pool[dbid], (SiderModuleString *)key, &nokey);
+        SiderModule_Assert(nokey == 0 && mem != NULL);
 
         struct MemBlock *block = mem; 
         while (block) {
-            RedisModule_SaveStringBuffer(rdb, block->block, BLOCK_SIZE);
+            SiderModule_SaveStringBuffer(rdb, block->block, BLOCK_SIZE);
             block = block->next;
         }
     }
 }
 
-void MemAllocAofRewrite(RedisModuleIO *aof, RedisModuleString *key, void *value) {
+void MemAllocAofRewrite(SiderModuleIO *aof, SiderModuleString *key, void *value) {
     MemAllocObject *o = (MemAllocObject *)value;
     if (o->size) {
-        int dbid = RedisModule_GetDbIdFromIO(aof);
+        int dbid = SiderModule_GetDbIdFromIO(aof);
         int nokey;
         size_t i = 0, j = 0;
-        struct MemBlock *mem = (struct MemBlock *)RedisModule_DictGet(mem_pool[dbid], (RedisModuleString *)key, &nokey);
-        RedisModule_Assert(nokey == 0 && mem != NULL);
+        struct MemBlock *mem = (struct MemBlock *)SiderModule_DictGet(mem_pool[dbid], (SiderModuleString *)key, &nokey);
+        SiderModule_Assert(nokey == 0 && mem != NULL);
         size_t array_size = o->size * 2;
-        RedisModuleString ** string_array = RedisModule_Calloc(array_size, sizeof(RedisModuleString *));
+        SiderModuleString ** string_array = SiderModule_Calloc(array_size, sizeof(SiderModuleString *));
         while (mem) {
-            string_array[i] = RedisModule_CreateStringFromLongLong(NULL, j);
-            string_array[i + 1] = RedisModule_CreateString(NULL, mem->block, BLOCK_SIZE);
+            string_array[i] = SiderModule_CreateStringFromLongLong(NULL, j);
+            string_array[i + 1] = SiderModule_CreateString(NULL, mem->block, BLOCK_SIZE);
             mem = mem->next;
             i += 2;
             j++;
         }
-        RedisModule_EmitAOF(aof, "mem.allocandwrite", "slv", key, o->size, string_array, array_size);
+        SiderModule_EmitAOF(aof, "mem.allocandwrite", "slv", key, o->size, string_array, array_size);
         for (i = 0; i < array_size; i++) {
-            RedisModule_FreeString(NULL, string_array[i]);
+            SiderModule_FreeString(NULL, string_array[i]);
         }
-        RedisModule_Free(string_array);
+        SiderModule_Free(string_array);
     } else {
-        RedisModule_EmitAOF(aof, "mem.allocandwrite", "sl", key, o->size);
+        SiderModule_EmitAOF(aof, "mem.allocandwrite", "sl", key, o->size);
     }
 }
 
 void MemAllocFree(void *value) {
-    RedisModule_Free(value);
+    SiderModule_Free(value);
 }
 
-void MemAllocUnlink(RedisModuleString *key, const void *value) {
+void MemAllocUnlink(SiderModuleString *key, const void *value) {
     REDISMODULE_NOT_USED(key);
     REDISMODULE_NOT_USED(value);
 
     /* When unlink and unlink2 exist at the same time, we will only call unlink2. */
-    RedisModule_Assert(0);
+    SiderModule_Assert(0);
 }
 
-void MemAllocUnlink2(RedisModuleKeyOptCtx *ctx, const void *value) {
+void MemAllocUnlink2(SiderModuleKeyOptCtx *ctx, const void *value) {
     MemAllocObject *o = (MemAllocObject *)value;
 
-    const RedisModuleString *key = RedisModule_GetKeyNameFromOptCtx(ctx);
-    int dbid = RedisModule_GetDbIdFromOptCtx(ctx);
+    const SiderModuleString *key = SiderModule_GetKeyNameFromOptCtx(ctx);
+    int dbid = SiderModule_GetDbIdFromOptCtx(ctx);
     
     if (o->size) {
         void *oldval;
-        RedisModule_DictDel(mem_pool[dbid], (RedisModuleString *)key, &oldval);
-        RedisModule_Assert(oldval != NULL);
+        SiderModule_DictDel(mem_pool[dbid], (SiderModuleString *)key, &oldval);
+        SiderModule_Assert(oldval != NULL);
         MemBlockFree((struct MemBlock *)oldval);
     }
 }
 
-void MemAllocDigest(RedisModuleDigest *md, void *value) {
+void MemAllocDigest(SiderModuleDigest *md, void *value) {
     MemAllocObject *o = (MemAllocObject *)value;
-    RedisModule_DigestAddLongLong(md, o->size);
-    RedisModule_DigestAddLongLong(md, o->used);
-    RedisModule_DigestAddLongLong(md, o->mask);
+    SiderModule_DigestAddLongLong(md, o->size);
+    SiderModule_DigestAddLongLong(md, o->used);
+    SiderModule_DigestAddLongLong(md, o->mask);
 
-    int dbid = RedisModule_GetDbIdFromDigest(md);
-    const RedisModuleString *key = RedisModule_GetKeyNameFromDigest(md);
+    int dbid = SiderModule_GetDbIdFromDigest(md);
+    const SiderModuleString *key = SiderModule_GetKeyNameFromDigest(md);
     
     if (o->size) {
         int nokey;
-        struct MemBlock *mem = (struct MemBlock *)RedisModule_DictGet(mem_pool[dbid], (RedisModuleString *)key, &nokey);
-        RedisModule_Assert(nokey == 0 && mem != NULL);
+        struct MemBlock *mem = (struct MemBlock *)SiderModule_DictGet(mem_pool[dbid], (SiderModuleString *)key, &nokey);
+        SiderModule_Assert(nokey == 0 && mem != NULL);
 
         struct MemBlock *block = mem;
         while (block) {
-            RedisModule_DigestAddStringBuffer(md, (const char *)block->block, BLOCK_SIZE);
+            SiderModule_DigestAddStringBuffer(md, (const char *)block->block, BLOCK_SIZE);
             block = block->next;
         }
     }
 }
 
-void *MemAllocCopy2(RedisModuleKeyOptCtx *ctx, const void *value) {
+void *MemAllocCopy2(SiderModuleKeyOptCtx *ctx, const void *value) {
     const MemAllocObject *old = value;
     MemAllocObject *new = createMemAllocObject();
     new->size = old->size;
     new->used = old->used;
     new->mask = old->mask;
 
-    int from_dbid = RedisModule_GetDbIdFromOptCtx(ctx);
-    int to_dbid = RedisModule_GetToDbIdFromOptCtx(ctx);
-    const RedisModuleString *fromkey = RedisModule_GetKeyNameFromOptCtx(ctx);
-    const RedisModuleString *tokey = RedisModule_GetToKeyNameFromOptCtx(ctx);
+    int from_dbid = SiderModule_GetDbIdFromOptCtx(ctx);
+    int to_dbid = SiderModule_GetToDbIdFromOptCtx(ctx);
+    const SiderModuleString *fromkey = SiderModule_GetKeyNameFromOptCtx(ctx);
+    const SiderModuleString *tokey = SiderModule_GetToKeyNameFromOptCtx(ctx);
 
     if (old->size) {
         int nokey;
-        struct MemBlock *oldmem = (struct MemBlock *)RedisModule_DictGet(mem_pool[from_dbid], (RedisModuleString *)fromkey, &nokey);
-        RedisModule_Assert(nokey == 0 && oldmem != NULL);
+        struct MemBlock *oldmem = (struct MemBlock *)SiderModule_DictGet(mem_pool[from_dbid], (SiderModuleString *)fromkey, &nokey);
+        SiderModule_Assert(nokey == 0 && oldmem != NULL);
         struct MemBlock *newmem = MemBlockClone(oldmem);
-        RedisModule_Assert(newmem != NULL);
-        RedisModule_DictSet(mem_pool[to_dbid], (RedisModuleString *)tokey, newmem);
+        SiderModule_Assert(newmem != NULL);
+        SiderModule_DictSet(mem_pool[to_dbid], (SiderModuleString *)tokey, newmem);
     }   
 
     return new;
 }
 
-size_t MemAllocMemUsage2(RedisModuleKeyOptCtx *ctx, const void *value, size_t sample_size) {
+size_t MemAllocMemUsage2(SiderModuleKeyOptCtx *ctx, const void *value, size_t sample_size) {
     REDISMODULE_NOT_USED(ctx);
     REDISMODULE_NOT_USED(sample_size);
     uint64_t size = 0;
@@ -669,21 +669,21 @@ size_t MemAllocMemUsage2(RedisModuleKeyOptCtx *ctx, const void *value, size_t sa
     return size;
 }
 
-size_t MemAllocMemFreeEffort2(RedisModuleKeyOptCtx *ctx, const void *value) {
+size_t MemAllocMemFreeEffort2(SiderModuleKeyOptCtx *ctx, const void *value) {
     REDISMODULE_NOT_USED(ctx);
     MemAllocObject *o = (MemAllocObject *)value;
     return o->size;
 }
 
-int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int SiderModule_OnLoad(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    if (RedisModule_Init(ctx, "datatype2", 1,REDISMODULE_APIVER_1) == REDISMODULE_ERR) {
+    if (SiderModule_Init(ctx, "datatype2", 1,REDISMODULE_APIVER_1) == REDISMODULE_ERR) {
         return REDISMODULE_ERR;
     }
 
-    RedisModuleTypeMethods tm = {
+    SiderModuleTypeMethods tm = {
         .version = REDISMODULE_TYPE_METHOD_VERSION,
         .rdb_load = MemAllocRdbLoad,
         .rdb_save = MemAllocRdbSave,
@@ -698,42 +698,42 @@ int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) 
         .free_effort2 = MemAllocMemFreeEffort2,
     };
 
-    MemAllocType = RedisModule_CreateDataType(ctx, "mem_alloc", 0, &tm);
+    MemAllocType = SiderModule_CreateDataType(ctx, "mem_alloc", 0, &tm);
     if (MemAllocType == NULL) {
         return REDISMODULE_ERR;
     }
 
-    if (RedisModule_CreateCommand(ctx, "mem.alloc", MemAlloc_RedisCommand, "write deny-oom", 1, 1, 1) == REDISMODULE_ERR) {
+    if (SiderModule_CreateCommand(ctx, "mem.alloc", MemAlloc_SiderCommand, "write deny-oom", 1, 1, 1) == REDISMODULE_ERR) {
         return REDISMODULE_ERR;
     }
 
-    if (RedisModule_CreateCommand(ctx, "mem.free", MemFree_RedisCommand, "write deny-oom", 1, 1, 1) == REDISMODULE_ERR) {
+    if (SiderModule_CreateCommand(ctx, "mem.free", MemFree_SiderCommand, "write deny-oom", 1, 1, 1) == REDISMODULE_ERR) {
         return REDISMODULE_ERR;
     }
 
-    if (RedisModule_CreateCommand(ctx, "mem.write", MemWrite_RedisCommand, "write deny-oom", 1, 1, 1) == REDISMODULE_ERR) {
+    if (SiderModule_CreateCommand(ctx, "mem.write", MemWrite_SiderCommand, "write deny-oom", 1, 1, 1) == REDISMODULE_ERR) {
         return REDISMODULE_ERR;
     }
 
-    if (RedisModule_CreateCommand(ctx, "mem.read", MemRead_RedisCommand, "readonly", 1, 1, 1) == REDISMODULE_ERR) {
+    if (SiderModule_CreateCommand(ctx, "mem.read", MemRead_SiderCommand, "readonly", 1, 1, 1) == REDISMODULE_ERR) {
         return REDISMODULE_ERR;
     }
 
-    if (RedisModule_CreateCommand(ctx, "mem.usage", MemUsage_RedisCommand, "readonly", 1, 1, 1) == REDISMODULE_ERR) {
+    if (SiderModule_CreateCommand(ctx, "mem.usage", MemUsage_SiderCommand, "readonly", 1, 1, 1) == REDISMODULE_ERR) {
         return REDISMODULE_ERR;
     }
 
     /* used for internal aof rewrite */
-    if (RedisModule_CreateCommand(ctx, "mem.allocandwrite", MemAllocAndWrite_RedisCommand, "write deny-oom", 1, 1, 1) == REDISMODULE_ERR) {
+    if (SiderModule_CreateCommand(ctx, "mem.allocandwrite", MemAllocAndWrite_SiderCommand, "write deny-oom", 1, 1, 1) == REDISMODULE_ERR) {
         return REDISMODULE_ERR;
     }
 
     for(int i = 0; i < MAX_DB; i++){
-        mem_pool[i] = RedisModule_CreateDict(NULL);
+        mem_pool[i] = SiderModule_CreateDict(NULL);
     }
 
-    RedisModule_SubscribeToServerEvent(ctx, RedisModuleEvent_FlushDB, flushdbCallback);
-    RedisModule_SubscribeToServerEvent(ctx, RedisModuleEvent_SwapDB, swapDbCallback);
+    SiderModule_SubscribeToServerEvent(ctx, SiderModuleEvent_FlushDB, flushdbCallback);
+    SiderModule_SubscribeToServerEvent(ctx, SiderModuleEvent_SwapDB, swapDbCallback);
   
     return REDISMODULE_OK;
 }

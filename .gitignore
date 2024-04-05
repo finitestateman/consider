@@ -5,13 +5,13 @@
 *.d
 *.log
 dump.rdb
-redis-benchmark
-redis-check-aof
-redis-check-rdb
-redis-check-dump
-redis-cli
-redis-sentinel
-redis-server
+sider-benchmark
+sider-check-aof
+sider-check-rdb
+sider-check-dump
+sider-cli
+sider-sentinel
+sider-server
 doc-tools
 release
 misc/*
@@ -22,8 +22,8 @@ SHORT_TERM_TODO
 release.h
 src/transfer.sh
 src/configs
-redis.ds
-src/redis.conf
+sider.ds
+src/sider.conf
 src/nodes.conf
 deps/lua/src/lua
 deps/lua/src/luac
@@ -40,4 +40,4 @@ Makefile.dep
 .ccls
 .ccls-cache/*
 compile_commands.json
-redis.code-workspace
+sider.code-workspace

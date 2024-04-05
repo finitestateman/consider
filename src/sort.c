@@ -3,15 +3,15 @@
  * Copyright (c) 2009-2012, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -35,8 +35,8 @@
 
 zskiplistNode* zslGetElementByRank(zskiplist *zsl, unsigned long rank);
 
-redisSortOperation *createSortOperation(int type, robj *pattern) {
-    redisSortOperation *so = zmalloc(sizeof(*so));
+siderSortOperation *createSortOperation(int type, robj *pattern) {
+    siderSortOperation *so = zmalloc(sizeof(*so));
     so->type = type;
     so->pattern = pattern;
     return so;
@@ -58,7 +58,7 @@ redisSortOperation *createSortOperation(int type, robj *pattern) {
  *
  * The returned object will always have its refcount increased by 1
  * when it is non-NULL. */
-robj *lookupKeyByPattern(redisDb *db, robj *pattern, robj *subst) {
+robj *lookupKeyByPattern(siderDb *db, robj *pattern, robj *subst) {
     char *p, *f, *k;
     sds spat, ssub;
     robj *keyobj, *fieldobj = NULL, *o;
@@ -136,7 +136,7 @@ noobj:
  * the additional parameter is not standard but a BSD-specific we have to
  * pass sorting parameters via the global 'server' structure */
 int sortCompare(const void *s1, const void *s2) {
-    const redisSortObject *so1 = s1, *so2 = s2;
+    const siderSortObject *so1 = s1, *so2 = s2;
     int cmp;
 
     if (!server.sort_alpha) {
@@ -184,7 +184,7 @@ int sortCompare(const void *s1, const void *s2) {
     return server.sort_desc ? -cmp : cmp;
 }
 
-/* The SORT command is the most complex command in Redis. Warning: this code
+/* The SORT command is the most complex command in Sider. Warning: this code
  * is optimized for speed and a bit less for readability */
 void sortCommandGeneric(client *c, int readonly) {
     list *operations;
@@ -196,7 +196,7 @@ void sortCommandGeneric(client *c, int readonly) {
     int int_conversion_error = 0;
     int syntax_error = 0;
     robj *sortval, *sortby = NULL, *storekey = NULL;
-    redisSortObject *vector; /* Resulting vector to sort */
+    siderSortObject *vector; /* Resulting vector to sort */
     int user_has_full_key_access = 0; /* ACL - used in order to verify 'get' and 'by' options can be used */
     /* Create a list of operations to perform for every sorted element.
      * Operations can be GET */
@@ -357,7 +357,7 @@ void sortCommandGeneric(client *c, int readonly) {
     }
 
     /* Load the sorting vector with all the objects to sort */
-    vector = zmalloc(sizeof(redisSortObject)*vectorlen);
+    vector = zmalloc(sizeof(siderSortObject)*vectorlen);
     j = 0;
 
     if (sortval->type == OBJ_LIST && dontsort) {
@@ -510,9 +510,9 @@ void sortCommandGeneric(client *c, int readonly) {
         server.sort_bypattern = sortby ? 1 : 0;
         server.sort_store = storekey ? 1 : 0;
         if (sortby && (start != 0 || end != vectorlen-1))
-            pqsort(vector,vectorlen,sizeof(redisSortObject),sortCompare, start,end);
+            pqsort(vector,vectorlen,sizeof(siderSortObject),sortCompare, start,end);
         else
-            qsort(vector,vectorlen,sizeof(redisSortObject),sortCompare);
+            qsort(vector,vectorlen,sizeof(siderSortObject),sortCompare);
     }
 
     /* Send command output to the output buffer, performing the specified
@@ -530,7 +530,7 @@ void sortCommandGeneric(client *c, int readonly) {
             if (!getop) addReplyBulk(c,vector[j].obj);
             listRewind(operations,&li);
             while((ln = listNext(&li))) {
-                redisSortOperation *sop = ln->value;
+                siderSortOperation *sop = ln->value;
                 robj *val = lookupKeyByPattern(c->db,sop->pattern,
                                                vector[j].obj);
 
@@ -562,7 +562,7 @@ void sortCommandGeneric(client *c, int readonly) {
             } else {
                 listRewind(operations,&li);
                 while((ln = listNext(&li))) {
-                    redisSortOperation *sop = ln->value;
+                    siderSortOperation *sop = ln->value;
                     robj *val = lookupKeyByPattern(c->db,sop->pattern,
                                                    vector[j].obj);
 

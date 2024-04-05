@@ -3,15 +3,15 @@
  *
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -33,7 +33,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-hiredisAllocFuncs hiredisAllocFns = {
+hisiderAllocFuncs hisiderAllocFns = {
     .mallocFn = malloc,
     .callocFn = calloc,
     .reallocFn = realloc,
@@ -41,18 +41,18 @@ hiredisAllocFuncs hiredisAllocFns = {
     .freeFn = free,
 };
 
-/* Override hiredis' allocators with ones supplied by the user */
-hiredisAllocFuncs hiredisSetAllocators(hiredisAllocFuncs *override) {
-    hiredisAllocFuncs orig = hiredisAllocFns;
+/* Override hisider' allocators with ones supplied by the user */
+hisiderAllocFuncs hisiderSetAllocators(hisiderAllocFuncs *override) {
+    hisiderAllocFuncs orig = hisiderAllocFns;
 
-    hiredisAllocFns = *override;
+    hisiderAllocFns = *override;
 
     return orig;
 }
 
 /* Reset allocators to use libc defaults */
-void hiredisResetAllocators(void) {
-    hiredisAllocFns = (hiredisAllocFuncs) {
+void hisiderResetAllocators(void) {
+    hisiderAllocFns = (hisiderAllocFuncs) {
         .mallocFn = malloc,
         .callocFn = calloc,
         .reallocFn = realloc,
@@ -64,7 +64,7 @@ void hiredisResetAllocators(void) {
 #ifdef _WIN32
 
 void *hi_malloc(size_t size) {
-    return hiredisAllocFns.mallocFn(size);
+    return hisiderAllocFns.mallocFn(size);
 }
 
 void *hi_calloc(size_t nmemb, size_t size) {
@@ -72,19 +72,19 @@ void *hi_calloc(size_t nmemb, size_t size) {
     if (SIZE_MAX / size < nmemb)
         return NULL;
 
-    return hiredisAllocFns.callocFn(nmemb, size);
+    return hisiderAllocFns.callocFn(nmemb, size);
 }
 
 void *hi_realloc(void *ptr, size_t size) {
-    return hiredisAllocFns.reallocFn(ptr, size);
+    return hisiderAllocFns.reallocFn(ptr, size);
 }
 
 char *hi_strdup(const char *str) {
-    return hiredisAllocFns.strdupFn(str);
+    return hisiderAllocFns.strdupFn(str);
 }
 
 void hi_free(void *ptr) {
-    hiredisAllocFns.freeFn(ptr);
+    hisiderAllocFns.freeFn(ptr);
 }
 
 #endif

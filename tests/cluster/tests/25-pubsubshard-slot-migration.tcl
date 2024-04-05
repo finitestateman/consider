@@ -8,7 +8,7 @@ test "Cluster is up" {
     assert_cluster_state ok
 }
 
-set cluster [redis_cluster 127.0.0.1:[get_instance_attrib redis 0 port]]
+set cluster [sider_cluster 127.0.0.1:[get_instance_attrib sider 0 port]]
 
 test "Migrate a slot, verify client receives sunsubscribe on primary serving the slot." {
 
@@ -18,7 +18,7 @@ test "Migrate a slot, verify client receives sunsubscribe on primary serving the
     array set nodefrom [$cluster masternode_for_slot $slot]
     array set nodeto [$cluster masternode_notfor_slot $slot]
 
-    set subscribeclient [redis_deferring_client_by_addr $nodefrom(host) $nodefrom(port)]
+    set subscribeclient [sider_deferring_client_by_addr $nodefrom(host) $nodefrom(port)]
 
     $subscribeclient deferred 1
     $subscribeclient ssubscribe $channelname
@@ -52,7 +52,7 @@ test "Client subscribes to multiple channels, migrate a slot, verify client rece
     array set nodefrom [$cluster masternode_for_slot $slot]
     array set nodeto [$cluster masternode_notfor_slot $slot]
 
-    set subscribeclient [redis_deferring_client_by_addr $nodefrom(host) $nodefrom(port)]
+    set subscribeclient [sider_deferring_client_by_addr $nodefrom(host) $nodefrom(port)]
 
     $subscribeclient deferred 1
     $subscribeclient ssubscribe $channelname
@@ -103,7 +103,7 @@ test "Migrate a slot, verify client receives sunsubscribe on replica serving the
     set addr [lindex [split [lindex $args 1] @] 0]
     set replicahost [lindex [split $addr :] 0]
     set replicaport [lindex [split $addr :] 1]
-    set subscribeclient [redis_deferring_client_by_addr $replicahost $replicaport]
+    set subscribeclient [sider_deferring_client_by_addr $replicahost $replicaport]
 
     $subscribeclient deferred 1
     $subscribeclient ssubscribe $channelname
@@ -133,7 +133,7 @@ test "Delete a slot, verify sunsubscribe message" {
 
     array set primary_client [$cluster masternode_for_slot $slot]
 
-    set subscribeclient [redis_deferring_client_by_addr $primary_client(host) $primary_client(port)]
+    set subscribeclient [sider_deferring_client_by_addr $primary_client(host) $primary_client(port)]
     $subscribeclient deferred 1
     $subscribeclient ssubscribe $channelname
     $subscribeclient read
@@ -154,7 +154,7 @@ test "Reset cluster, verify sunsubscribe message" {
 
     array set primary_client [$cluster masternode_for_slot $slot]
 
-    set subscribeclient [redis_deferring_client_by_addr $primary_client(host) $primary_client(port)]
+    set subscribeclient [sider_deferring_client_by_addr $primary_client(host) $primary_client(port)]
     $subscribeclient deferred 1
     $subscribeclient ssubscribe $channelname
     $subscribeclient read

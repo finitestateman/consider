@@ -1,16 +1,16 @@
 /*
- * Copyright (c) 2021, Redis Ltd.
+ * Copyright (c) 2021, Sider Ltd.
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -143,7 +143,7 @@ void reqresReset(client *c, int free_buf) {
  * Ideally, we would just have this code inside reqresAppendRequest, which is called
  * from processCommand, but we cannot save the reply offset inside processCommand
  * because of the following pipe-lining scenario:
- * set rd [redis_deferring_client]
+ * set rd [sider_deferring_client]
  * set buf ""
  * append buf "SET key vale\r\n"
  * append buf "BLPOP mylist 0\r\n"

@@ -1,4 +1,4 @@
-/* Background I/O service for Redis.
+/* Background I/O service for Sider.
  *
  * This file implements operations that we need to perform in the background.
  * Currently there is only a single operation, that is a background close(2)
@@ -8,7 +8,7 @@
  *
  * In the future we'll either continue implementing new things we need or
  * we'll switch to libeio. However there are probably long term uses for this
- * file as we may want to put here Redis specific background tasks (for instance
+ * file as we may want to put here Sider specific background tasks (for instance
  * it is not impossible that we'll need a non blocking FLUSHDB/FLUSHALL
  * implementation).
  *
@@ -34,15 +34,15 @@
  * Copyright (c) 2009-2012, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -210,9 +210,9 @@ void *bioProcessBackgroundJobs(void *arg) {
     /* Check that the worker is within the right interval. */
     serverAssert(worker < BIO_WORKER_NUM);
 
-    redis_set_thread_title(bio_worker_title[worker]);
+    sider_set_thread_title(bio_worker_title[worker]);
 
-    redisSetCpuAffinity(server.bio_cpulist);
+    siderSetCpuAffinity(server.bio_cpulist);
 
     makeThreadKillable();
 
@@ -245,7 +245,7 @@ void *bioProcessBackgroundJobs(void *arg) {
 
         if (job_type == BIO_CLOSE_FILE) {
             if (job->fd_args.need_fsync &&
-                redis_fsync(job->fd_args.fd) == -1 &&
+                sider_fsync(job->fd_args.fd) == -1 &&
                 errno != EBADF && errno != EINVAL)
             {
                 serverLog(LL_WARNING, "Fail to fsync the AOF file: %s",strerror(errno));
@@ -260,7 +260,7 @@ void *bioProcessBackgroundJobs(void *arg) {
             /* The fd may be closed by main thread and reused for another
              * socket, pipe, or file. We just ignore these errno because
              * aof fsync did not really fail. */
-            if (redis_fsync(job->fd_args.fd) == -1 &&
+            if (sider_fsync(job->fd_args.fd) == -1 &&
                 errno != EBADF && errno != EINVAL)
             {
                 int last_status;
@@ -323,7 +323,7 @@ void bioDrainWorker(int job_type) {
 
 /* Kill the running bio threads in an unclean way. This function should be
  * used only when it's critical to stop the threads for some reason.
- * Currently Redis does this only on crash (for instance on SIGSEGV) in order
+ * Currently Sider does this only on crash (for instance on SIGSEGV) in order
  * to perform a fast memory check without other threads messing with memory. */
 void bioKillThreads(void) {
     int err;

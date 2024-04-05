@@ -1215,7 +1215,7 @@ foreach type {single multiple single_multiple} {
         r multi
         r sadd dstset{t} c
 
-        set r2 [redis_client]
+        set r2 [sider_client]
         $r2 smove srcset{t} dstset{t} a
 
         # The dstset is actually unchanged, multi should success

@@ -108,9 +108,9 @@ start_server {tags {"introspection"}} {
         r config resetstat
         r set mykey myval
         r eval {
-            redis.call('set', KEYS[1], 0)
-            redis.call('expire', KEYS[1], 0)
-            redis.call('geoadd', KEYS[1], 0, 0, "bar")
+            sider.call('set', KEYS[1], 0)
+            sider.call('expire', KEYS[1], 0)
+            sider.call('geoadd', KEYS[1], 0, 0, "bar")
         } 1 mykey
         assert_match {*calls=1,*} [cmdstat eval]
         assert_match {*calls=2,*} [cmdstat set]
@@ -118,7 +118,7 @@ start_server {tags {"introspection"}} {
         assert_match {*calls=1,*} [cmdstat geoadd]
     } {} {needs:config-resetstat}
 
-    test {COMMAND COUNT get total number of Redis commands} {
+    test {COMMAND COUNT get total number of Sider commands} {
         assert_morethan [r command count] 0
     }
 

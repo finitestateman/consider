@@ -1,4 +1,4 @@
-#include "redismodule.h"
+#include "sidermodule.h"
 #include <strings.h>
 
 /* Second module configs module, for testing.
@@ -13,7 +13,7 @@ int getBoolConfigCommand(const char *name, void *privdata) {
     return 0;
 }
 
-int setBoolConfigCommand(const char *name, int new, void *privdata, RedisModuleString **err) {
+int setBoolConfigCommand(const char *name, int new, void *privdata, SiderModuleString **err) {
     REDISMODULE_NOT_USED(privdata);
     REDISMODULE_NOT_USED(err);
     if (!strcasecmp(name, "test")) {
@@ -24,15 +24,15 @@ int setBoolConfigCommand(const char *name, int new, void *privdata, RedisModuleS
 }
 
 /* No arguments are expected */ 
-int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int SiderModule_OnLoad(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
-    if (RedisModule_Init(ctx, "configs", 1, REDISMODULE_APIVER_1) == REDISMODULE_ERR) return REDISMODULE_ERR;
+    if (SiderModule_Init(ctx, "configs", 1, REDISMODULE_APIVER_1) == REDISMODULE_ERR) return REDISMODULE_ERR;
 
-    if (RedisModule_RegisterBoolConfig(ctx, "test", 1, REDISMODULE_CONFIG_DEFAULT, getBoolConfigCommand, setBoolConfigCommand, NULL, &argc) == REDISMODULE_ERR) {
+    if (SiderModule_RegisterBoolConfig(ctx, "test", 1, REDISMODULE_CONFIG_DEFAULT, getBoolConfigCommand, setBoolConfigCommand, NULL, &argc) == REDISMODULE_ERR) {
         return REDISMODULE_ERR;
     }
-    if (RedisModule_LoadConfigs(ctx) == REDISMODULE_ERR) {
+    if (SiderModule_LoadConfigs(ctx) == REDISMODULE_ERR) {
         return REDISMODULE_ERR;
     }
     return REDISMODULE_OK;

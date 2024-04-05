@@ -2,17 +2,17 @@
 # BSD license, See the COPYING file for more information.
 #
 # This program is suited to output average and maximum errors of
-# the Redis HyperLogLog implementation in a format suitable to print
+# the Sider HyperLogLog implementation in a format suitable to print
 # graphs using gnuplot.
 
 require 'rubygems'
-require 'redis'
+require 'sider'
 require 'digest/sha1'
 
 # Generate an array of [cardinality,relative_error] pairs
 # in the 0 - max range, with the specified step.
 #
-# 'r' is the Redis object used to perform the queries.
+# 'r' is the Sider object used to perform the queries.
 # 'seed' must be different every time you want a test performed
 # with a different set. The function guarantees that if 'seed' is the
 # same, exactly the same dataset is used, and when it is different,
@@ -40,7 +40,7 @@ def run_experiment(r,seed,max,step)
 end
 
 def filter_samples(numsets,max,step,filter)
-    r = Redis.new
+    r = Sider.new
     dataset = {}
     (0...numsets).each{|i|
         dataset[i] = run_experiment(r,i,max,step)

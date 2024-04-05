@@ -3,21 +3,21 @@
 #include <string.h>
 #include <signal.h>
 
-#include <hiredis.h>
-#include <hiredis_ssl.h>
+#include <hisider.h>
+#include <hisider_ssl.h>
 #include <async.h>
 #include <adapters/libevent.h>
 
-void getCallback(redisAsyncContext *c, void *r, void *privdata) {
-    redisReply *reply = r;
+void getCallback(siderAsyncContext *c, void *r, void *privdata) {
+    siderReply *reply = r;
     if (reply == NULL) return;
     printf("argv[%s]: %s\n", (char*)privdata, reply->str);
 
     /* Disconnect after receiving the reply to GET */
-    redisAsyncDisconnect(c);
+    siderAsyncDisconnect(c);
 }
 
-void connectCallback(const redisAsyncContext *c, int status) {
+void connectCallback(const siderAsyncContext *c, int status) {
     if (status != REDIS_OK) {
         printf("Error: %s\n", c->errstr);
         return;
@@ -25,7 +25,7 @@ void connectCallback(const redisAsyncContext *c, int status) {
     printf("Connected...\n");
 }
 
-void disconnectCallback(const redisAsyncContext *c, int status) {
+void disconnectCallback(const siderAsyncContext *c, int status) {
     if (status != REDIS_OK) {
         printf("Error: %s\n", c->errstr);
         return;
@@ -55,36 +55,36 @@ int main (int argc, char **argv) {
     const char *certKey = argv[5];
     const char *caCert = argc > 5 ? argv[6] : NULL;
 
-    redisSSLContext *ssl;
-    redisSSLContextError ssl_error = REDIS_SSL_CTX_NONE;
+    siderSSLContext *ssl;
+    siderSSLContextError ssl_error = REDIS_SSL_CTX_NONE;
 
-    redisInitOpenSSL();
+    siderInitOpenSSL();
 
-    ssl = redisCreateSSLContext(caCert, NULL,
+    ssl = siderCreateSSLContext(caCert, NULL,
             cert, certKey, NULL, &ssl_error);
     if (!ssl) {
-        printf("Error: %s\n", redisSSLContextGetError(ssl_error));
+        printf("Error: %s\n", siderSSLContextGetError(ssl_error));
         return 1;
     }
 
-    redisAsyncContext *c = redisAsyncConnect(hostname, port);
+    siderAsyncContext *c = siderAsyncConnect(hostname, port);
     if (c->err) {
         /* Let *c leak for now... */
         printf("Error: %s\n", c->errstr);
         return 1;
     }
-    if (redisInitiateSSLWithContext(&c->c, ssl) != REDIS_OK) {
+    if (siderInitiateSSLWithContext(&c->c, ssl) != REDIS_OK) {
         printf("SSL Error!\n");
         exit(1);
     }
 
-    redisLibeventAttach(c,base);
-    redisAsyncSetConnectCallback(c,connectCallback);
-    redisAsyncSetDisconnectCallback(c,disconnectCallback);
-    redisAsyncCommand(c, NULL, NULL, "SET key %b", value, nvalue);
-    redisAsyncCommand(c, getCallback, (char*)"end-1", "GET key");
+    siderLibeventAttach(c,base);
+    siderAsyncSetConnectCallback(c,connectCallback);
+    siderAsyncSetDisconnectCallback(c,disconnectCallback);
+    siderAsyncCommand(c, NULL, NULL, "SET key %b", value, nvalue);
+    siderAsyncCommand(c, getCallback, (char*)"end-1", "GET key");
     event_base_dispatch(base);
 
-    redisFreeSSLContext(ssl);
+    siderFreeSSLContext(ssl);
     return 0;
 }

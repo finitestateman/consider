@@ -30,7 +30,7 @@ set current_epoch [CI 1 cluster_current_epoch]
 
 set numkeys 50000
 set numops 10000
-set cluster [redis_cluster 127.0.0.1:[get_instance_attrib redis 0 port]]
+set cluster [sider_cluster 127.0.0.1:[get_instance_attrib sider 0 port]]
 catch {unset content}
 array set content {}
 
@@ -41,13 +41,13 @@ test "Send CLUSTER FAILOVER to #5, during load" {
         set key "key:$listid"
         set ele [randomValue]
         # We write both with Lua scripts and with plain commands.
-        # This way we are able to stress Lua -> Redis command invocation
+        # This way we are able to stress Lua -> Sider command invocation
         # as well, that has tests to prevent Lua to write into wrong
         # hash slots.
         if {$listid % 2} {
             $cluster rpush $key $ele
         } else {
-           $cluster eval {redis.call("rpush",KEYS[1],ARGV[1])} 1 $key $ele
+           $cluster eval {sider.call("rpush",KEYS[1],ARGV[1])} 1 $key $ele
         }
         lappend content($key) $ele
 
@@ -80,7 +80,7 @@ test "Instance #5 is now a master" {
 }
 
 test "Verify $numkeys keys for consistency with logical content" {
-    # Check that the Redis Cluster content matches our logical content.
+    # Check that the Sider Cluster content matches our logical content.
     foreach {key value} [array get content] {
         assert {[$cluster lrange $key 0 -1] eq $value}
     }

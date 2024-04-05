@@ -1,4 +1,4 @@
-/* Extracted from anet.c to work properly with Hiredis error reporting.
+/* Extracted from anet.c to work properly with Hisider error reporting.
  *
  * Copyright (c) 2009-2011, Salvatore Sanfilippo <antirez at gmail dot com>
  * Copyright (c) 2010-2014, Pieter Noordhuis <pcnoordhuis at gmail dot com>
@@ -7,15 +7,15 @@
  *
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -35,23 +35,23 @@
 #ifndef __NET_H
 #define __NET_H
 
-#include "hiredis.h"
+#include "hisider.h"
 
-void redisNetClose(redisContext *c);
-ssize_t redisNetRead(redisContext *c, char *buf, size_t bufcap);
-ssize_t redisNetWrite(redisContext *c);
+void siderNetClose(siderContext *c);
+ssize_t siderNetRead(siderContext *c, char *buf, size_t bufcap);
+ssize_t siderNetWrite(siderContext *c);
 
-int redisCheckSocketError(redisContext *c);
-int redisContextSetTimeout(redisContext *c, const struct timeval tv);
-int redisContextConnectTcp(redisContext *c, const char *addr, int port, const struct timeval *timeout);
-int redisContextConnectBindTcp(redisContext *c, const char *addr, int port,
+int siderCheckSocketError(siderContext *c);
+int siderContextSetTimeout(siderContext *c, const struct timeval tv);
+int siderContextConnectTcp(siderContext *c, const char *addr, int port, const struct timeval *timeout);
+int siderContextConnectBindTcp(siderContext *c, const char *addr, int port,
                                const struct timeval *timeout,
                                const char *source_addr);
-int redisContextConnectUnix(redisContext *c, const char *path, const struct timeval *timeout);
-int redisKeepAlive(redisContext *c, int interval);
-int redisCheckConnectDone(redisContext *c, int *completed);
+int siderContextConnectUnix(siderContext *c, const char *path, const struct timeval *timeout);
+int siderKeepAlive(siderContext *c, int interval);
+int siderCheckConnectDone(siderContext *c, int *completed);
 
-int redisSetTcpNoDelay(redisContext *c);
-int redisContextSetTcpUserTimeout(redisContext *c, unsigned int timeout);
+int siderSetTcpNoDelay(siderContext *c);
+int siderContextSetTcpUserTimeout(siderContext *c, unsigned int timeout);
 
 #endif

@@ -3,24 +3,24 @@
 #include <string.h>
 #include <signal.h>
 
-#include <hiredis.h>
+#include <hisider.h>
 #include <async.h>
-#include <adapters/redismoduleapi.h>
+#include <adapters/sidermoduleapi.h>
 
-void debugCallback(redisAsyncContext *c, void *r, void *privdata) {
+void debugCallback(siderAsyncContext *c, void *r, void *privdata) {
     (void)privdata; //unused
-    redisReply *reply = r;
+    siderReply *reply = r;
     if (reply == NULL) {
         /* The DEBUG SLEEP command will almost always fail, because we have set a 1 second timeout */
         printf("`DEBUG SLEEP` error: %s\n", c->errstr ? c->errstr : "unknown error");
         return;
     }
     /* Disconnect after receiving the reply of DEBUG SLEEP (which will not)*/
-    redisAsyncDisconnect(c);
+    siderAsyncDisconnect(c);
 }
 
-void getCallback(redisAsyncContext *c, void *r, void *privdata) {
-    redisReply *reply = r;
+void getCallback(siderAsyncContext *c, void *r, void *privdata) {
+    siderReply *reply = r;
     if (reply == NULL) {
         if (c->errstr) {
             printf("errstr: %s\n", c->errstr);
@@ -30,10 +30,10 @@ void getCallback(redisAsyncContext *c, void *r, void *privdata) {
     printf("argv[%s]: %s\n", (char*)privdata, reply->str);
 
     /* start another request that demonstrate timeout */
-    redisAsyncCommand(c, debugCallback, NULL, "DEBUG SLEEP %f", 1.5);
+    siderAsyncCommand(c, debugCallback, NULL, "DEBUG SLEEP %f", 1.5);
 }
 
-void connectCallback(const redisAsyncContext *c, int status) {
+void connectCallback(const siderAsyncContext *c, int status) {
     if (status != REDIS_OK) {
         printf("Error: %s\n", c->errstr);
         return;
@@ -41,7 +41,7 @@ void connectCallback(const redisAsyncContext *c, int status) {
     printf("Connected...\n");
 }
 
-void disconnectCallback(const redisAsyncContext *c, int status) {
+void disconnectCallback(const siderAsyncContext *c, int status) {
     if (status != REDIS_OK) {
         printf("Error: %s\n", c->errstr);
         return;
@@ -50,29 +50,29 @@ void disconnectCallback(const redisAsyncContext *c, int status) {
 }
 
 /*
- * This example requires Redis 7.0 or above.
+ * This example requires Sider 7.0 or above.
  *
- * 1- Compile this file as a shared library. Directory of "redismodule.h" must
+ * 1- Compile this file as a shared library. Directory of "sidermodule.h" must
  *    be in the include path.
- *       gcc -fPIC -shared -I../../redis/src/ -I.. example-redismoduleapi.c -o example-redismoduleapi.so
+ *       gcc -fPIC -shared -I../../sider/src/ -I.. example-sidermoduleapi.c -o example-sidermoduleapi.so
  *
  * 2- Load module:
- *       redis-server --loadmodule ./example-redismoduleapi.so value
+ *       sider-server --loadmodule ./example-sidermoduleapi.so value
  */
-int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int SiderModule_OnLoad(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
 
-    int ret = RedisModule_Init(ctx, "example-redismoduleapi", 1, REDISMODULE_APIVER_1);
+    int ret = SiderModule_Init(ctx, "example-sidermoduleapi", 1, REDISMODULE_APIVER_1);
     if (ret != REDISMODULE_OK) {
         printf("error module init \n");
         return REDISMODULE_ERR;
     }
 
-    if (redisModuleCompatibilityCheck() != REDIS_OK) {
-        printf("Redis 7.0 or above is required! \n");
+    if (siderModuleCompatibilityCheck() != REDIS_OK) {
+        printf("Sider 7.0 or above is required! \n");
         return REDISMODULE_ERR;
     }
 
-    redisAsyncContext *c = redisAsyncConnect("127.0.0.1", 6379);
+    siderAsyncContext *c = siderAsyncConnect("127.0.0.1", 6379);
     if (c->err) {
         /* Let *c leak for now... */
         printf("Error: %s\n", c->errstr);
@@ -80,13 +80,13 @@ int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) 
     }
 
     size_t len;
-    const char *val = RedisModule_StringPtrLen(argv[argc-1], &len);
+    const char *val = SiderModule_StringPtrLen(argv[argc-1], &len);
 
-    RedisModuleCtx *module_ctx = RedisModule_GetDetachedThreadSafeContext(ctx);
-    redisModuleAttach(c, module_ctx);
-    redisAsyncSetConnectCallback(c,connectCallback);
-    redisAsyncSetDisconnectCallback(c,disconnectCallback);
-    redisAsyncSetTimeout(c, (struct timeval){ .tv_sec = 1, .tv_usec = 0});
+    SiderModuleCtx *module_ctx = SiderModule_GetDetachedThreadSafeContext(ctx);
+    siderModuleAttach(c, module_ctx);
+    siderAsyncSetConnectCallback(c,connectCallback);
+    siderAsyncSetDisconnectCallback(c,disconnectCallback);
+    siderAsyncSetTimeout(c, (struct timeval){ .tv_sec = 1, .tv_usec = 0});
 
     /*
     In this demo, we first `set key`, then `get key` to demonstrate the basic usage of the adapter.
@@ -95,7 +95,7 @@ int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) 
     timeout error, which is shown in the `debugCallback`.
     */
 
-    redisAsyncCommand(c, NULL, NULL, "SET key %b", val, len);
-    redisAsyncCommand(c, getCallback, (char*)"end-1", "GET key");
+    siderAsyncCommand(c, NULL, NULL, "SET key %b", val, len);
+    siderAsyncCommand(c, getCallback, (char*)"end-1", "GET key");
     return 0;
 }

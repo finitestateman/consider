@@ -1,19 +1,19 @@
 /*
  * Copyright (c) 2009-2011, Salvatore Sanfilippo <antirez at gmail dot com>
  * Copyright (c) 2010-2011, Pieter Noordhuis <pcnoordhuis at gmail dot com>
- * Copyright (c) 2019, Redis Labs
+ * Copyright (c) 2019, Sider Labs
  *
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "hiredis.h"
+#include "hisider.h"
 #include "async.h"
 #include "net.h"
 
@@ -57,14 +57,14 @@
 
 #include "win32.h"
 #include "async_private.h"
-#include "hiredis_ssl.h"
+#include "hisider_ssl.h"
 
 #define OPENSSL_1_1_0 0x10100000L
 
-void __redisSetError(redisContext *c, int type, const char *str);
+void __siderSetError(siderContext *c, int type, const char *str);
 
-struct redisSSLContext {
-    /* Associated OpenSSL SSL_CTX as created by redisCreateSSLContext() */
+struct siderSSLContext {
+    /* Associated OpenSSL SSL_CTX as created by siderCreateSSLContext() */
     SSL_CTX *ssl_ctx;
 
     /* Requested SNI, or NULL */
@@ -72,7 +72,7 @@ struct redisSSLContext {
 };
 
 /* The SSL connection context is attached to SSL/TLS connections as a privdata. */
-typedef struct redisSSL {
+typedef struct siderSSL {
     /**
      * OpenSSL SSL object.
      */
@@ -92,10 +92,10 @@ typedef struct redisSSL {
      * should resume whenever a read takes place, if possible
      */
     int pendingWrite;
-} redisSSL;
+} siderSSL;
 
 /* Forward declaration */
-redisContextFuncs redisContextSSLFuncs;
+siderContextFuncs siderContextSSLFuncs;
 
 /**
  * OpenSSL global initialization and locking handling callbacks.
@@ -165,7 +165,7 @@ static int initOpensslLocks(void) {
 }
 #endif /* HIREDIS_USE_CRYPTO_LOCKS */
 
-int redisInitOpenSSL(void)
+int siderInitOpenSSL(void)
 {
     SSL_library_init();
 #ifdef HIREDIS_USE_CRYPTO_LOCKS
@@ -176,10 +176,10 @@ int redisInitOpenSSL(void)
 }
 
 /**
- * redisSSLContext helper context destruction.
+ * siderSSLContext helper context destruction.
  */
 
-const char *redisSSLContextGetError(redisSSLContextError error)
+const char *siderSSLContextGetError(siderSSLContextError error)
 {
     switch (error) {
         case REDIS_SSL_CTX_NONE:
@@ -203,7 +203,7 @@ const char *redisSSLContextGetError(redisSSLContextError error)
     }
 }
 
-void redisFreeSSLContext(redisSSLContext *ctx)
+void siderFreeSSLContext(siderSSLContext *ctx)
 {
     if (!ctx)
         return;
@@ -223,14 +223,14 @@ void redisFreeSSLContext(redisSSLContext *ctx)
 
 
 /**
- * redisSSLContext helper context initialization.
+ * siderSSLContext helper context initialization.
  */
 
-redisSSLContext *redisCreateSSLContext(const char *cacert_filename, const char *capath,
+siderSSLContext *siderCreateSSLContext(const char *cacert_filename, const char *capath,
         const char *cert_filename, const char *private_key_filename,
-        const char *server_name, redisSSLContextError *error)
+        const char *server_name, siderSSLContextError *error)
 {
-    redisSSLOptions options = {
+    siderSSLOptions options = {
         .cacert_filename = cacert_filename,
         .capath = capath,
         .cert_filename = cert_filename,
@@ -239,10 +239,10 @@ redisSSLContext *redisCreateSSLContext(const char *cacert_filename, const char *
         .verify_mode = REDIS_SSL_VERIFY_PEER,
     };
 
-    return redisCreateSSLContextWithOptions(&options, error);
+    return siderCreateSSLContextWithOptions(&options, error);
 }
 
-redisSSLContext *redisCreateSSLContextWithOptions(redisSSLOptions *options, redisSSLContextError *error) {
+siderSSLContext *siderCreateSSLContextWithOptions(siderSSLOptions *options, siderSSLContextError *error) {
     const char *cacert_filename = options->cacert_filename;
     const char *capath = options->capath;
     const char *cert_filename = options->cert_filename;
@@ -254,7 +254,7 @@ redisSSLContext *redisCreateSSLContextWithOptions(redisSSLOptions *options, redi
     PCCERT_CONTEXT win_ctx = NULL;
 #endif
 
-    redisSSLContext *ctx = hi_calloc(1, sizeof(redisSSLContext));
+    siderSSLContext *ctx = hi_calloc(1, sizeof(siderSSLContext));
     if (ctx == NULL)
         goto error;
 
@@ -343,7 +343,7 @@ error:
     CertFreeCertificateContext(win_ctx);
     CertCloseStore(win_store, 0);
 #endif
-    redisFreeSSLContext(ctx);
+    siderFreeSSLContext(ctx);
     return NULL;
 }
 
@@ -352,19 +352,19 @@ error:
  */
 
 
-static int redisSSLConnect(redisContext *c, SSL *ssl) {
+static int siderSSLConnect(siderContext *c, SSL *ssl) {
     if (c->privctx) {
-        __redisSetError(c, REDIS_ERR_OTHER, "redisContext was already associated");
+        __siderSetError(c, REDIS_ERR_OTHER, "siderContext was already associated");
         return REDIS_ERR;
     }
 
-    redisSSL *rssl = hi_calloc(1, sizeof(redisSSL));
+    siderSSL *rssl = hi_calloc(1, sizeof(siderSSL));
     if (rssl == NULL) {
-        __redisSetError(c, REDIS_ERR_OOM, "Out of memory");
+        __siderSetError(c, REDIS_ERR_OOM, "Out of memory");
         return REDIS_ERR;
     }
 
-    c->funcs = &redisContextSSLFuncs;
+    c->funcs = &siderContextSSLFuncs;
     rssl->ssl = ssl;
 
     SSL_set_mode(rssl->ssl, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
@@ -394,7 +394,7 @@ static int redisSSLConnect(redisContext *c, SSL *ssl) {
             snprintf(err,sizeof(err)-1,"SSL_connect failed: %s",
                     ERR_reason_error_string(e));
         }
-        __redisSetError(c, REDIS_ERR_IO, err);
+        __siderSetError(c, REDIS_ERR_IO, err);
     }
 
     hi_free(rssl);
@@ -402,44 +402,44 @@ static int redisSSLConnect(redisContext *c, SSL *ssl) {
 }
 
 /**
- * A wrapper around redisSSLConnect() for users who manage their own context and
+ * A wrapper around siderSSLConnect() for users who manage their own context and
  * create their own SSL object.
  */
 
-int redisInitiateSSL(redisContext *c, SSL *ssl) {
-    return redisSSLConnect(c, ssl);
+int siderInitiateSSL(siderContext *c, SSL *ssl) {
+    return siderSSLConnect(c, ssl);
 }
 
 /**
- * A wrapper around redisSSLConnect() for users who use redisSSLContext and don't
+ * A wrapper around siderSSLConnect() for users who use siderSSLContext and don't
  * manage their own SSL objects.
  */
 
-int redisInitiateSSLWithContext(redisContext *c, redisSSLContext *redis_ssl_ctx)
+int siderInitiateSSLWithContext(siderContext *c, siderSSLContext *sider_ssl_ctx)
 {
-    if (!c || !redis_ssl_ctx)
+    if (!c || !sider_ssl_ctx)
         return REDIS_ERR;
 
-    /* We want to verify that redisSSLConnect() won't fail on this, as it will
+    /* We want to verify that siderSSLConnect() won't fail on this, as it will
      * not own the SSL object in that case and we'll end up leaking.
      */
     if (c->privctx)
         return REDIS_ERR;
 
-    SSL *ssl = SSL_new(redis_ssl_ctx->ssl_ctx);
+    SSL *ssl = SSL_new(sider_ssl_ctx->ssl_ctx);
     if (!ssl) {
-        __redisSetError(c, REDIS_ERR_OTHER, "Couldn't create new SSL instance");
+        __siderSetError(c, REDIS_ERR_OTHER, "Couldn't create new SSL instance");
         goto error;
     }
 
-    if (redis_ssl_ctx->server_name) {
-        if (!SSL_set_tlsext_host_name(ssl, redis_ssl_ctx->server_name)) {
-            __redisSetError(c, REDIS_ERR_OTHER, "Failed to set server_name/SNI");
+    if (sider_ssl_ctx->server_name) {
+        if (!SSL_set_tlsext_host_name(ssl, sider_ssl_ctx->server_name)) {
+            __siderSetError(c, REDIS_ERR_OTHER, "Failed to set server_name/SNI");
             goto error;
         }
     }
 
-    if (redisSSLConnect(c, ssl) != REDIS_OK) {
+    if (siderSSLConnect(c, ssl) != REDIS_OK) {
         goto error;
     }
 
@@ -451,7 +451,7 @@ error:
     return REDIS_ERR;
 }
 
-static int maybeCheckWant(redisSSL *rssl, int rv) {
+static int maybeCheckWant(siderSSL *rssl, int rv) {
     /**
      * If the error is WANT_READ or WANT_WRITE, the appropriate flags are set
      * and true is returned. False is returned otherwise
@@ -468,11 +468,11 @@ static int maybeCheckWant(redisSSL *rssl, int rv) {
 }
 
 /**
- * Implementation of redisContextFuncs for SSL connections.
+ * Implementation of siderContextFuncs for SSL connections.
  */
 
-static void redisSSLFree(void *privctx){
-    redisSSL *rsc = privctx;
+static void siderSSLFree(void *privctx){
+    siderSSL *rsc = privctx;
 
     if (!rsc) return;
     if (rsc->ssl) {
@@ -482,14 +482,14 @@ static void redisSSLFree(void *privctx){
     hi_free(rsc);
 }
 
-static ssize_t redisSSLRead(redisContext *c, char *buf, size_t bufcap) {
-    redisSSL *rssl = c->privctx;
+static ssize_t siderSSLRead(siderContext *c, char *buf, size_t bufcap) {
+    siderSSL *rssl = c->privctx;
 
     int nread = SSL_read(rssl->ssl, buf, bufcap);
     if (nread > 0) {
         return nread;
     } else if (nread == 0) {
-        __redisSetError(c, REDIS_ERR_EOF, "Server closed the connection");
+        __siderSetError(c, REDIS_ERR_EOF, "Server closed the connection");
         return -1;
     } else {
         int err = SSL_get_error(rssl->ssl, nread);
@@ -507,7 +507,7 @@ static ssize_t redisSSLRead(redisContext *c, char *buf, size_t bufcap) {
                 if (errno == EAGAIN) {
                     msg = "Resource temporarily unavailable";
                 }
-                __redisSetError(c, REDIS_ERR_IO, msg);
+                __siderSetError(c, REDIS_ERR_IO, msg);
                 return -1;
             }
         }
@@ -518,14 +518,14 @@ static ssize_t redisSSLRead(redisContext *c, char *buf, size_t bufcap) {
         if (maybeCheckWant(rssl, err)) {
             return 0;
         } else {
-            __redisSetError(c, REDIS_ERR_IO, NULL);
+            __siderSetError(c, REDIS_ERR_IO, NULL);
             return -1;
         }
     }
 }
 
-static ssize_t redisSSLWrite(redisContext *c) {
-    redisSSL *rssl = c->privctx;
+static ssize_t siderSSLWrite(siderContext *c) {
+    siderSSL *rssl = c->privctx;
 
     size_t len = rssl->lastLen ? rssl->lastLen : hi_sdslen(c->obuf);
     int rv = SSL_write(rssl->ssl, c->obuf, len);
@@ -539,17 +539,17 @@ static ssize_t redisSSLWrite(redisContext *c) {
         if ((c->flags & REDIS_BLOCK) == 0 && maybeCheckWant(rssl, err)) {
             return 0;
         } else {
-            __redisSetError(c, REDIS_ERR_IO, NULL);
+            __siderSetError(c, REDIS_ERR_IO, NULL);
             return -1;
         }
     }
     return rv;
 }
 
-static void redisSSLAsyncRead(redisAsyncContext *ac) {
+static void siderSSLAsyncRead(siderAsyncContext *ac) {
     int rv;
-    redisSSL *rssl = ac->c.privctx;
-    redisContext *c = &ac->c;
+    siderSSL *rssl = ac->c.privctx;
+    siderContext *c = &ac->c;
 
     rssl->wantRead = 0;
 
@@ -558,33 +558,33 @@ static void redisSSLAsyncRead(redisAsyncContext *ac) {
 
         /* This is probably just a write event */
         rssl->pendingWrite = 0;
-        rv = redisBufferWrite(c, &done);
+        rv = siderBufferWrite(c, &done);
         if (rv == REDIS_ERR) {
-            __redisAsyncDisconnect(ac);
+            __siderAsyncDisconnect(ac);
             return;
         } else if (!done) {
             _EL_ADD_WRITE(ac);
         }
     }
 
-    rv = redisBufferRead(c);
+    rv = siderBufferRead(c);
     if (rv == REDIS_ERR) {
-        __redisAsyncDisconnect(ac);
+        __siderAsyncDisconnect(ac);
     } else {
         _EL_ADD_READ(ac);
-        redisProcessCallbacks(ac);
+        siderProcessCallbacks(ac);
     }
 }
 
-static void redisSSLAsyncWrite(redisAsyncContext *ac) {
+static void siderSSLAsyncWrite(siderAsyncContext *ac) {
     int rv, done = 0;
-    redisSSL *rssl = ac->c.privctx;
-    redisContext *c = &ac->c;
+    siderSSL *rssl = ac->c.privctx;
+    siderContext *c = &ac->c;
 
     rssl->pendingWrite = 0;
-    rv = redisBufferWrite(c, &done);
+    rv = siderBufferWrite(c, &done);
     if (rv == REDIS_ERR) {
-        __redisAsyncDisconnect(ac);
+        __siderAsyncDisconnect(ac);
         return;
     }
 
@@ -606,12 +606,12 @@ static void redisSSLAsyncWrite(redisAsyncContext *ac) {
     _EL_ADD_READ(ac);
 }
 
-redisContextFuncs redisContextSSLFuncs = {
-    .close = redisNetClose,
-    .free_privctx = redisSSLFree,
-    .async_read = redisSSLAsyncRead,
-    .async_write = redisSSLAsyncWrite,
-    .read = redisSSLRead,
-    .write = redisSSLWrite
+siderContextFuncs siderContextSSLFuncs = {
+    .close = siderNetClose,
+    .free_privctx = siderSSLFree,
+    .async_read = siderSSLAsyncRead,
+    .async_write = siderSSLAsyncWrite,
+    .read = siderSSLRead,
+    .write = siderSSLWrite
 };
 

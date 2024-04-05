@@ -12,7 +12,7 @@ start_server {tags {"cli"}} {
             set opts "-n $::dbnum"
         }
         set ::env(TERM) dumb
-        set cmdline [rediscli [srv host] [srv port] $opts]
+        set cmdline [sidercli [srv host] [srv port] $opts]
         if {$infile ne ""} {
             set cmdline "$cmdline < $infile"
             set mode "r"
@@ -92,7 +92,7 @@ start_server {tags {"cli"}} {
     }
 
     proc _run_cli {host port db opts args} {
-        set cmd [rediscli $host $port [list -n $db {*}$args]]
+        set cmd [sidercli $host $port [list -n $db {*}$args]]
         foreach {key value} $opts {
             if {$key eq "pipe"} {
                 set cmd "sh -c \"$value | $cmd\""
@@ -358,11 +358,11 @@ start_server {tags {"cli"}} {
         assert_equal "foo\nbar" [run_cli lrange list 0 -1]
     }
 
-if {!$::tls} { ;# fake_redis_node doesn't support TLS
+if {!$::tls} { ;# fake_sider_node doesn't support TLS
     test_nontty_cli "ASK redirect test" {
-        # Set up two fake Redis nodes.
+        # Set up two fake Sider nodes.
         set tclsh [info nameofexecutable]
-        set script "tests/helpers/fake_redis_node.tcl"
+        set script "tests/helpers/fake_sider_node.tcl"
         set port1 [find_available_port $::baseport $::portcount]
         set port2 [find_available_port $::baseport $::portcount]
         set p1 [exec $tclsh $script $port1 \
@@ -375,7 +375,7 @@ if {!$::tls} { ;# fake_redis_node doesn't support TLS
             [catch {close [socket "127.0.0.1" $port1]}] == 0 && \
             [catch {close [socket "127.0.0.1" $port2]}] == 0
         } else {
-            fail "Failed to start fake Redis nodes"
+            fail "Failed to start fake Sider nodes"
         }
         # Run the cli
         assert_equal "OK" [run_cli_host_port_db "127.0.0.1" $port1 0 -c SET foo bar]
@@ -444,14 +444,14 @@ if {!$::tls} { ;# fake_redis_node doesn't support TLS
         r acl deluser clitest
     }
     
-    proc test_redis_cli_rdb_dump {functions_only} {
+    proc test_sider_cli_rdb_dump {functions_only} {
         r flushdb
         r function flush
 
         set dir [lindex [r config get dir] 1]
 
         assert_equal "OK" [r debug populate 100000 key 1000]
-        assert_equal "lib1" [r function load "#!lua name=lib1\nredis.register_function('func1', function() return 123 end)"]
+        assert_equal "lib1" [r function load "#!lua name=lib1\nsider.register_function('func1', function() return 123 end)"]
         if {$functions_only} {
             set args "--functions-rdb $dir/cli.rdb"
         } else {
@@ -464,7 +464,7 @@ if {!$::tls} { ;# fake_redis_node doesn't support TLS
         file rename "$dir/cli.rdb" "$dir/dump.rdb"
 
         assert_equal "OK" [r set should-not-exist 1]
-        assert_equal "should_not_exist_func" [r function load "#!lua name=should_not_exist_func\nredis.register_function('should_not_exist_func', function() return 456 end)"]
+        assert_equal "should_not_exist_func" [r function load "#!lua name=should_not_exist_func\nsider.register_function('should_not_exist_func', function() return 456 end)"]
         assert_equal "OK" [r debug reload nosave]
         assert_equal {} [r get should-not-exist]
         assert_equal {{library_name lib1 engine LUA functions {{name func1 description {} flags {}}}}} [r function list]
@@ -480,12 +480,12 @@ if {!$::tls} { ;# fake_redis_node doesn't support TLS
     test "Dumping an RDB - functions only: $functions_only" {
         # Disk-based master
         assert_match "OK" [r config set repl-diskless-sync no]
-        test_redis_cli_rdb_dump $functions_only
+        test_sider_cli_rdb_dump $functions_only
 
         # Disk-less master
         assert_match "OK" [r config set repl-diskless-sync yes]
         assert_match "OK" [r config set repl-diskless-sync-delay 0]
-        test_redis_cli_rdb_dump $functions_only
+        test_sider_cli_rdb_dump $functions_only
     } {} {needs:repl needs:debug}
 
     } ;# foreach functions_only
@@ -504,12 +504,12 @@ if {!$::tls} { ;# fake_redis_node doesn't support TLS
         assert_equal {key:2} [run_cli --scan --quoted-pattern {"*:\x32"}]
     }
 
-    proc test_redis_cli_repl {} {
+    proc test_sider_cli_repl {} {
         set fd [open_cli "--replica"]
         wait_for_condition 500 100 {
             [string match {*slave0:*state=online*} [r info]]
         } else {
-            fail "redis-cli --replica did not connect"
+            fail "sider-cli --replica did not connect"
         }
 
         for {set i 0} {$i < 100} {incr i} {
@@ -519,7 +519,7 @@ if {!$::tls} { ;# fake_redis_node doesn't support TLS
         wait_for_condition 500 100 {
             [string match {*test-value-99*} [read_cli $fd]]
         } else {
-            fail "redis-cli --replica didn't read commands"
+            fail "sider-cli --replica didn't read commands"
         }
 
         fconfigure $fd -blocking true
@@ -531,12 +531,12 @@ if {!$::tls} { ;# fake_redis_node doesn't support TLS
     test "Connecting as a replica" {
         # Disk-based master
         assert_match "OK" [r config set repl-diskless-sync no]
-        test_redis_cli_repl
+        test_sider_cli_repl
 
         # Disk-less master
         assert_match "OK" [r config set repl-diskless-sync yes]
         assert_match "OK" [r config set repl-diskless-sync-delay 0]
-        test_redis_cli_repl
+        test_sider_cli_repl
     } {} {needs:repl}
 
     test "Piping raw protocol" {
@@ -580,7 +580,7 @@ if {!$::tls} { ;# fake_redis_node doesn't support TLS
     }
 
     test "DUMP RESTORE with -x option" {
-        set cmdline [rediscli [srv host] [srv port]]
+        set cmdline [sidercli [srv host] [srv port]]
 
         exec {*}$cmdline DEL set new_set
         exec {*}$cmdline SADD set 1 2 3 4 5 6
@@ -594,7 +594,7 @@ if {!$::tls} { ;# fake_redis_node doesn't support TLS
     }
 
     test "DUMP RESTORE with -X option" {
-        set cmdline [rediscli [srv host] [srv port]]
+        set cmdline [sidercli [srv host] [srv port]]
 
         exec {*}$cmdline DEL zset new_zset
         exec {*}$cmdline ZADD zset 1 a 2 b 3 c

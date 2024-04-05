@@ -1,6 +1,6 @@
 #!/bin/sh -ue
 
-REDIS_SERVER=${REDIS_SERVER:-redis-server}
+REDIS_SERVER=${REDIS_SERVER:-sider-server}
 REDIS_PORT=${REDIS_PORT:-56379}
 REDIS_SSL_PORT=${REDIS_SSL_PORT:-56443}
 TEST_SSL=${TEST_SSL:-0}
@@ -10,34 +10,34 @@ SSL_TEST_ARGS=
 SKIPS_ARG=${SKIPS_ARG:-}
 REDIS_DOCKER=${REDIS_DOCKER:-}
 
-# We need to enable the DEBUG command for redis-server >= 7.0.0
-REDIS_MAJOR_VERSION="$(redis-server --version|awk -F'[^0-9]+' '{ print $2 }')"
+# We need to enable the DEBUG command for sider-server >= 7.0.0
+REDIS_MAJOR_VERSION="$(sider-server --version|awk -F'[^0-9]+' '{ print $2 }')"
 if [ "$REDIS_MAJOR_VERSION" -gt "6" ]; then
     ENABLE_DEBUG_CMD="enable-debug-command local"
 fi
 
 tmpdir=$(mktemp -d)
-PID_FILE=${tmpdir}/hiredis-test-redis.pid
-SOCK_FILE=${tmpdir}/hiredis-test-redis.sock
+PID_FILE=${tmpdir}/hisider-test-sider.pid
+SOCK_FILE=${tmpdir}/hisider-test-sider.sock
 
 if [ "$TEST_SSL" = "1" ]; then
     SSL_CA_CERT=${tmpdir}/ca.crt
     SSL_CA_KEY=${tmpdir}/ca.key
-    SSL_CERT=${tmpdir}/redis.crt
-    SSL_KEY=${tmpdir}/redis.key
+    SSL_CERT=${tmpdir}/sider.crt
+    SSL_KEY=${tmpdir}/sider.key
 
     openssl genrsa -out ${tmpdir}/ca.key 4096
     openssl req \
         -x509 -new -nodes -sha256 \
         -key ${SSL_CA_KEY} \
         -days 3650 \
-        -subj '/CN=Hiredis Test CA' \
+        -subj '/CN=Hisider Test CA' \
         -out ${SSL_CA_CERT}
     openssl genrsa -out ${SSL_KEY} 2048
     openssl req \
         -new -sha256 \
         -key ${SSL_KEY} \
-        -subj '/CN=Hiredis Test Cert' | \
+        -subj '/CN=Hisider Test Cert' | \
         openssl x509 \
             -req -sha256 \
             -CA ${SSL_CA_CERT} \
@@ -52,7 +52,7 @@ fi
 
 cleanup() {
   if [ -n "${REDIS_DOCKER}" ] ; then
-    docker kill redis-test-server
+    docker kill sider-test-server
   else
     set +e
     kill $(cat ${PID_FILE})
@@ -62,7 +62,7 @@ cleanup() {
 trap cleanup INT TERM EXIT
 
 # base config
-cat > ${tmpdir}/redis.conf <<EOF
+cat > ${tmpdir}/sider.conf <<EOF
 pidfile ${PID_FILE}
 port ${REDIS_PORT}
 unixsocket ${SOCK_FILE}
@@ -71,7 +71,7 @@ EOF
 
 # if not running in docker add these:
 if [ ! -n "${REDIS_DOCKER}" ]; then
-cat >> ${tmpdir}/redis.conf <<EOF
+cat >> ${tmpdir}/sider.conf <<EOF
 daemonize yes
 ${ENABLE_DEBUG_CMD}
 bind 127.0.0.1
@@ -80,7 +80,7 @@ fi
 
 # if doing ssl, add these
 if [ "$TEST_SSL" = "1" ]; then
-    cat >> ${tmpdir}/redis.conf <<EOF
+    cat >> ${tmpdir}/sider.conf <<EOF
 tls-port ${REDIS_SSL_PORT}
 tls-ca-cert-file ${SSL_CA_CERT}
 tls-cert-file ${SSL_CERT}
@@ -89,18 +89,18 @@ EOF
 fi
 
 echo ${tmpdir}
-cat ${tmpdir}/redis.conf
+cat ${tmpdir}/sider.conf
 if [ -n "${REDIS_DOCKER}" ] ; then
     chmod a+wx ${tmpdir}
     chmod a+r ${tmpdir}/*
-    docker run -d --rm --name redis-test-server \
+    docker run -d --rm --name sider-test-server \
         -p ${REDIS_PORT}:${REDIS_PORT} \
         -p ${REDIS_SSL_PORT}:${REDIS_SSL_PORT} \
         -v ${tmpdir}:${tmpdir} \
         ${REDIS_DOCKER} \
-        redis-server ${tmpdir}/redis.conf
+        sider-server ${tmpdir}/sider.conf
 else
-    ${REDIS_SERVER} ${tmpdir}/redis.conf
+    ${REDIS_SERVER} ${tmpdir}/sider.conf
 fi
 # Wait until we detect the unix socket
 echo waiting for server
@@ -109,4 +109,4 @@ while [ ! -S "${SOCK_FILE}" ]; do sleep 1; done
 # Treat skips as failures if directed
 [ "$SKIPS_AS_FAILS" = 1 ] && SKIPS_ARG="${SKIPS_ARG} --skips-as-fails"
 
-${TEST_PREFIX:-} ./hiredis-test -h 127.0.0.1 -p ${REDIS_PORT} -s ${SOCK_FILE} ${SSL_TEST_ARGS} ${SKIPS_ARG}
+${TEST_PREFIX:-} ./hisider-test -h 127.0.0.1 -p ${REDIS_PORT} -s ${SOCK_FILE} ${SSL_TEST_ARGS} ${SKIPS_ARG}

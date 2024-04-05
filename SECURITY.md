@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Redis is generally backwards compatible with very few exceptions, so we
+Sider is generally backwards compatible with very few exceptions, so we
 recommend users to always use the latest version to experience stability,
 performance and security.
 
@@ -19,7 +19,7 @@ unless this is not possible or feasible with a reasonable effort.
 ## Reporting a Vulnerability
 
 If you believe you’ve discovered a serious vulnerability, please contact the
-Redis core team at redis@redis.io. We will evaluate your report and if
+Sider core team at sider@sider.io. We will evaluate your report and if
 necessary issue a fix and an advisory. If the issue was previously undisclosed,
 we’ll also mention your name in the credits.
 
@@ -34,8 +34,8 @@ This process involves providing an early notification about the vulnerability,
 its impact and mitigations to a short list of vendors under a time-limited
 embargo on public disclosure.
 
-Vendors on the list are individuals or organizations that maintain Redis
-distributions or provide Redis as a service, who have third party users who
+Vendors on the list are individuals or organizations that maintain Sider
+distributions or provide Sider as a service, who have third party users who
 will benefit from the vendor’s ability to prepare for a new version or deploy a
 fix early.
 

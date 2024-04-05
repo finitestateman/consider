@@ -3,15 +3,15 @@
  * Copyright (c) 2009-2012, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -233,7 +233,7 @@ int prepareReplicasToWrite(void) {
     return prepared;
 }
 
-/* Wrapper for feedReplicationBuffer() that takes Redis string objects
+/* Wrapper for feedReplicationBuffer() that takes Sider string objects
  * as input. */
 void feedReplicationBufferWithObject(robj *o) {
     char llstr[LONG_STR_SIZE];
@@ -1026,7 +1026,7 @@ void syncCommand(client *c) {
         }
     } else {
         /* If a slave uses SYNC, we are dealing with an old implementation
-         * of the replication protocol (like redis-cli --slave). Flag the client
+         * of the replication protocol (like sider-cli --slave). Flag the client
          * so that we don't expect to receive REPLCONF ACK feedbacks. */
         c->flags |= CLIENT_PRE_PSYNC;
     }
@@ -1138,7 +1138,7 @@ void syncCommand(client *c) {
  *
  * - listening-port <port>
  * - ip-address <ip>
- * What is the listening ip and port of the Replica redis instance, so that
+ * What is the listening ip and port of the Replica sider instance, so that
  * the master can accurately lists replicas and their listening ports in the
  * INFO output.
  *
@@ -1614,7 +1614,7 @@ void updateSlavesWaitingBgsave(int bgsaveerr, int type) {
         client *slave = ln->value;
 
         if (slave->replstate == SLAVE_STATE_WAIT_BGSAVE_END) {
-            struct redis_stat buf;
+            struct sider_stat buf;
 
             if (bgsaveerr != C_OK) {
                 freeClientAsync(slave);
@@ -1663,7 +1663,7 @@ void updateSlavesWaitingBgsave(int bgsaveerr, int type) {
                 slave->repl_start_cmd_stream_on_ack = 1;
             } else {
                 if ((slave->repldbfd = open(server.rdb_filename,O_RDONLY)) == -1 ||
-                    redis_fstat(slave->repldbfd,&buf) == -1) {
+                    sider_fstat(slave->repldbfd,&buf) == -1) {
                     freeClientAsync(slave);
                     serverLog(LL_WARNING,"SYNC failed. Can't open/stat DB after BGSAVE: %s", strerror(errno));
                     continue;
@@ -1836,13 +1836,13 @@ static int useDisklessLoad(void) {
 /* Helper function for readSyncBulkPayload() to initialize tempDb
  * before socket-loading the new db from master. The tempDb may be populated
  * by swapMainDbWithTempDb or freed by disklessLoadDiscardTempDb later. */
-redisDb *disklessLoadInitTempDb(void) {
+siderDb *disklessLoadInitTempDb(void) {
     return initTempDb();
 }
 
 /* Helper function for readSyncBulkPayload() to discard our tempDb
  * when the loading succeeded or failed. */
-void disklessLoadDiscardTempDb(redisDb *tempDb) {
+void disklessLoadDiscardTempDb(siderDb *tempDb) {
     discardTempDb(tempDb, replicationEmptyDbCallback);
 }
 
@@ -1866,7 +1866,7 @@ void readSyncBulkPayload(connection *conn) {
     char buf[PROTO_IOBUF_LEN];
     ssize_t nread, readlen, nwritten;
     int use_diskless_load = useDisklessLoad();
-    redisDb *diskless_load_tempDb = NULL;
+    siderDb *diskless_load_tempDb = NULL;
     functionsLibCtx* temp_functions_lib_ctx = NULL;
     int empty_db_flags = server.repl_slave_lazy_flush ? EMPTYDB_ASYNC :
                                                         EMPTYDB_NO_FLAGS;
@@ -2034,7 +2034,7 @@ void readSyncBulkPayload(connection *conn) {
     /* We reach this point in one of the following cases:
      *
      * 1. The replica is using diskless replication, that is, it reads data
-     *    directly from the socket to the Redis memory, without using
+     *    directly from the socket to the Sider memory, without using
      *    a temporary RDB file on disk. In that case we just block and
      *    read everything from the socket.
      *
@@ -2084,7 +2084,7 @@ void readSyncBulkPayload(connection *conn) {
     rdbSaveInfo rsi = RDB_SAVE_INFO_INIT;
     if (use_diskless_load) {
         rio rdb;
-        redisDb *dbarray;
+        siderDb *dbarray;
         functionsLibCtx* functions_lib_ctx;
         int asyncLoading = 0;
 
@@ -2280,7 +2280,7 @@ void readSyncBulkPayload(connection *conn) {
     serverLog(LL_NOTICE, "MASTER <-> REPLICA sync: Finished with success");
 
     if (server.supervised_mode == SUPERVISED_SYSTEMD) {
-        redisCommunicateSystemd("STATUS=MASTER <-> REPLICA sync: Finished with success. Ready to accept connections in read-write mode.\n");
+        siderCommunicateSystemd("STATUS=MASTER <-> REPLICA sync: Finished with success. Ready to accept connections in read-write mode.\n");
     }
 
     /* Send the initial ACK immediately to put this replica in online state. */
@@ -2334,7 +2334,7 @@ char *sendCommand(connection *conn, ...) {
     size_t argslen = 0;
     char *arg;
 
-    /* Create the command to send to the master, we use redis binary
+    /* Create the command to send to the master, we use sider binary
      * protocol to make sure correct arguments are sent. This function
      * is not safe for all binary data. */
     va_start(ap,conn);
@@ -2657,7 +2657,7 @@ void syncWithMaster(connection *conn) {
 
         /* We accept only two replies as valid, a positive +PONG reply
          * (we just check for "+") or an authentication error.
-         * Note that older versions of Redis replied with "operation not
+         * Note that older versions of Sider replied with "operation not
          * permitted" instead of using a proper error code, so we test
          * both. */
         if (err[0] != '+' &&
@@ -2757,7 +2757,7 @@ void syncWithMaster(connection *conn) {
     if (server.repl_state == REPL_STATE_RECEIVE_PORT_REPLY) {
         err = receiveSynchronousResponse(conn);
         if (err == NULL) goto no_response_error;
-        /* Ignore the error if any, not all the Redis versions support
+        /* Ignore the error if any, not all the Sider versions support
          * REPLCONF listening-port. */
         if (err[0] == '-') {
             serverLog(LL_NOTICE,"(Non critical) Master does not understand "
@@ -2775,7 +2775,7 @@ void syncWithMaster(connection *conn) {
     if (server.repl_state == REPL_STATE_RECEIVE_IP_REPLY) {
         err = receiveSynchronousResponse(conn);
         if (err == NULL) goto no_response_error;
-        /* Ignore the error if any, not all the Redis versions support
+        /* Ignore the error if any, not all the Sider versions support
          * REPLCONF ip-address. */
         if (err[0] == '-') {
             serverLog(LL_NOTICE,"(Non critical) Master does not understand "
@@ -2790,7 +2790,7 @@ void syncWithMaster(connection *conn) {
     if (server.repl_state == REPL_STATE_RECEIVE_CAPA_REPLY) {
         err = receiveSynchronousResponse(conn);
         if (err == NULL) goto no_response_error;
-        /* Ignore the error if any, not all the Redis versions support
+        /* Ignore the error if any, not all the Sider versions support
          * REPLCONF capa. */
         if (err[0] == '-') {
             serverLog(LL_NOTICE,"(Non critical) Master does not understand "
@@ -2851,7 +2851,7 @@ void syncWithMaster(connection *conn) {
     if (psync_result == PSYNC_CONTINUE) {
         serverLog(LL_NOTICE, "MASTER <-> REPLICA sync: Master accepted a Partial Resynchronization.");
         if (server.supervised_mode == SUPERVISED_SYSTEMD) {
-            redisCommunicateSystemd("STATUS=MASTER <-> REPLICA sync: Partial Resynchronization accepted. Ready to accept connections in read-write mode.\n");
+            siderCommunicateSystemd("STATUS=MASTER <-> REPLICA sync: Partial Resynchronization accepted. Ready to accept connections in read-write mode.\n");
         }
         return;
     }
@@ -3457,9 +3457,9 @@ int checkGoodReplicasStatus(void) {
 }
 
 /* ----------------------- SYNCHRONOUS REPLICATION --------------------------
- * Redis synchronous replication design can be summarized in points:
+ * Sider synchronous replication design can be summarized in points:
  *
- * - Redis masters have a global replication offset, used by PSYNC.
+ * - Sider masters have a global replication offset, used by PSYNC.
  * - Master increment the offset every time new commands are sent to slaves.
  * - Slaves ping back masters with the offset processed so far.
  *
@@ -3532,7 +3532,7 @@ void waitCommand(client *c) {
     long long offset = c->woff;
 
     if (server.masterhost) {
-        addReplyError(c,"WAIT cannot be used with replica instances. Please also note that since Redis 4.0 if a replica is configured to be writable (which is not the default) writes to replicas are just local and are not propagated.");
+        addReplyError(c,"WAIT cannot be used with replica instances. Please also note that since Sider 4.0 if a replica is configured to be writable (which is not the default) writes to replicas are just local and are not propagated.");
         return;
     }
 
@@ -3730,7 +3730,7 @@ void replicationCron(void) {
     if (server.masterhost && server.repl_state == REPL_STATE_TRANSFER &&
         (time(NULL)-server.repl_transfer_lastio) > server.repl_timeout)
     {
-        serverLog(LL_WARNING,"Timeout receiving bulk data from MASTER... If the problem persists try to set the 'repl-timeout' parameter in redis.conf to a larger value.");
+        serverLog(LL_WARNING,"Timeout receiving bulk data from MASTER... If the problem persists try to set the 'repl-timeout' parameter in sider.conf to a larger value.");
         cancelReplicationHandshake(1);
     }
 
@@ -3769,7 +3769,7 @@ void replicationCron(void) {
         listLength(server.slaves))
     {
         /* Note that we don't send the PING if the clients are paused during
-         * a Redis Cluster manual failover: the PING we send will otherwise
+         * a Sider Cluster manual failover: the PING we send will otherwise
          * alter the replication offsets of master and slave, and will no longer
          * match the one stored into 'mf_master_offset' state. */
         int manual_failover_in_progress =
@@ -3887,7 +3887,7 @@ void replicationCron(void) {
 
     replicationStartPendingFork();
 
-    /* Remove the RDB file used for replication if Redis is not running
+    /* Remove the RDB file used for replication if Sider is not running
      * with any persistence. */
     removeRDBUsedToSyncReplicas();
 

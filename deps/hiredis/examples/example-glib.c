@@ -1,13 +1,13 @@
 #include <stdlib.h>
 
-#include <hiredis.h>
+#include <hisider.h>
 #include <async.h>
 #include <adapters/glib.h>
 
 static GMainLoop *mainloop;
 
 static void
-connect_cb (const redisAsyncContext *ac G_GNUC_UNUSED,
+connect_cb (const siderAsyncContext *ac G_GNUC_UNUSED,
             int status)
 {
     if (status != REDIS_OK) {
@@ -19,7 +19,7 @@ connect_cb (const redisAsyncContext *ac G_GNUC_UNUSED,
 }
 
 static void
-disconnect_cb (const redisAsyncContext *ac G_GNUC_UNUSED,
+disconnect_cb (const siderAsyncContext *ac G_GNUC_UNUSED,
                int status)
 {
     if (status != REDIS_OK) {
@@ -31,41 +31,41 @@ disconnect_cb (const redisAsyncContext *ac G_GNUC_UNUSED,
 }
 
 static void
-command_cb(redisAsyncContext *ac,
+command_cb(siderAsyncContext *ac,
            gpointer r,
            gpointer user_data G_GNUC_UNUSED)
 {
-    redisReply *reply = r;
+    siderReply *reply = r;
 
     if (reply) {
         g_print("REPLY: %s\n", reply->str);
     }
 
-    redisAsyncDisconnect(ac);
+    siderAsyncDisconnect(ac);
 }
 
 gint
 main (gint argc     G_GNUC_UNUSED,
       gchar *argv[] G_GNUC_UNUSED)
 {
-    redisAsyncContext *ac;
+    siderAsyncContext *ac;
     GMainContext *context = NULL;
     GSource *source;
 
-    ac = redisAsyncConnect("127.0.0.1", 6379);
+    ac = siderAsyncConnect("127.0.0.1", 6379);
     if (ac->err) {
         g_printerr("%s\n", ac->errstr);
         exit(EXIT_FAILURE);
     }
 
-    source = redis_source_new(ac);
+    source = sider_source_new(ac);
     mainloop = g_main_loop_new(context, FALSE);
     g_source_attach(source, context);
 
-    redisAsyncSetConnectCallback(ac, connect_cb);
-    redisAsyncSetDisconnectCallback(ac, disconnect_cb);
-    redisAsyncCommand(ac, command_cb, NULL, "SET key 1234");
-    redisAsyncCommand(ac, command_cb, NULL, "GET key");
+    siderAsyncSetConnectCallback(ac, connect_cb);
+    siderAsyncSetDisconnectCallback(ac, disconnect_cb);
+    siderAsyncCommand(ac, command_cb, NULL, "SET key 1234");
+    siderAsyncCommand(ac, command_cb, NULL, "GET key");
 
     g_main_loop_run(mainloop);
 

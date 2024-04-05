@@ -40,7 +40,7 @@ start_server {tags {"modules"}} {
 
     test {DataType: ModuleTypeReplaceValue() fails on non-module keys} {
         r datatype.set key-a 1 AAA
-        r set key-b RedisString
+        r set key-b SiderString
 
         catch {r datatype.swap key-a key-b} e
         set e
@@ -64,7 +64,7 @@ start_server {tags {"modules"}} {
         r config set busy-reply-threshold 5000 ;# make sure we're using a high default
         # trigger slow loading
         r datatype.slow_loading 1
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
         set start [clock clicks -milliseconds]
         $rd debug reload
 

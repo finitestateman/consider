@@ -1,17 +1,17 @@
 /* CLI (command line interface) common methods
  * 
- * Copyright (c) 2020, Redis Labs
+ * Copyright (c) 2020, Sider Labs
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -34,24 +34,24 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <hiredis.h>
-#include <sdscompat.h> /* Use hiredis' sds compat header that maps sds calls to their hi_ variants */
-#include <sds.h> /* use sds.h from hiredis, so that only one set of sds functions will be present in the binary */
+#include <hisider.h>
+#include <sdscompat.h> /* Use hisider' sds compat header that maps sds calls to their hi_ variants */
+#include <sds.h> /* use sds.h from hisider, so that only one set of sds functions will be present in the binary */
 #include <unistd.h>
 #include <string.h>
 #include <ctype.h>
 #ifdef USE_OPENSSL
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-#include <hiredis_ssl.h>
+#include <hisider_ssl.h>
 #endif
 
 #define UNUSED(V) ((void) V)
 
-/* Wrapper around redisSecureConnection to avoid hiredis_ssl dependencies if
+/* Wrapper around siderSecureConnection to avoid hisider_ssl dependencies if
  * not building with TLS support.
  */
-int cliSecureConnection(redisContext *c, cliSSLconfig config, const char **err) {
+int cliSecureConnection(siderContext *c, cliSSLconfig config, const char **err) {
 #ifdef USE_OPENSSL
     static SSL_CTX *ssl_ctx = NULL;
 
@@ -109,7 +109,7 @@ int cliSecureConnection(redisContext *c, cliSSLconfig config, const char **err) 
         return REDIS_ERR;
     }
 
-    return redisInitiateSSL(c, ssl);
+    return siderInitiateSSL(c, ssl);
 
 error:
     SSL_CTX_free(ssl_ctx);
@@ -123,9 +123,9 @@ error:
 #endif
 }
 
-/* Wrapper around hiredis to allow arbitrary reads and writes.
+/* Wrapper around hisider to allow arbitrary reads and writes.
  *
- * We piggybacks on top of hiredis to achieve transparent TLS support,
+ * We piggybacks on top of hisider to achieve transparent TLS support,
  * and use its internal buffers so it can co-exist with commands
  * previously/later issued on the connection.
  *
@@ -133,11 +133,11 @@ error:
  * work transparently.
  */
 
-/* Write a raw buffer through a redisContext. If we already have something
- * in the buffer (leftovers from hiredis operations) it will be written
+/* Write a raw buffer through a siderContext. If we already have something
+ * in the buffer (leftovers from hisider operations) it will be written
  * as well.
  */
-ssize_t cliWriteConn(redisContext *c, const char *buf, size_t buf_len)
+ssize_t cliWriteConn(siderContext *c, const char *buf, size_t buf_len)
 {
     int done = 0;
 
@@ -145,7 +145,7 @@ ssize_t cliWriteConn(redisContext *c, const char *buf, size_t buf_len)
      * but we don't assume that, and write.
      */
     c->obuf = sdscatlen(c->obuf, buf, buf_len);
-    if (redisBufferWrite(c, &done) == REDIS_ERR) {
+    if (siderBufferWrite(c, &done) == REDIS_ERR) {
         if (!(c->flags & REDIS_BLOCK))
             errno = EAGAIN;
 
@@ -301,20 +301,20 @@ static sds percentDecode(const char *pe, size_t len) {
 /* Parse a URI and extract the server connection information.
  * URI scheme is based on the provisional specification[1] excluding support
  * for query parameters. Valid URIs are:
- *   scheme:    "redis://"
+ *   scheme:    "sider://"
  *   authority: [[<username> ":"] <password> "@"] [<hostname> [":" <port>]]
  *   path:      ["/" [<db>]]
  *
- *  [1]: https://www.iana.org/assignments/uri-schemes/prov/redis */
-void parseRedisUri(const char *uri, const char* tool_name, cliConnInfo *connInfo, int *tls_flag) {
+ *  [1]: https://www.iana.org/assignments/uri-schemes/prov/sider */
+void parseSiderUri(const char *uri, const char* tool_name, cliConnInfo *connInfo, int *tls_flag) {
 #ifdef USE_OPENSSL
     UNUSED(tool_name);
 #else
     UNUSED(tls_flag);
 #endif
 
-    const char *scheme = "redis://";
-    const char *tlsscheme = "rediss://";
+    const char *scheme = "sider://";
+    const char *tlsscheme = "siders://";
     const char *curr = uri;
     const char *end = uri + strlen(uri);
     const char *userinfo, *username, *port, *host, *path;
@@ -325,7 +325,7 @@ void parseRedisUri(const char *uri, const char* tool_name, cliConnInfo *connInfo
         *tls_flag = 1;
         curr += strlen(tlsscheme);
 #else
-        fprintf(stderr,"rediss:// is only supported when %s is compiled with OpenSSL\n", tool_name);
+        fprintf(stderr,"siders:// is only supported when %s is compiled with OpenSSL\n", tool_name);
         exit(1);
 #endif
     } else if (!strncasecmp(scheme, curr, strlen(scheme))) {

@@ -2,15 +2,15 @@
  * Copyright (c) 2016, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -190,7 +190,7 @@ void rdbCheckSetupSignals(void) {
  * 1 is returned.
  * The file is specified as a filename in 'rdbfilename' if 'fp' is NULL,
  * otherwise the already open file 'fp' is checked. */
-int redis_check_rdb(char *rdbfilename, FILE *fp) {
+int sider_check_rdb(char *rdbfilename, FILE *fp) {
     uint64_t dbid;
     int selected_dbid = -1;
     int type, rdbver;
@@ -390,17 +390,17 @@ static sds checkRdbVersion(void) {
     version = sdscatprintf(sdsempty(), "%s", REDIS_VERSION);
 
     /* Add git commit and working tree status when available */
-    if (strtoll(redisGitSHA1(),NULL,16)) {
-        version = sdscatprintf(version, " (git:%s", redisGitSHA1());
-        if (strtoll(redisGitDirty(),NULL,10))
+    if (strtoll(siderGitSHA1(),NULL,16)) {
+        version = sdscatprintf(version, " (git:%s", siderGitSHA1());
+        if (strtoll(siderGitDirty(),NULL,10))
             version = sdscatprintf(version, "-dirty");
         version = sdscat(version, ")");
     }
     return version;
 }
 
-/* RDB check main: called form server.c when Redis is executed with the
- * redis-check-rdb alias, on during RDB loading errors.
+/* RDB check main: called form server.c when Sider is executed with the
+ * sider-check-rdb alias, on during RDB loading errors.
  *
  * The function works in two ways: can be called with argc/argv as a
  * standalone executable, or called with a non NULL 'fp' argument if we
@@ -411,7 +411,7 @@ static sds checkRdbVersion(void) {
  * status code according to success (RDB is sane) or error (RDB is corrupted).
  * Otherwise if called with a non NULL fp, the function returns C_OK or
  * C_ERR depending on the success or failure. */
-int redis_check_rdb_main(int argc, char **argv, FILE *fp) {
+int sider_check_rdb_main(int argc, char **argv, FILE *fp) {
     struct timeval tv;
 
     if (argc != 2 && fp == NULL) {
@@ -419,7 +419,7 @@ int redis_check_rdb_main(int argc, char **argv, FILE *fp) {
         exit(1);
     } else if (!strcmp(argv[1],"-v") || !strcmp(argv[1], "--version")) {
         sds version = checkRdbVersion();
-        printf("redis-check-rdb %s\n", version);
+        printf("sider-check-rdb %s\n", version);
         sdsfree(version);
         exit(0);
     }
@@ -429,7 +429,7 @@ int redis_check_rdb_main(int argc, char **argv, FILE *fp) {
 
     /* In order to call the loading functions we need to create the shared
      * integer objects, however since this function may be called from
-     * an already initialized Redis instance, check if we really need to. */
+     * an already initialized Sider instance, check if we really need to. */
     if (shared.integers[0] == NULL)
         createSharedObjects();
     server.loading_process_events_interval_bytes = 0;
@@ -437,7 +437,7 @@ int redis_check_rdb_main(int argc, char **argv, FILE *fp) {
     rdbCheckMode = 1;
     rdbCheckInfo("Checking RDB file %s", argv[1]);
     rdbCheckSetupSignals();
-    int retval = redis_check_rdb(argv[1],fp);
+    int retval = sider_check_rdb(argv[1],fp);
     if (retval == 0) {
         rdbCheckInfo("\\o/ RDB looks OK! \\o/");
         rdbShowGenericInfo();

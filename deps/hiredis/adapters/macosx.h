@@ -8,65 +8,65 @@
 
 #include <CoreFoundation/CoreFoundation.h>
 
-#include "../hiredis.h"
+#include "../hisider.h"
 #include "../async.h"
 
 typedef struct {
-    redisAsyncContext *context;
+    siderAsyncContext *context;
     CFSocketRef socketRef;
     CFRunLoopSourceRef sourceRef;
-} RedisRunLoop;
+} SiderRunLoop;
 
-static int freeRedisRunLoop(RedisRunLoop* redisRunLoop) {
-    if( redisRunLoop != NULL ) {
-        if( redisRunLoop->sourceRef != NULL ) {
-            CFRunLoopSourceInvalidate(redisRunLoop->sourceRef);
-            CFRelease(redisRunLoop->sourceRef);
+static int freeSiderRunLoop(SiderRunLoop* siderRunLoop) {
+    if( siderRunLoop != NULL ) {
+        if( siderRunLoop->sourceRef != NULL ) {
+            CFRunLoopSourceInvalidate(siderRunLoop->sourceRef);
+            CFRelease(siderRunLoop->sourceRef);
         }
-        if( redisRunLoop->socketRef != NULL ) {
-            CFSocketInvalidate(redisRunLoop->socketRef);
-            CFRelease(redisRunLoop->socketRef);
+        if( siderRunLoop->socketRef != NULL ) {
+            CFSocketInvalidate(siderRunLoop->socketRef);
+            CFRelease(siderRunLoop->socketRef);
         }
-        hi_free(redisRunLoop);
+        hi_free(siderRunLoop);
     }
     return REDIS_ERR;
 }
 
-static void redisMacOSAddRead(void *privdata) {
-    RedisRunLoop *redisRunLoop = (RedisRunLoop*)privdata;
-    CFSocketEnableCallBacks(redisRunLoop->socketRef, kCFSocketReadCallBack);
+static void siderMacOSAddRead(void *privdata) {
+    SiderRunLoop *siderRunLoop = (SiderRunLoop*)privdata;
+    CFSocketEnableCallBacks(siderRunLoop->socketRef, kCFSocketReadCallBack);
 }
 
-static void redisMacOSDelRead(void *privdata) {
-    RedisRunLoop *redisRunLoop = (RedisRunLoop*)privdata;
-    CFSocketDisableCallBacks(redisRunLoop->socketRef, kCFSocketReadCallBack);
+static void siderMacOSDelRead(void *privdata) {
+    SiderRunLoop *siderRunLoop = (SiderRunLoop*)privdata;
+    CFSocketDisableCallBacks(siderRunLoop->socketRef, kCFSocketReadCallBack);
 }
 
-static void redisMacOSAddWrite(void *privdata) {
-    RedisRunLoop *redisRunLoop = (RedisRunLoop*)privdata;
-    CFSocketEnableCallBacks(redisRunLoop->socketRef, kCFSocketWriteCallBack);
+static void siderMacOSAddWrite(void *privdata) {
+    SiderRunLoop *siderRunLoop = (SiderRunLoop*)privdata;
+    CFSocketEnableCallBacks(siderRunLoop->socketRef, kCFSocketWriteCallBack);
 }
 
-static void redisMacOSDelWrite(void *privdata) {
-    RedisRunLoop *redisRunLoop = (RedisRunLoop*)privdata;
-    CFSocketDisableCallBacks(redisRunLoop->socketRef, kCFSocketWriteCallBack);
+static void siderMacOSDelWrite(void *privdata) {
+    SiderRunLoop *siderRunLoop = (SiderRunLoop*)privdata;
+    CFSocketDisableCallBacks(siderRunLoop->socketRef, kCFSocketWriteCallBack);
 }
 
-static void redisMacOSCleanup(void *privdata) {
-    RedisRunLoop *redisRunLoop = (RedisRunLoop*)privdata;
-    freeRedisRunLoop(redisRunLoop);
+static void siderMacOSCleanup(void *privdata) {
+    SiderRunLoop *siderRunLoop = (SiderRunLoop*)privdata;
+    freeSiderRunLoop(siderRunLoop);
 }
 
-static void redisMacOSAsyncCallback(CFSocketRef __unused s, CFSocketCallBackType callbackType, CFDataRef __unused address, const void __unused *data, void *info) {
-    redisAsyncContext* context = (redisAsyncContext*) info;
+static void siderMacOSAsyncCallback(CFSocketRef __unused s, CFSocketCallBackType callbackType, CFDataRef __unused address, const void __unused *data, void *info) {
+    siderAsyncContext* context = (siderAsyncContext*) info;
 
     switch (callbackType) {
         case kCFSocketReadCallBack:
-            redisAsyncHandleRead(context);
+            siderAsyncHandleRead(context);
             break;
 
         case kCFSocketWriteCallBack:
-            redisAsyncHandleWrite(context);
+            siderAsyncHandleWrite(context);
             break;
 
         default:
@@ -74,39 +74,39 @@ static void redisMacOSAsyncCallback(CFSocketRef __unused s, CFSocketCallBackType
     }
 }
 
-static int redisMacOSAttach(redisAsyncContext *redisAsyncCtx, CFRunLoopRef runLoop) {
-    redisContext *redisCtx = &(redisAsyncCtx->c);
+static int siderMacOSAttach(siderAsyncContext *siderAsyncCtx, CFRunLoopRef runLoop) {
+    siderContext *siderCtx = &(siderAsyncCtx->c);
 
     /* Nothing should be attached when something is already attached */
-    if( redisAsyncCtx->ev.data != NULL ) return REDIS_ERR;
+    if( siderAsyncCtx->ev.data != NULL ) return REDIS_ERR;
 
-    RedisRunLoop* redisRunLoop = (RedisRunLoop*) hi_calloc(1, sizeof(RedisRunLoop));
-    if (redisRunLoop == NULL)
+    SiderRunLoop* siderRunLoop = (SiderRunLoop*) hi_calloc(1, sizeof(SiderRunLoop));
+    if (siderRunLoop == NULL)
         return REDIS_ERR;
 
-    /* Setup redis stuff */
-    redisRunLoop->context = redisAsyncCtx;
+    /* Setup sider stuff */
+    siderRunLoop->context = siderAsyncCtx;
 
-    redisAsyncCtx->ev.addRead  = redisMacOSAddRead;
-    redisAsyncCtx->ev.delRead  = redisMacOSDelRead;
-    redisAsyncCtx->ev.addWrite = redisMacOSAddWrite;
-    redisAsyncCtx->ev.delWrite = redisMacOSDelWrite;
-    redisAsyncCtx->ev.cleanup  = redisMacOSCleanup;
-    redisAsyncCtx->ev.data     = redisRunLoop;
+    siderAsyncCtx->ev.addRead  = siderMacOSAddRead;
+    siderAsyncCtx->ev.delRead  = siderMacOSDelRead;
+    siderAsyncCtx->ev.addWrite = siderMacOSAddWrite;
+    siderAsyncCtx->ev.delWrite = siderMacOSDelWrite;
+    siderAsyncCtx->ev.cleanup  = siderMacOSCleanup;
+    siderAsyncCtx->ev.data     = siderRunLoop;
 
     /* Initialize and install read/write events */
-    CFSocketContext socketCtx = { 0, redisAsyncCtx, NULL, NULL, NULL };
+    CFSocketContext socketCtx = { 0, siderAsyncCtx, NULL, NULL, NULL };
 
-    redisRunLoop->socketRef = CFSocketCreateWithNative(NULL, redisCtx->fd,
+    siderRunLoop->socketRef = CFSocketCreateWithNative(NULL, siderCtx->fd,
                                                        kCFSocketReadCallBack | kCFSocketWriteCallBack,
-                                                       redisMacOSAsyncCallback,
+                                                       siderMacOSAsyncCallback,
                                                        &socketCtx);
-    if( !redisRunLoop->socketRef ) return freeRedisRunLoop(redisRunLoop);
+    if( !siderRunLoop->socketRef ) return freeSiderRunLoop(siderRunLoop);
 
-    redisRunLoop->sourceRef = CFSocketCreateRunLoopSource(NULL, redisRunLoop->socketRef, 0);
-    if( !redisRunLoop->sourceRef ) return freeRedisRunLoop(redisRunLoop);
+    siderRunLoop->sourceRef = CFSocketCreateRunLoopSource(NULL, siderRunLoop->socketRef, 0);
+    if( !siderRunLoop->sourceRef ) return freeSiderRunLoop(siderRunLoop);
 
-    CFRunLoopAddSource(runLoop, redisRunLoop->sourceRef, kCFRunLoopDefaultMode);
+    CFRunLoopAddSource(runLoop, siderRunLoop->sourceRef, kCFRunLoopDefaultMode);
 
     return REDIS_OK;
 }

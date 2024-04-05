@@ -13,13 +13,13 @@ def markdown(s)
     newlines = []
     # Fix some markdown
     lines.each{|l|
-        # Rewrite RM_Xyz() to RedisModule_Xyz().
-        l = l.gsub(/(?<![A-Z_])RM_(?=[A-Z])/, 'RedisModule_')
+        # Rewrite RM_Xyz() to SiderModule_Xyz().
+        l = l.gsub(/(?<![A-Z_])RM_(?=[A-Z])/, 'SiderModule_')
         # Fix more markdown, except in code blocks indented by 4 spaces, which we
         # don't want to mess with.
         if not l.start_with?('    ')
-            # Add backquotes around RedisModule functions and type where missing.
-            l = l.gsub(/(?<!`)RedisModule[A-z]+(?:\*?\(\))?/){|x| "`#{x}`"}
+            # Add backquotes around SiderModule functions and type where missing.
+            l = l.gsub(/(?<!`)SiderModule[A-z]+(?:\*?\(\))?/){|x| "`#{x}`"}
             # Add backquotes around c functions like malloc() where missing.
             l = l.gsub(/(?<![`A-z.])[a-z_]+\(\)/, '`\0`')
             # Add backquotes around macro and var names containing underscores.
@@ -31,7 +31,7 @@ def markdown(s)
             l = l.gsub(/ -- /, ' – ')
         end
         # Link function names to their definition within the page
-        l = l.gsub(/`(RedisModule_[A-z0-9]+)[()]*`/) {|x|
+        l = l.gsub(/`(SiderModule_[A-z0-9]+)[()]*`/) {|x|
             $index[$1] ? "[#{x}](\##{$1})" : x
         }
         newlines << l
@@ -71,9 +71,9 @@ end
 def docufy(src,i)
     m = /RM_[A-z0-9]+/.match(src[i])
     name = m[0]
-    name = name.sub("RM_","RedisModule_")
+    name = name.sub("RM_","SiderModule_")
     proto = src[i].sub("{","").strip+";\n"
-    proto = proto.sub("RM_","RedisModule_")
+    proto = proto.sub("RM_","SiderModule_")
     proto = linebreak_proto(proto, "    ");
     # Add a link target with the function name. (We don't trust the exact id of
     # the generated one, which depends on the Markdown implementation.)
@@ -142,7 +142,7 @@ puts "title: \"Modules API reference\"\n"
 puts "linkTitle: \"API reference\"\n"
 puts "weight: 1\n"
 puts "description: >\n"
-puts "    Reference for the Redis Modules API\n"
+puts "    Reference for the Sider Modules API\n"
 puts "aliases:\n"
 puts "    - /topics/modules-api-ref\n"
 puts "---\n"
@@ -156,7 +156,7 @@ $index = {}
 src.each_with_index do |line,i|
     if is_func_line(src, i)
         line =~ /RM_([A-z0-9]+)/
-        name = "RedisModule_#{$1}"
+        name = "SiderModule_#{$1}"
         $index[name] = true
     end
 end
@@ -170,7 +170,7 @@ if File.directory?(git_dir) && `which git` != ""
         version.chomp!
         `git --git-dir="#{git_dir}" cat-file blob "#{version}:src/module.c"`.each_line do |line|
             if line =~ /^\w.*[ \*]RM_([A-z0-9]+)/
-                name = "RedisModule_#{$1}"
+                name = "SiderModule_#{$1}"
                 if ! $since[name]
                     $since[name] = version
                 end

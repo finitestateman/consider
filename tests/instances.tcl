@@ -1,6 +1,6 @@
 # Multi-instance test framework.
-# This is used in order to test Sentinel and Redis Cluster, and provides
-# basic capabilities for spawning and handling N parallel Redis / Sentinel
+# This is used in order to test Sentinel and Sider Cluster, and provides
+# basic capabilities for spawning and handling N parallel Sider / Sentinel
 # instances.
 #
 # Copyright (C) 2014 Salvatore Sanfilippo antirez@gmail.com
@@ -10,7 +10,7 @@
 package require Tcl 8.5
 
 set tcl_precision 17
-source ../support/redis.tcl
+source ../support/sider.tcl
 source ../support/util.tcl
 source ../support/aofmanifest.tcl
 source ../support/server.tcl
@@ -25,11 +25,11 @@ set ::dont_clean 0
 set ::simulate_error 0
 set ::failed 0
 set ::sentinel_instances {}
-set ::redis_instances {}
+set ::sider_instances {}
 set ::global_config {}
 set ::sentinel_base_port 20000
-set ::redis_base_port 30000
-set ::redis_port_count 1024
+set ::sider_base_port 30000
+set ::sider_port_count 1024
 set ::host "127.0.0.1"
 set ::leaked_fds_file [file normalize "tmp/leaked_fds.txt"]
 set ::pids {} ; # We kill everything at exit
@@ -40,17 +40,17 @@ set ::loop 0
 
 if {[catch {cd tmp}]} {
     puts "tmp directory not found."
-    puts "Please run this test from the Redis source root."
+    puts "Please run this test from the Sider source root."
     exit 1
 }
 
 # Execute the specified instance of the server specified by 'type', using
 # the provided configuration file. Returns the PID of the process.
 proc exec_instance {type dirname cfgfile} {
-    if {$type eq "redis"} {
-        set prgname redis-server
+    if {$type eq "sider"} {
+        set prgname sider-server
     } elseif {$type eq "sentinel"} {
-        set prgname redis-sentinel
+        set prgname sider-sentinel
     } else {
         error "Unknown instance type."
     }
@@ -64,10 +64,10 @@ proc exec_instance {type dirname cfgfile} {
     return $pid
 }
 
-# Spawn a redis or sentinel instance, depending on 'type'.
+# Spawn a sider or sentinel instance, depending on 'type'.
 proc spawn_instance {type base_port count {conf {}} {base_conf_file ""}} {
     for {set j 0} {$j < $count} {incr j} {
-        set port [find_available_port $base_port $::redis_port_count]
+        set port [find_available_port $base_port $::sider_port_count]
         # plaintext port (only used for TLS cluster)
         set pport 0
         # Create a directory for this instance.
@@ -87,20 +87,20 @@ proc spawn_instance {type base_port count {conf {}} {base_conf_file ""}} {
 
         if {$::tls} {
             if {$::tls_module} {
-                puts $cfg [format "loadmodule %s/../../../src/redis-tls.so" [pwd]]
+                puts $cfg [format "loadmodule %s/../../../src/sider-tls.so" [pwd]]
             }
 
             puts $cfg "tls-port $port"
             puts $cfg "tls-replication yes"
             puts $cfg "tls-cluster yes"
             # plaintext port, only used by plaintext clients in a TLS cluster
-            set pport [find_available_port $base_port $::redis_port_count]
+            set pport [find_available_port $base_port $::sider_port_count]
             puts $cfg "port $pport"
             puts $cfg [format "tls-cert-file %s/../../tls/server.crt" [pwd]]
             puts $cfg [format "tls-key-file %s/../../tls/server.key" [pwd]]
             puts $cfg [format "tls-client-cert-file %s/../../tls/client.crt" [pwd]]
             puts $cfg [format "tls-client-key-file %s/../../tls/client.key" [pwd]]
-            puts $cfg [format "tls-dh-params-file %s/../../tls/redis.dh" [pwd]]
+            puts $cfg [format "tls-dh-params-file %s/../../tls/sider.dh" [pwd]]
             puts $cfg [format "tls-ca-cert-file %s/../../tls/ca.crt" [pwd]]
         } else {
             puts $cfg "port $port"
@@ -135,11 +135,11 @@ proc spawn_instance {type base_port count {conf {}} {base_conf_file ""}} {
             if {[server_is_up 127.0.0.1 $port 100] == 0} {
                 puts "Starting $type #$j at port $port failed, try another"
                 incr retry -1
-                set port [find_available_port $base_port $::redis_port_count]
+                set port [find_available_port $base_port $::sider_port_count]
                 set cfg [open $cfgfile a+]
                 if {$::tls} {
                     puts $cfg "tls-port $port"
-                    set pport [find_available_port $base_port $::redis_port_count]
+                    set pport [find_available_port $base_port $::sider_port_count]
                     puts $cfg "port $pport"
                 } else {
                     puts $cfg "port $port"
@@ -160,7 +160,7 @@ proc spawn_instance {type base_port count {conf {}} {base_conf_file ""}} {
         }
 
         # Push the instance into the right list
-        set link [redis $::host $port 0 $::tls]
+        set link [sider $::host $port 0 $::tls]
         $link reconnect 1
         lappend ::${type}_instances [list \
             pid $pid \
@@ -313,7 +313,7 @@ proc parse_options {} {
             puts "--fail                  Simulate a test failure."
             puts "--valgrind              Run with valgrind."
             puts "--tls                   Run tests in TLS mode."
-            puts "--tls-module            Run tests in TLS mode with Redis module."
+            puts "--tls-module            Run tests in TLS mode with Sider module."
             puts "--host <host>           Use hostname instead of 127.0.0.1."
             puts "--config <k> <v>        Extra config argument(s)."
             puts "--stop                  Blocks once the first test fails."
@@ -342,12 +342,12 @@ proc pause_on_error {} {
         set cmd [lindex $argv 0]
         if {$cmd eq {continue}} {
             break
-        } elseif {$cmd eq {show-redis-logs}} {
+        } elseif {$cmd eq {show-sider-logs}} {
             set count 10
             if {[lindex $argv 1] ne {}} {set count [lindex $argv 1]}
-            foreach_redis_id id {
+            foreach_sider_id id {
                 puts "=== REDIS $id ===="
-                puts [exec tail -$count redis_$id/log.txt]
+                puts [exec tail -$count sider_$id/log.txt]
                 puts "---------------------\n"
             }
         } elseif {$cmd eq {show-sentinel-logs}} {
@@ -359,8 +359,8 @@ proc pause_on_error {} {
                 puts "---------------------\n"
             }
         } elseif {$cmd eq {ls}} {
-            foreach_redis_id id {
-                puts -nonewline "Redis $id"
+            foreach_sider_id id {
+                puts -nonewline "Sider $id"
                 set errcode [catch {
                     set str {}
                     append str "@[RI $id tcp_port]: "
@@ -391,13 +391,13 @@ proc pause_on_error {} {
                 }
             }
         } elseif {$cmd eq {help}} {
-            puts "ls                     List Sentinel and Redis instances."
+            puts "ls                     List Sentinel and Sider instances."
             puts "show-sentinel-logs \[N\] Show latest N lines of logs."
-            puts "show-redis-logs \[N\]    Show latest N lines of logs."
+            puts "show-sider-logs \[N\]    Show latest N lines of logs."
             puts "S <id> cmd ... arg     Call command in Sentinel <id>."
-            puts "R <id> cmd ... arg     Call command in Redis <id>."
+            puts "R <id> cmd ... arg     Call command in Sider <id>."
             puts "SI <id> <field>        Show Sentinel <id> INFO <field>."
-            puts "RI <id> <field>        Show Redis <id> INFO <field>."
+            puts "RI <id> <field>        Show Sider <id> INFO <field>."
             puts "continue               Resume test."
         } else {
             set errcode [catch {eval $line} retval]
@@ -489,7 +489,7 @@ while 1 {
                 gets stdin
             }
         }
-        check_leaks {redis sentinel}
+        check_leaks {sider sentinel}
 
         # Check if a leaked fds file was created and abort the test.
         if {$::leaked_fds_file != "" && [file exists $::leaked_fds_file]} {
@@ -526,14 +526,14 @@ proc S {n args} {
     [dict get $s link] {*}$args
 }
 
-# Returns a Redis instance by index.
+# Returns a Sider instance by index.
 # Example:
 #     [Rn 0] info
 proc Rn {n} {
-    return [dict get [lindex $::redis_instances $n] link]
+    return [dict get [lindex $::sider_instances $n] link]
 }
 
-# Like R but to chat with Redis instances.
+# Like R but to chat with Sider instances.
 proc R {n args} {
     [Rn $n] {*}$args
 }
@@ -566,7 +566,7 @@ proc RPort {n} {
     }
 }
 
-# Iterate over IDs of sentinel or redis instances.
+# Iterate over IDs of sentinel or sider instances.
 proc foreach_instance_id {instances idvar code} {
     upvar 1 $idvar id
     for {set id 0} {$id < [llength $instances]} {incr id} {
@@ -588,8 +588,8 @@ proc foreach_sentinel_id {idvar code} {
     return -code $errcode $result
 }
 
-proc foreach_redis_id {idvar code} {
-    set errcode [catch {uplevel 1 [list foreach_instance_id $::redis_instances $idvar $code]} result]
+proc foreach_sider_id {idvar code} {
+    set errcode [catch {uplevel 1 [list foreach_instance_id $::sider_instances $idvar $code]} result]
     return -code $errcode $result
 }
 
@@ -608,15 +608,15 @@ proc set_instance_attrib {type id attrib newval} {
 # Create a master-slave cluster of the given number of total instances.
 # The first instance "0" is the master, all others are configured as
 # slaves.
-proc create_redis_master_slave_cluster n {
-    foreach_redis_id id {
+proc create_sider_master_slave_cluster n {
+    foreach_sider_id id {
         if {$id == 0} {
             # Our master.
             R $id slaveof no one
             R $id flushall
         } elseif {$id < $n} {
-            R $id slaveof [get_instance_attrib redis 0 host] \
-                          [get_instance_attrib redis 0 port]
+            R $id slaveof [get_instance_attrib sider 0 host] \
+                          [get_instance_attrib sider 0 port]
         } else {
             # Instances not part of the cluster.
             R $id slaveof no one
@@ -700,7 +700,7 @@ proc restart_instance {type id} {
     }
 
     # Connect with it with a fresh link
-    set link [redis 127.0.0.1 $port 0 $::tls]
+    set link [sider 127.0.0.1 $port 0 $::tls]
     $link reconnect 1
     set_instance_attrib $type $id link $link
 
@@ -717,26 +717,26 @@ proc restart_instance {type id} {
     }
 }
 
-proc redis_deferring_client {type id} {
+proc sider_deferring_client {type id} {
     set port [get_instance_attrib $type $id port]
     set host [get_instance_attrib $type $id host]
-    set client [redis $host $port 1 $::tls]
+    set client [sider $host $port 1 $::tls]
     return $client
 }
 
-proc redis_deferring_client_by_addr {host port} {
-    set client [redis $host $port 1 $::tls]
+proc sider_deferring_client_by_addr {host port} {
+    set client [sider $host $port 1 $::tls]
     return $client
 }
 
-proc redis_client {type id} {
+proc sider_client {type id} {
     set port [get_instance_attrib $type $id port]
     set host [get_instance_attrib $type $id host]
-    set client [redis $host $port 0 $::tls]
+    set client [sider $host $port 0 $::tls]
     return $client
 }
 
-proc redis_client_by_addr {host port} {
-    set client [redis $host $port 0 $::tls]
+proc sider_client_by_addr {host port} {
+    set client [sider $host $port 0 $::tls]
     return $client
 }

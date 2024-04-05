@@ -6,17 +6,17 @@ test "Create a 3 nodes cluster" {
     cluster_create_with_continuous_slots 3 3
 }
 
-set cluster [redis_cluster 127.0.0.1:[get_instance_attrib redis 0 port]]
+set cluster [sider_cluster 127.0.0.1:[get_instance_attrib sider 0 port]]
 test "Pub/Sub shard basics" {
 
     set slot [$cluster cluster keyslot "channel.0"]
     array set publishnode [$cluster masternode_for_slot $slot]
     array set notshardnode [$cluster masternode_notfor_slot $slot]
 
-    set publishclient [redis_client_by_addr $publishnode(host) $publishnode(port)]
-    set subscribeclient [redis_deferring_client_by_addr $publishnode(host) $publishnode(port)]
-    set subscribeclient2 [redis_deferring_client_by_addr $publishnode(host) $publishnode(port)]
-    set anotherclient [redis_deferring_client_by_addr $notshardnode(host) $notshardnode(port)]
+    set publishclient [sider_client_by_addr $publishnode(host) $publishnode(port)]
+    set subscribeclient [sider_deferring_client_by_addr $publishnode(host) $publishnode(port)]
+    set subscribeclient2 [sider_deferring_client_by_addr $publishnode(host) $publishnode(port)]
+    set anotherclient [sider_deferring_client_by_addr $notshardnode(host) $notshardnode(port)]
 
     $subscribeclient ssubscribe channel.0
     $subscribeclient read
@@ -62,10 +62,10 @@ test "Verify Pub/Sub and Pub/Sub shard no overlap" {
     array set publishnode [$cluster masternode_for_slot $slot]
     array set notshardnode [$cluster masternode_notfor_slot $slot]
 
-    set publishshardclient [redis_client_by_addr $publishnode(host) $publishnode(port)]
-    set publishclient [redis_deferring_client_by_addr $publishnode(host) $publishnode(port)]
-    set subscribeshardclient [redis_deferring_client_by_addr $publishnode(host) $publishnode(port)]
-    set subscribeclient [redis_deferring_client_by_addr $publishnode(host) $publishnode(port)]
+    set publishshardclient [sider_client_by_addr $publishnode(host) $publishnode(port)]
+    set publishclient [sider_deferring_client_by_addr $publishnode(host) $publishnode(port)]
+    set subscribeshardclient [sider_deferring_client_by_addr $publishnode(host) $publishnode(port)]
+    set subscribeclient [sider_deferring_client_by_addr $publishnode(host) $publishnode(port)]
 
     $subscribeshardclient deferred 1
     $subscribeshardclient ssubscribe channel.0

@@ -3,15 +3,15 @@
  *
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <hiredis.h>
+#include <hisider.h>
 
 #define KEY_COUNT 5
 
@@ -40,13 +40,13 @@
         exit(-1); \
     } while (0)
 
-static void assertReplyAndFree(redisContext *context, redisReply *reply, int type) {
+static void assertReplyAndFree(siderContext *context, siderReply *reply, int type) {
     if (reply == NULL)
         panicAbort("NULL reply from server (error: %s)", context->errstr);
 
     if (reply->type != type) {
         if (reply->type == REDIS_REPLY_ERROR)
-            fprintf(stderr, "Redis Error: %s\n", reply->str);
+            fprintf(stderr, "Sider Error: %s\n", reply->str);
 
         panicAbort("Expected reply type %d but got type %d", type, reply->type);
     }
@@ -55,15 +55,15 @@ static void assertReplyAndFree(redisContext *context, redisReply *reply, int typ
 }
 
 /* Switch to the RESP3 protocol and enable client tracking */
-static void enableClientTracking(redisContext *c) {
-    redisReply *reply = redisCommand(c, "HELLO 3");
+static void enableClientTracking(siderContext *c) {
+    siderReply *reply = siderCommand(c, "HELLO 3");
     if (reply == NULL || c->err) {
         panicAbort("NULL reply or server error (error: %s)", c->errstr);
     }
 
     if (reply->type != REDIS_REPLY_MAP) {
         fprintf(stderr, "Error: Can't send HELLO 3 command.  Are you sure you're ");
-        fprintf(stderr, "connected to redis-server >= 6.0.0?\nRedis error: %s\n",
+        fprintf(stderr, "connected to sider-server >= 6.0.0?\nSider error: %s\n",
                         reply->type == REDIS_REPLY_ERROR ? reply->str : "(unknown)");
         exit(-1);
     }
@@ -71,12 +71,12 @@ static void enableClientTracking(redisContext *c) {
     freeReplyObject(reply);
 
     /* Enable client tracking */
-    reply = redisCommand(c, "CLIENT TRACKING ON");
+    reply = siderCommand(c, "CLIENT TRACKING ON");
     assertReplyAndFree(c, reply, REDIS_REPLY_STATUS);
 }
 
 void pushReplyHandler(void *privdata, void *r) {
-    redisReply *reply = r;
+    siderReply *reply = r;
     int *invalidations = privdata;
 
     /* Sanity check on the invalidation reply */
@@ -97,7 +97,7 @@ void pushReplyHandler(void *privdata, void *r) {
 }
 
 /* We aren't actually freeing anything here, but it is included to show that we can
- * have hiredis call our data destructor when freeing the context */
+ * have hisider call our data destructor when freeing the context */
 void privdata_dtor(void *privdata) {
     unsigned int *icount = privdata;
     printf("privdata_dtor():  In context privdata dtor (invalidations: %u)\n", *icount);
@@ -105,17 +105,17 @@ void privdata_dtor(void *privdata) {
 
 int main(int argc, char **argv) {
     unsigned int j, invalidations = 0;
-    redisContext *c;
-    redisReply *reply;
+    siderContext *c;
+    siderReply *reply;
 
     const char *hostname = (argc > 1) ? argv[1] : "127.0.0.1";
     int port = (argc > 2) ? atoi(argv[2]) : 6379;
 
-    redisOptions o = {0};
+    siderOptions o = {0};
     REDIS_OPTIONS_SET_TCP(&o, hostname, port);
 
     /* Set our context privdata to the address of our invalidation counter.  Each
-     * time our PUSH handler is called, hiredis will pass the privdata for context.
+     * time our PUSH handler is called, hisider will pass the privdata for context.
      *
      * This could also be done after we create the context like so:
      *
@@ -127,27 +127,27 @@ int main(int argc, char **argv) {
     /* Set our custom PUSH message handler */
     o.push_cb = pushReplyHandler;
 
-    c = redisConnectWithOptions(&o);
+    c = siderConnectWithOptions(&o);
     if (c == NULL || c->err)
         panicAbort("Connection error:  %s", c ? c->errstr : "OOM");
 
     /* Enable RESP3 and turn on client tracking */
     enableClientTracking(c);
 
-    /* Set some keys and then read them back.  Once we do that, Redis will deliver
+    /* Set some keys and then read them back.  Once we do that, Sider will deliver
      * invalidation push messages whenever the key is modified */
     for (j = 0; j < KEY_COUNT; j++) {
-        reply = redisCommand(c, "SET key:%d initial:%d", j, j);
+        reply = siderCommand(c, "SET key:%d initial:%d", j, j);
         assertReplyAndFree(c, reply, REDIS_REPLY_STATUS);
 
-        reply = redisCommand(c, "GET key:%d", j);
+        reply = siderCommand(c, "GET key:%d", j);
         assertReplyAndFree(c, reply, REDIS_REPLY_STRING);
     }
 
     /* Trigger invalidation messages by updating keys we just read */
     for (j = 0; j < KEY_COUNT; j++) {
         printf("            main(): SET key:%d update:%d\n", j, j);
-        reply = redisCommand(c, "SET key:%d update:%d", j, j);
+        reply = siderCommand(c, "SET key:%d update:%d", j, j);
         assertReplyAndFree(c, reply, REDIS_REPLY_STATUS);
         printf("            main(): SET REPLY OK\n");
     }
@@ -155,5 +155,5 @@ int main(int argc, char **argv) {
     printf("\nTotal detected invalidations: %d, expected: %d\n", invalidations, KEY_COUNT);
 
     /* PING server */
-    redisFree(c);
+    siderFree(c);
 }

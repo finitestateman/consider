@@ -2,15 +2,15 @@
  * Copyright (c) 2013, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -30,7 +30,7 @@
 #include "server.h"
 
 /* This file implements keyspace events notification via Pub/Sub and
- * described at https://redis.io/topics/notifications. */
+ * described at https://sider.io/topics/notifications. */
 
 /* Turn a string representing notification classes into an integer
  * representing notification classes flags xored.
@@ -93,13 +93,13 @@ sds keyspaceEventsFlagsToString(int flags) {
     return res;
 }
 
-/* The API provided to the rest of the Redis core is a simple function:
+/* The API provided to the rest of the Sider core is a simple function:
  *
  * notifyKeyspaceEvent(int type, char *event, robj *key, int dbid);
  *
  * 'type' is the notification class we define in `server.h`.
  * 'event' is a C string representing the event name.
- * 'key' is a Redis object representing the key name.
+ * 'key' is a Sider object representing the key name.
  * 'dbid' is the database ID where the key lives.  */
 void notifyKeyspaceEvent(int type, char *event, robj *key, int dbid) {
     sds chan;

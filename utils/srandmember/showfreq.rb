@@ -1,6 +1,6 @@
-require 'redis'
+require 'sider'
 
-r = Redis.new
+r = Sider.new
 r.select(9)
 r.del("myset");
 r.sadd("myset",(0..999).to_a)

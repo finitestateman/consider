@@ -29,7 +29,7 @@ proc reboot_instance {type id} {
     }
 
     # Connect with it with a fresh link
-    set link [redis 127.0.0.1 $port 0 $::tls]
+    set link [sider 127.0.0.1 $port 0 $::tls]
     $link reconnect 1
     set_instance_attrib $type $id link $link
 }
@@ -52,8 +52,8 @@ test "Master reboot in very short time" {
         S $id sentinel debug ask-period 500 
     }
 
-    kill_instance redis $master_id
-    reboot_instance redis $master_id
+    kill_instance sider $master_id
+    reboot_instance sider $master_id
     
     foreach_sentinel_id id {        
         wait_for_condition 1000 100 {
@@ -64,7 +64,7 @@ test "Master reboot in very short time" {
     }
 
     set addr [S 0 SENTINEL GET-MASTER-ADDR-BY-NAME mymaster]
-    set master_id [get_instance_id_by_port redis [lindex $addr 1]]
+    set master_id [get_instance_id_by_port sider [lindex $addr 1]]
 
     # Make sure the instance load all the dataset
     while 1 {
@@ -83,12 +83,12 @@ test "New master [join $addr {:}] role matches" {
 }
 
 test "All the other slaves now point to the new master" {
-    foreach_redis_id id {
+    foreach_sider_id id {
         if {$id != $master_id && $id != 0} {
             wait_for_condition 1000 50 {
                 [RI $id master_port] == [lindex $addr 1]
             } else {
-                fail "Redis ID $id not configured to replicate with new master"
+                fail "Sider ID $id not configured to replicate with new master"
             }
         }
     }

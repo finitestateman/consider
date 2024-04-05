@@ -13,9 +13,9 @@ start_server {tags {"modules"}} {
         r hello $proto
 
         test "RESP$proto: RM_ReplyWithString: an string reply" {
-            # RedisString
-            set string [r rw.string "Redis"]
-            assert_equal "Redis" $string
+            # SiderString
+            set string [r rw.string "Sider"]
+            assert_equal "Sider" $string
             # C string
             set string [r rw.cstring]
             assert_equal "A simple string" $string

@@ -2,15 +2,15 @@
  * Copyright (c) 2019, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -30,7 +30,7 @@
  *
  * This file implements the LOLWUT command. The command should do something
  * fun and interesting, and should be replaced by a new implementation at
- * each new version of Redis.
+ * each new version of Sider.
  *
  * Thanks to Michele Hiki Falcone for the original image that inspired
  * the image, part of his game, Plaguemon.
@@ -192,7 +192,7 @@ void lolwut6Command(client *c) {
     sds rendered = renderCanvas(canvas);
     rendered = sdscat(rendered,
         "\nDedicated to the 8 bit game developers of past and present.\n"
-        "Original 8 bit image from Plaguemon by hikikomori. Redis ver. ");
+        "Original 8 bit image from Plaguemon by hikikomori. Sider ver. ");
     rendered = sdscat(rendered,REDIS_VERSION);
     rendered = sdscatlen(rendered,"\n",1);
     addReplyVerbatim(c,rendered,sdslen(rendered),"txt");

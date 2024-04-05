@@ -5,15 +5,15 @@
  * Copyright (c) 2006-2010, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -32,7 +32,7 @@
 
 #include "ae.h"
 #include "anet.h"
-#include "redisassert.h"
+#include "siderassert.h"
 
 #include <stdio.h>
 #include <sys/time.h>
@@ -256,7 +256,7 @@ int aeDeleteTimeEvent(aeEventLoop *eventLoop, long long id)
  * If there are no timers, -1 is returned.
  *
  * Note that's O(N) since time events are unsorted.
- * Possible optimizations (not needed by Redis so far, but...):
+ * Possible optimizations (not needed by Sider so far, but...):
  * 1) Insert the event in order, so that the nearest is just the head.
  *    Much better but still insertion or deletion of timers is O(N).
  * 2) Use a skiplist to have this operation as O(1) and insertion as O(log(N)).

@@ -8,7 +8,7 @@ test "info command with at most one argument" {
         } else {
             set info [S 0 info $arg]
         }
-        assert { [string match "*redis_version*" $info] }
+        assert { [string match "*sider_version*" $info] }
         assert { [string match "*maxclients*" $info] }
         assert { [string match "*used_cpu_user*" $info] }
         assert { [string match "*sentinel_tilt*" $info] }
@@ -23,17 +23,17 @@ test "info command with one sub-section" {
     set info [S 0 info cpu]
     assert { [string match "*used_cpu_user*" $info] }
     assert { ![string match "*sentinel_tilt*" $info] }
-    assert { ![string match "*redis_version*" $info] }
+    assert { ![string match "*sider_version*" $info] }
 
     set info [S 0 info sentinel]
     assert { [string match "*sentinel_tilt*" $info] }
     assert { ![string match "*used_cpu_user*" $info] }
-    assert { ![string match "*redis_version*" $info] }
+    assert { ![string match "*sider_version*" $info] }
 }
 
 test "info command with multiple sub-sections" {
     set info [S 0 info server sentinel replication]
-    assert { [string match "*redis_version*" $info] }
+    assert { [string match "*sider_version*" $info] }
     assert { [string match "*sentinel_tilt*" $info] }
     assert { ![string match "*used_memory*" $info] }
     assert { ![string match "*used_cpu_user*" $info] }
@@ -41,7 +41,7 @@ test "info command with multiple sub-sections" {
     set info [S 0 info cpu all]
     assert { [string match "*used_cpu_user*" $info] }
     assert { [string match "*sentinel_tilt*" $info] }
-    assert { [string match "*redis_version*" $info] }
+    assert { [string match "*sider_version*" $info] }
     assert { ![string match "*used_memory*" $info] }
     assert { ![string match "*master_repl_offset*" $info] }
 }

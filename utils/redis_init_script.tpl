@@ -5,7 +5,7 @@ case "$1" in
         then
             echo "$PIDFILE exists, process is already running or crashed"
         else
-            echo "Starting Redis server..."
+            echo "Starting Sider server..."
             $EXEC $CONF
         fi
         ;;
@@ -19,19 +19,19 @@ case "$1" in
             $CLIEXEC -p $REDISPORT shutdown
             while [ -x /proc/${PID} ]
             do
-                echo "Waiting for Redis to shutdown ..."
+                echo "Waiting for Sider to shutdown ..."
                 sleep 1
             done
-            echo "Redis stopped"
+            echo "Sider stopped"
         fi
         ;;
     status)
         PID=$(cat $PIDFILE)
         if [ ! -x /proc/${PID} ]
         then
-            echo 'Redis is not running'
+            echo 'Sider is not running'
         else
-            echo "Redis is running ($PID)"
+            echo "Sider is running ($PID)"
         fi
         ;;
     restart)

@@ -2,15 +2,15 @@
  * Copyright (c) 2009-2012, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -89,8 +89,8 @@ sds makePath(char *path, char *filename);
 int fsyncFileDir(const char *filename);
 int reclaimFilePageCache(int fd, size_t offset, size_t length);
 
-size_t redis_strlcpy(char *dst, const char *src, size_t dsize);
-size_t redis_strlcat(char *dst, const char *src, size_t dsize);
+size_t sider_strlcpy(char *dst, const char *src, size_t dsize);
+size_t sider_strlcat(char *dst, const char *src, size_t dsize);
 
 #ifdef REDIS_TEST
 int utilTest(int argc, char **argv, int flags);

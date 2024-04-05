@@ -20,9 +20,9 @@ start_server {overrides {save {900 1}} tags {"modules"}} {
         assert { [string match "*cmdstat_module*" $info] }
     }
 
-    test {test redis version} {
-        set version [s redis_version]
-        assert_equal $version [r test.redisversion]
+    test {test sider version} {
+        set version [s sider_version]
+        assert_equal $version [r test.siderversion]
     }
 
     test {test long double conversions} {
@@ -44,9 +44,9 @@ start_server {overrides {save {900 1}} tags {"modules"}} {
         assert_equal [r test.dbsize] 0
     }
 
-    test {test RedisModule_ResetDataset do not reset functions} {
+    test {test SiderModule_ResetDataset do not reset functions} {
         r function load {#!lua name=lib
-            redis.register_function('test', function() return 1 end)
+            sider.register_function('test', function() return 1 end)
         }
         assert_equal [r function list] {{library_name lib engine LUA functions {{name test description {} flags {}}}}}
         r test.flushall
@@ -120,7 +120,7 @@ start_server {overrides {save {900 1}} tags {"modules"}} {
     }
 
     test {tracking with rm_call sanity} {
-        set rd_trk [redis_client]
+        set rd_trk [sider_client]
         $rd_trk HELLO 3
         $rd_trk CLIENT TRACKING on
         r MSET key1{t} 1 key2{t} 1
@@ -135,13 +135,13 @@ start_server {overrides {save {900 1}} tags {"modules"}} {
     }
 
     test {tracking with rm_call with script} {
-        set rd_trk [redis_client]
+        set rd_trk [sider_client]
         $rd_trk HELLO 3
         $rd_trk CLIENT TRACKING on
         r MSET key1{t} 1 key2{t} 1
 
         # GET triggers tracking, SET does not
-        $rd_trk test.rm_call EVAL "redis.call('get', 'key1{t}')" 2 key1{t} key2{t}
+        $rd_trk test.rm_call EVAL "sider.call('get', 'key1{t}')" 2 key1{t} key2{t}
         r MSET key1{t} 2 key2{t} 2
         assert_equal {invalidate key1{t}} [$rd_trk read]
         assert_equal "PONG" [$rd_trk ping]
@@ -248,7 +248,7 @@ start_server {overrides {save {900 1}} tags {"modules"}} {
         # use the M flag without allow-oom shebang flag
         assert_error {OOM *} {
             r test.rm_call_flags M eval {#!lua
-                redis.call('set','x',1)
+                sider.call('set','x',1)
                 return 1
             } 1 x
         }
@@ -256,7 +256,7 @@ start_server {overrides {save {900 1}} tags {"modules"}} {
         # add the M flag with allow-oom shebang flag
         assert_equal {1} [
             r test.rm_call_flags M eval {#!lua flags=allow-oom
-                redis.call('set','x',1)
+                sider.call('set','x',1)
                 return 1
             } 1 x
         ]
@@ -276,13 +276,13 @@ start_server {overrides {save {900 1}} tags {"modules"}} {
 
     test {rm_call EVAL} {
         r test.rm_call eval {
-            redis.call('set','x',1)
+            sider.call('set','x',1)
             return 1
         } 1 x
 
         assert_error {ERR Write commands are not allowed from read-only scripts.*} {
             r test.rm_call eval {#!lua flags=no-writes
-                redis.call('set','x',1)
+                sider.call('set','x',1)
                 return 1
             } 1 x
         }
@@ -295,34 +295,34 @@ start_server {overrides {save {900 1}} tags {"modules"}} {
         # script without shebang, but uses SET, so fails
         assert_error {*OOM command not allowed when used memory > 'maxmemory'*} {
             r test.rm_call_flags M eval {
-                redis.call('set','x',1)
+                sider.call('set','x',1)
                 return 1
             } 1 x
         }
 
         # script with an allow-oom flag, succeeds despite using SET
         r test.rm_call_flags M eval {#!lua flags=allow-oom
-            redis.call('set','x', 1)
+            sider.call('set','x', 1)
             return 2
         } 1 x
 
         # script with no-writes flag, implies allow-oom, succeeds
         r test.rm_call_flags M eval {#!lua flags=no-writes
-            redis.call('get','x')
+            sider.call('get','x')
             return 2
         } 1 x
 
         # script with shebang using default flags, so fails regardless of using only GET
         assert_error {*OOM command not allowed when used memory > 'maxmemory'*} {
             r test.rm_call_flags M eval {#!lua
-                redis.call('get','x')
+                sider.call('get','x')
                 return 3
             } 1 x
         }
 
         # script without shebang, but uses GET, so succeeds
         r test.rm_call_flags M eval {
-            redis.call('get','x')
+            sider.call('get','x')
             return 4
         } 1 x
 
@@ -335,19 +335,19 @@ start_server {overrides {save {900 1}} tags {"modules"}} {
 
         # no shebang at all
         r test.rm_call eval {
-            redis.call('set','x',1)
+            sider.call('set','x',1)
             return 6
         } 1 x
 
         # Shebang without flags
         r test.rm_call eval {#!lua
-            redis.call('set','x', 1)
+            sider.call('set','x', 1)
             return 7
         } 1 x
 
         # with allow-oom flag
         r test.rm_call eval {#!lua flags=allow-oom
-            redis.call('set','x', 1)
+            sider.call('set','x', 1)
             return 8
         } 1 x
 
@@ -363,25 +363,25 @@ start_server {overrides {save {900 1}} tags {"modules"}} {
 
         assert_equal [
             r test.rm_call eval {#!lua flags=no-writes
-                return redis.call('get','x')
+                return sider.call('get','x')
             } 1 x
         ] "some value"
 
         assert_equal [
             r test.rm_call eval {
-                return redis.call('get','x')
+                return sider.call('get','x')
             } 1 x
         ] "some value"
 
         assert_error {NOREPLICAS *} {
             r test.rm_call eval {#!lua
-                return redis.call('get','x')
+                return sider.call('get','x')
             } 1 x
         }
 
         assert_error {NOREPLICAS *} {
             r test.rm_call eval {
-                return redis.call('set','x', 1)
+                return sider.call('set','x', 1)
             } 1 x
         }
 
@@ -396,25 +396,25 @@ start_server {overrides {save {900 1}} tags {"modules"}} {
 
         assert_error {READONLY You can't write against a read only replica. script*} {
             r test.rm_call eval {
-                redis.call('set','x',1)
+                sider.call('set','x',1)
                 return 1
             } 1 x
         }
 
         r test.rm_call eval {#!lua flags=no-writes
-            redis.call('get','x')
+            sider.call('get','x')
             return 2
         } 1 x
 
         assert_error {READONLY Can not run script with write flag on readonly replica*} {
             r test.rm_call eval {#!lua
-                redis.call('get','x')
+                sider.call('get','x')
                 return 3
             } 1 x
         }
 
         r test.rm_call eval {
-            redis.call('get','x')
+            sider.call('get','x')
             return 4
         } 1 x
 
@@ -432,14 +432,14 @@ start_server {overrides {save {900 1}} tags {"modules"}} {
 
         assert_error {MASTERDOWN *} {
             r test.rm_call eval {#!lua flags=no-writes
-                redis.call('get','x')
+                sider.call('get','x')
                 return 2
             } 1 x
         }
 
         assert_error {MASTERDOWN *} {
             r test.rm_call eval {
-                redis.call('get','x')
+                sider.call('get','x')
                 return 4
             } 1 x
         }
@@ -468,21 +468,21 @@ start_server {overrides {save {900 1}} tags {"modules"}} {
 
         # repeate with script
         assert_error {MISCONF *} {r test.rm_call eval {
-            return redis.call('set','x',1)
+            return sider.call('set','x',1)
             } 1 x
         }
         assert_equal {x} [r test.rm_call eval {
-            return redis.call('get','x')
+            return sider.call('get','x')
             } 1 x
         ]
 
         # again with script using shebang
         assert_error {MISCONF *} {r test.rm_call eval {#!lua
-            return redis.call('set','x',1)
+            return sider.call('set','x',1)
             } 1 x
         }
         assert_equal {x} [r test.rm_call eval {#!lua flags=no-writes
-            return redis.call('get','x')
+            return sider.call('get','x')
             } 1 x
         ]
 
@@ -542,7 +542,7 @@ if {[string match {*jemalloc*} [s mem_allocator]]} {
     test {test RM_Call with large arg for SET command} {
         # set a big value to trigger increasing the query buf
         r set foo [string repeat A 100000]
-        # set a smaller value but > PROTO_MBULK_BIG_ARG (32*1024) Redis will try to save the query buf itself on the DB.
+        # set a smaller value but > PROTO_MBULK_BIG_ARG (32*1024) Sider will try to save the query buf itself on the DB.
         r test.call_generic set bar [string repeat A 33000]
         # asset the value was trimmed
         assert {[r memory usage bar] < 42000}; # 42K to count for Jemalloc's additional memory overhead.

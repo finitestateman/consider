@@ -108,7 +108,7 @@ start_server {tags {"acl external:skip"}} {
     } {*NOPERM*channel*}
 
     test {By default, only default user is able to subscribe to any channel} {
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
         $rd AUTH default pwd
         $rd read
         $rd SUBSCRIBE foo
@@ -124,7 +124,7 @@ start_server {tags {"acl external:skip"}} {
     } {*NOPERM*channel*}
 
     test {By default, only default user is able to subscribe to any shard channel} {
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
         $rd AUTH default pwd
         $rd read
         $rd SSUBSCRIBE foo
@@ -140,7 +140,7 @@ start_server {tags {"acl external:skip"}} {
     } {*NOPERM*channel*}
 
     test {By default, only default user is able to subscribe to any pattern} {
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
         $rd AUTH default pwd
         $rd read
         $rd PSUBSCRIBE bar*
@@ -209,7 +209,7 @@ start_server {tags {"acl external:skip"}} {
     }
 
     test {It's possible to allow subscribing to a subset of channels} {
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
         $rd AUTH psuser pspass
         $rd read
         $rd SUBSCRIBE foo:1
@@ -222,7 +222,7 @@ start_server {tags {"acl external:skip"}} {
     } {*NOPERM*channel*}
 
     test {It's possible to allow subscribing to a subset of shard channels} {
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
         $rd AUTH psuser pspass
         $rd read
         $rd SSUBSCRIBE foo:1
@@ -235,7 +235,7 @@ start_server {tags {"acl external:skip"}} {
     } {*NOPERM*channel*}
 
     test {It's possible to allow subscribing to a subset of channel patterns} {
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
         $rd AUTH psuser pspass
         $rd read
         $rd PSUBSCRIBE foo:1
@@ -248,7 +248,7 @@ start_server {tags {"acl external:skip"}} {
     } {*NOPERM*channel*}
     
     test {Subscribers are killed when revoked of channel permission} {
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
         r ACL setuser psuser resetchannels &foo:1
         $rd AUTH psuser pspass
         $rd read
@@ -262,7 +262,7 @@ start_server {tags {"acl external:skip"}} {
     } {0}
 
     test {Subscribers are killed when revoked of channel permission} {
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
         r ACL setuser psuser resetchannels &foo:1
         $rd AUTH psuser pspass
         $rd read
@@ -276,7 +276,7 @@ start_server {tags {"acl external:skip"}} {
     } {0}
 
     test {Subscribers are killed when revoked of pattern permission} {
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
         r ACL setuser psuser resetchannels &bar:*
         $rd AUTH psuser pspass
         $rd read
@@ -290,7 +290,7 @@ start_server {tags {"acl external:skip"}} {
     } {0}
 
     test {Subscribers are killed when revoked of allchannels permission} {
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
         r ACL setuser psuser allchannels
         $rd AUTH psuser pspass
         $rd read
@@ -304,7 +304,7 @@ start_server {tags {"acl external:skip"}} {
     } {0}
 
     test {Subscribers are pardoned if literal permissions are retained and/or gaining allchannels} {
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
         r ACL setuser psuser resetchannels &foo:1 &bar:* &orders
         $rd AUTH psuser pspass
         $rd read
@@ -326,7 +326,7 @@ start_server {tags {"acl external:skip"}} {
     test {blocked command gets rejected when reprocessed after permission change} {
         r auth default ""
         r config resetstat
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
         r ACL setuser psuser reset on nopass +@all allkeys
         $rd AUTH psuser pspass
         $rd read
@@ -526,7 +526,7 @@ start_server {tags {"acl external:skip"}} {
         }
     }
 
-    # Note that the order of the generated ACL rules is not stable in Redis
+    # Note that the order of the generated ACL rules is not stable in Sider
     # so we need to match the different parts and not as a whole string.
     test {ACL GETUSER is able to translate back command permissions} {
         # Subtractive
@@ -754,7 +754,7 @@ start_server {tags {"acl external:skip"}} {
     }
 
     test {ACL LOG can distinguish the transaction context (2)} {
-        set rd1 [redis_deferring_client]
+        set rd1 [sider_deferring_client]
         r ACL SETUSER antirez +incr
 
         r AUTH antirez foo
@@ -774,7 +774,7 @@ start_server {tags {"acl external:skip"}} {
 
     test {ACL can log errors in the context of Lua scripting} {
         r AUTH antirez foo
-        catch {r EVAL {redis.call('incr','foo')} 0}
+        catch {r EVAL {sider.call('incr','foo')} 0}
         r AUTH default ""
         set entry [lindex [r ACL LOG] 0]
         assert {[dict get $entry context] eq {lua}}
@@ -815,7 +815,7 @@ start_server {tags {"acl external:skip"}} {
 
     test {When default user is off, new connections are not authenticated} {
         r ACL setuser default off
-        catch {set rd1 [redis_deferring_client]} e
+        catch {set rd1 [sider_deferring_client]} e
         r ACL setuser default on
         set e
     } {*NOAUTH*}
@@ -890,7 +890,7 @@ start_server {tags {"acl external:skip"}} {
     test {ACL load non-existing configured ACL file} {
        catch {r ACL load} err
        set err
-    } {*Redis instance is not configured to use an ACL file*}
+    } {*Sider instance is not configured to use an ACL file*}
 
     # If there is an AUTH failure the metric increases
     test {ACL-Metrics user AUTH failure} {
@@ -1154,10 +1154,10 @@ start_server [list overrides [list "dir" $server_path "aclfile" "user.acl"] tags
     }
     
     test {Test loading duplicate users in config on startup} {
-        catch {exec src/redis-server --user foo --user foo} err
+        catch {exec src/sider-server --user foo --user foo} err
         assert_match {*Duplicate user*} $err
 
-        catch {exec src/redis-server --user default --user default} err
+        catch {exec src/sider-server --user default --user default} err
         assert_match {*Duplicate user*} $err
     } {} {external:skip}
 }

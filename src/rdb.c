@@ -2,15 +2,15 @@
  * Copyright (c) 2009-2012, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -93,7 +93,7 @@ void rdbReportError(int corruption_error, int linenum, char *reason, ...) {
             rdbCheckError("Cannot check RDB that is a FIFO: %s", argv[1]);
             return;
         }
-        redis_check_rdb_main(2,argv,NULL);
+        sider_check_rdb_main(2,argv,NULL);
     } else if (corruption_error) {
         /* In diskless loading, in case of corrupt file, log and exit. */
         serverLog(LL_WARNING, "%s. Failure loading rdb format", msg);
@@ -127,7 +127,7 @@ int rdbLoadType(rio *rdb) {
 }
 
 /* This is only used to load old databases stored with the RDB_OPCODE_EXPIRETIME
- * opcode. New versions of Redis store using the RDB_OPCODE_EXPIRETIME_MS
+ * opcode. New versions of Sider store using the RDB_OPCODE_EXPIRETIME_MS
  * opcode. On error -1 is returned, however this could be a valid time, so
  * to check for loading errors the caller should call rioGetReadError() after
  * calling this function. */
@@ -144,13 +144,13 @@ int rdbSaveMillisecondTime(rio *rdb, long long t) {
 }
 
 /* This function loads a time from the RDB file. It gets the version of the
- * RDB because, unfortunately, before Redis 5 (RDB version 9), the function
+ * RDB because, unfortunately, before Sider 5 (RDB version 9), the function
  * failed to convert data to/from little endian, so RDB files with keys having
  * expires could not be shared between big endian and little endian systems
  * (because the expire time will be totally wrong). The fix for this is just
  * to call memrev64ifbe(), however if we fix this for all the RDB versions,
  * this call will introduce an incompatibility for big endian systems:
- * after upgrading to Redis version 5 they will no longer be able to load their
+ * after upgrading to Sider version 5 they will no longer be able to load their
  * own old RDB files. Because of that, we instead fix the function only for new
  * RDB versions, and load older RDB versions as we used to do in the past,
  * allowing big endian systems to load their own old RDB files.
@@ -250,7 +250,7 @@ int rdbLoadLenByRef(rio *rdb, int *isencoded, uint64_t *lenptr) {
 
 /* This is like rdbLoadLenByRef() but directly returns the value read
  * from the RDB stream, signaling an error by returning RDB_LENERR
- * (since it is a too large count to be applicable in any Redis data
+ * (since it is a too large count to be applicable in any Sider data
  * structure). */
 uint64_t rdbLoadLen(rio *rdb, int *isencoded) {
     uint64_t len;
@@ -490,7 +490,7 @@ ssize_t rdbSaveLongLongAsStringObject(rio *rdb, long long value) {
     return nwritten;
 }
 
-/* Like rdbSaveRawString() gets a Redis object instead. */
+/* Like rdbSaveRawString() gets a Sider object instead. */
 ssize_t rdbSaveStringObject(rio *rdb, robj *obj) {
     /* Avoid to decode the object, then encode it again, if the
      * object is already integer encoded. */
@@ -505,13 +505,13 @@ ssize_t rdbSaveStringObject(rio *rdb, robj *obj) {
 /* Load a string object from an RDB file according to flags:
  *
  * RDB_LOAD_NONE (no flags): load an RDB object, unencoded.
- * RDB_LOAD_ENC: If the returned type is a Redis object, try to
+ * RDB_LOAD_ENC: If the returned type is a Sider object, try to
  *               encode it in a special way to be more memory
  *               efficient. When this flag is passed the function
  *               no longer guarantees that obj->ptr is an SDS string.
  * RDB_LOAD_PLAIN: Return a plain string allocated with zmalloc()
- *                 instead of a Redis object with an sds in it.
- * RDB_LOAD_SDS: Return an SDS string instead of a Redis object.
+ *                 instead of a Sider object with an sds in it.
+ * RDB_LOAD_SDS: Return an SDS string instead of a Sider object.
  *
  * On I/O error NULL is returned.
  */
@@ -809,7 +809,7 @@ size_t rdbSaveStreamConsumers(rio *rdb, streamCG *cg) {
     return nwritten;
 }
 
-/* Save a Redis object.
+/* Save a Sider object.
  * Returns -1 on error, number of bytes written on success. */
 ssize_t rdbSaveObject(rio *rdb, robj *o, robj *key, int dbid) {
     ssize_t n = 0, nwritten = 0;
@@ -1079,7 +1079,7 @@ ssize_t rdbSaveObject(rio *rdb, robj *o, robj *key, int dbid) {
         }
     } else if (o->type == OBJ_MODULE) {
         /* Save a module-specific value. */
-        RedisModuleIO io;
+        SiderModuleIO io;
         moduleValue *mv = o->ptr;
         moduleType *mt = mv->type;
 
@@ -1191,12 +1191,12 @@ ssize_t rdbSaveAuxFieldStrInt(rio *rdb, char *key, long long val) {
 
 /* Save a few default AUX fields with information about the RDB generated. */
 int rdbSaveInfoAuxFields(rio *rdb, int rdbflags, rdbSaveInfo *rsi) {
-    int redis_bits = (sizeof(void*) == 8) ? 64 : 32;
+    int sider_bits = (sizeof(void*) == 8) ? 64 : 32;
     int aof_base = (rdbflags & RDBFLAGS_AOF_PREAMBLE) != 0;
 
     /* Add a few fields about the state when the RDB was created. */
-    if (rdbSaveAuxFieldStrStr(rdb,"redis-ver",REDIS_VERSION) == -1) return -1;
-    if (rdbSaveAuxFieldStrInt(rdb,"redis-bits",redis_bits) == -1) return -1;
+    if (rdbSaveAuxFieldStrStr(rdb,"sider-ver",REDIS_VERSION) == -1) return -1;
+    if (rdbSaveAuxFieldStrInt(rdb,"sider-bits",sider_bits) == -1) return -1;
     if (rdbSaveAuxFieldStrInt(rdb,"ctime",time(NULL)) == -1) return -1;
     if (rdbSaveAuxFieldStrInt(rdb,"used-mem",zmalloc_used_memory()) == -1) return -1;
 
@@ -1215,7 +1215,7 @@ int rdbSaveInfoAuxFields(rio *rdb, int rdbflags, rdbSaveInfo *rsi) {
 
 ssize_t rdbSaveSingleModuleAux(rio *rdb, int when, moduleType *mt) {
     /* Save a module-specific aux value. */
-    RedisModuleIO io;
+    SiderModuleIO io;
     int retval = 0;
     moduleInitIOContext(io,mt,rdb,NULL,-1);
 
@@ -1305,7 +1305,7 @@ ssize_t rdbSaveDb(rio *rdb, int dbid, int rdbflags, long *key_counter) {
     static long long info_updated_time = 0;
     char *pname = (rdbflags & RDBFLAGS_AOF_PREAMBLE) ? "AOF rewrite" :  "RDB";
 
-    redisDb *db = server.db + dbid;
+    siderDb *db = server.db + dbid;
     dict *d = db->dict;
     if (dictSize(d) == 0) return 0;
     di = dictGetSafeIterator(d);
@@ -1366,7 +1366,7 @@ werr:
 }
 
 /* Produces a dump of the database in RDB format sending it to the specified
- * Redis I/O channel. On success C_OK is returned, otherwise C_ERR
+ * Sider I/O channel. On success C_OK is returned, otherwise C_ERR
  * is returned and part of the output, or all the output, can be
  * missing because of I/O errors.
  *
@@ -1565,12 +1565,12 @@ int rdbSaveBackground(int req, char *filename, rdbSaveInfo *rsi, int rdbflags) {
     server.dirty_before_bgsave = server.dirty;
     server.lastbgsave_try = time(NULL);
 
-    if ((childpid = redisFork(CHILD_TYPE_RDB)) == 0) {
+    if ((childpid = siderFork(CHILD_TYPE_RDB)) == 0) {
         int retval;
 
         /* Child */
-        redisSetProcTitle("redis-rdb-bgsave");
-        redisSetCpuAffinity(server.bgsave_cpulist);
+        siderSetProcTitle("sider-rdb-bgsave");
+        siderSetCpuAffinity(server.bgsave_cpulist);
         retval = rdbSave(req, filename,rsi,rdbflags);
         if (retval == C_OK) {
             sendChildCowInfo(CHILD_INFO_TYPE_RDB_COW_SIZE, "RDB");
@@ -1602,9 +1602,9 @@ void rdbRemoveTempFile(pid_t childpid, int from_signal) {
 
     /* Generate temp rdb file name using async-signal safe functions. */
     ll2string(pid, sizeof(pid), childpid);
-    redis_strlcpy(tmpfile, "temp-", sizeof(tmpfile));
-    redis_strlcat(tmpfile, pid, sizeof(tmpfile));
-    redis_strlcat(tmpfile, ".rdb", sizeof(tmpfile));
+    sider_strlcpy(tmpfile, "temp-", sizeof(tmpfile));
+    sider_strlcat(tmpfile, pid, sizeof(tmpfile));
+    sider_strlcat(tmpfile, ".rdb", sizeof(tmpfile));
 
     if (from_signal) {
         /* bg_unlink is not async-signal-safe, but in this case we don't really
@@ -1620,7 +1620,7 @@ void rdbRemoveTempFile(pid_t childpid, int from_signal) {
 /* This function is called by rdbLoadObject() when the code is in RDB-check
  * mode and we find a module value of type 2 that can be parsed without
  * the need of the actual module. The value is parsed for errors, finally
- * a dummy redis object is returned just to conform to the API. */
+ * a dummy sider object is returned just to conform to the API. */
 robj *rdbLoadCheckModuleValue(rio *rdb, char *modulename) {
     uint64_t opcode;
     while((opcode = rdbLoadLen(rdb,NULL)) != RDB_MODULE_OPCODE_EOF) {
@@ -1818,7 +1818,7 @@ int lpValidateIntegrityAndDups(unsigned char *lp, size_t size, int deep, int pai
     return ret;
 }
 
-/* Load a Redis object of the specified type from the specified file.
+/* Load a Sider object of the specified type from the specified file.
  * On success a newly allocated object is returned, otherwise NULL.
  * When the function returns NULL and if 'error' is not NULL, the
  * integer pointed by 'error' is set to the type of error that occurred */
@@ -2269,7 +2269,7 @@ robj *rdbLoadObject(int rdbtype, rio *rdb, sds key, int dbid, int *error) {
                     return NULL;
                 }
                 /* Convert to ziplist encoded hash. This must be deprecated
-                 * when loading dumps created by Redis 2.4 gets deprecated. */
+                 * when loading dumps created by Sider 2.4 gets deprecated. */
                 {
                     unsigned char *lp = lpNew(0);
                     unsigned char *zi = zipmapRewind(o->ptr);
@@ -2803,7 +2803,7 @@ robj *rdbLoadObject(int rdbtype, rio *rdb, sds key, int dbid, int *error) {
             rdbReportCorruptRDB("The RDB file contains module data I can't load: no matching module type '%s'", name);
             return NULL;
         }
-        RedisModuleIO io;
+        SiderModuleIO io;
         robj keyobj;
         initStaticStringObject(keyobj,key);
         moduleInitIOContext(io,mt,rdb,&keyobj,dbid);
@@ -3023,7 +3023,7 @@ int rdbLoadRio(rio *rdb, int rdbflags, rdbSaveInfo *rsi) {
 int rdbLoadRioWithLoadingCtx(rio *rdb, int rdbflags, rdbSaveInfo *rsi, rdbLoadingCtx *rdb_loading_ctx) {
     uint64_t dbid = 0;
     int type, rdbver;
-    redisDb *db = rdb_loading_ctx->dbarray+0;
+    siderDb *db = rdb_loading_ctx->dbarray+0;
     char buf[1024];
     int error;
     long long empty_keys_skipped = 0;
@@ -3088,7 +3088,7 @@ int rdbLoadRioWithLoadingCtx(rio *rdb, int rdbflags, rdbSaveInfo *rsi, rdbLoadin
             if ((dbid = rdbLoadLen(rdb,NULL)) == RDB_LENERR) goto eoferr;
             if (dbid >= (unsigned)server.dbnum) {
                 serverLog(LL_WARNING,
-                    "FATAL: Data file was created with a Redis "
+                    "FATAL: Data file was created with a Sider "
                     "server configured to handle more than %d "
                     "databases. Exiting\n", server.dbnum);
                 exit(1);
@@ -3137,7 +3137,7 @@ int rdbLoadRioWithLoadingCtx(rio *rdb, int rdbflags, rdbSaveInfo *rsi, rdbLoadin
                 if (rsi) rsi->repl_offset = strtoll(auxval->ptr,NULL,10);
             } else if (!strcasecmp(auxkey->ptr,"lua")) {
                 /* Won't load the script back in memory anymore. */
-            } else if (!strcasecmp(auxkey->ptr,"redis-ver")) {
+            } else if (!strcasecmp(auxkey->ptr,"sider-ver")) {
                 serverLog(LL_NOTICE,"Loading RDB produced by version %s",
                     (char*)auxval->ptr);
             } else if (!strcasecmp(auxkey->ptr,"ctime")) {
@@ -3156,7 +3156,7 @@ int rdbLoadRioWithLoadingCtx(rio *rdb, int rdbflags, rdbSaveInfo *rsi, rdbLoadin
             } else if (!strcasecmp(auxkey->ptr, "aof-base")) {
                 long long isbase = strtoll(auxval->ptr, NULL, 10);
                 if (isbase) serverLog(LL_NOTICE, "RDB is base AOF");
-            } else if (!strcasecmp(auxkey->ptr,"redis-bits")) {
+            } else if (!strcasecmp(auxkey->ptr,"sider-bits")) {
                 /* Just ignored. */
             } else {
                 /* We ignore fields we don't understand, as by AUX field
@@ -3169,7 +3169,7 @@ int rdbLoadRioWithLoadingCtx(rio *rdb, int rdbflags, rdbSaveInfo *rsi, rdbLoadin
             decrRefCount(auxval);
             continue; /* Read type again. */
         } else if (type == RDB_OPCODE_MODULE_AUX) {
-            /* Load module data that is not related to the Redis key space.
+            /* Load module data that is not related to the Sider key space.
              * Such data can be potentially be stored both before and after the
              * RDB keys-values section. */
             uint64_t moduleid = rdbLoadLen(rdb,NULL);
@@ -3195,7 +3195,7 @@ int rdbLoadRioWithLoadingCtx(rio *rdb, int rdbflags, rdbSaveInfo *rsi, rdbLoadin
                     exit(1);
                 }
 
-                RedisModuleIO io;
+                SiderModuleIO io;
                 moduleInitIOContext(io,mt,rdb,NULL,-1);
                 /* Call the rdb_load method of the module providing the 10 bit
                  * encoding version in the lower 10 bits of the module ID. */
@@ -3356,7 +3356,7 @@ int rdbLoadRioWithLoadingCtx(rio *rdb, int rdbflags, rdbSaveInfo *rsi, rdbLoadin
     return C_OK;
 
     /* Unexpected end of file is handled here calling rdbReportReadError():
-     * this will in turn either abort Redis in most cases, or if we are loading
+     * this will in turn either abort Sider in most cases, or if we are loading
      * the RDB file from a socket during initial SYNC (diskless replica mode),
      * we'll report the error to the caller, so that we can retry. */
 eoferr:
@@ -3549,7 +3549,7 @@ int rdbSaveToSlavesSockets(int req, rdbSaveInfo *rsi) {
     }
 
     /* Create the child process. */
-    if ((childpid = redisFork(CHILD_TYPE_RDB)) == 0) {
+    if ((childpid = siderFork(CHILD_TYPE_RDB)) == 0) {
         /* Child */
         int retval, dummy;
         rio rdb;
@@ -3560,8 +3560,8 @@ int rdbSaveToSlavesSockets(int req, rdbSaveInfo *rsi) {
          * get a write error and exit. */
         close(server.rdb_pipe_read);
 
-        redisSetProcTitle("redis-rdb-to-slaves");
-        redisSetCpuAffinity(server.bgsave_cpulist);
+        siderSetProcTitle("sider-rdb-to-slaves");
+        siderSetCpuAffinity(server.bgsave_cpulist);
 
         retval = rdbSaveRioWithEOFMark(req,&rdb,NULL,rsi);
         if (retval == C_OK && rioFlush(&rdb) == 0)

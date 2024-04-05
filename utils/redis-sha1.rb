@@ -1,4 +1,4 @@
-# redis-sha1.rb - Copyright (C) 2009 Salvatore Sanfilippo
+# sider-sha1.rb - Copyright (C) 2009 Salvatore Sanfilippo
 # BSD license, See the COPYING file for more information.
 #
 # Performs the SHA1 sum of the whole dataset.
@@ -9,12 +9,12 @@
 # unsorted elements. Otherwise the sum may differ with equal dataset.
 
 require 'rubygems'
-require 'redis'
+require 'sider'
 require 'digest/sha1'
 
-def redisSha1(opts={})
+def siderSha1(opts={})
     sha1=""
-    r = Redis.new(opts)
+    r = Sider.new(opts)
     r.keys('*').sort.each{|k|
         vtype = r.type?(k)
         if vtype == "string"
@@ -48,5 +48,5 @@ end
 host = ARGV[0] || "127.0.0.1"
 port = ARGV[1] || "6379"
 db = ARGV[2] || "0"
-puts "Performing SHA1 of Redis server #{host} #{port} DB: #{db}"
-p "Dataset SHA1: #{redisSha1(:host => host, :port => port.to_i, :db => db)}"
+puts "Performing SHA1 of Sider server #{host} #{port} DB: #{db}"
+p "Dataset SHA1: #{siderSha1(:host => host, :port => port.to_i, :db => db)}"

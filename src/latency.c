@@ -1,5 +1,5 @@
 /* The latency monitor allows to easily observe the sources of latency
- * in a Redis instance using the LATENCY command. Different latency
+ * in a Sider instance using the LATENCY command. Different latency
  * sources are monitored, like disk I/O, execution of commands, fork
  * system call, and so forth.
  *
@@ -8,15 +8,15 @@
  * Copyright (c) 2014, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -198,7 +198,7 @@ void analyzeLatencyForEvent(char *event, struct latencyStats *ls) {
     if (ls->samples) ls->mad = sum / ls->samples;
 }
 
-/* Create a human readable report of latency events for this Redis instance. */
+/* Create a human readable report of latency events for this Sider instance. */
 sds createLatencyReport(void) {
     sds report = sdsempty();
     int advise_better_vm = 0;       /* Better virtual machines. */
@@ -224,7 +224,7 @@ sds createLatencyReport(void) {
     if (dictSize(server.latency_events) == 0 &&
         server.latency_monitor_threshold == 0)
     {
-        report = sdscat(report,"I'm sorry, Dave, I can't do that. Latency monitoring is disabled in this Redis instance. You may use \"CONFIG SET latency-monitor-threshold <milliseconds>.\" in order to enable it. If we weren't in a deep space mission I'd suggest to take a look at https://redis.io/topics/latency-monitor.\n");
+        report = sdscat(report,"I'm sorry, Dave, I can't do that. Latency monitoring is disabled in this Sider instance. You may use \"CONFIG SET latency-monitor-threshold <milliseconds>.\" in order to enable it. If we weren't in a deep space mission I'd suggest to take a look at https://sider.io/topics/latency-monitor.\n");
         return report;
     }
 
@@ -243,7 +243,7 @@ sds createLatencyReport(void) {
         if (ts == NULL) continue;
         eventnum++;
         if (eventnum == 1) {
-            report = sdscat(report,"Dave, I have observed latency spikes in this Redis instance. You don't mind talking about it, do you Dave?\n\n");
+            report = sdscat(report,"Dave, I have observed latency spikes in this Sider instance. You don't mind talking about it, do you Dave?\n\n");
         }
         analyzeLatencyForEvent(event,&ls);
 
@@ -372,9 +372,9 @@ sds createLatencyReport(void) {
     }
 
     if (eventnum == 0 && advices == 0) {
-        report = sdscat(report,"Dave, no latency spike was observed during the lifetime of this Redis instance, not in the slightest bit. I honestly think you ought to sit down calmly, take a stress pill, and think things over.\n");
+        report = sdscat(report,"Dave, no latency spike was observed during the lifetime of this Sider instance, not in the slightest bit. I honestly think you ought to sit down calmly, take a stress pill, and think things over.\n");
     } else if (eventnum > 0 && advices == 0) {
-        report = sdscat(report,"\nWhile there are latency events logged, I'm not able to suggest any easy fix. Please use the Redis community to get some help, providing this report in your help request.\n");
+        report = sdscat(report,"\nWhile there are latency events logged, I'm not able to suggest any easy fix. Please use the Sider community to get some help, providing this report in your help request.\n");
     } else {
         /* Add all the suggestions accumulated so far. */
 
@@ -386,7 +386,7 @@ sds createLatencyReport(void) {
 
         /* Slow log. */
         if (advise_slowlog_enabled) {
-            report = sdscatprintf(report,"- There are latency issues with potentially slow commands you are using. Try to enable the Slow Log Redis feature using the command 'CONFIG SET slowlog-log-slower-than %llu'. If the Slow log is disabled Redis is not able to log slow commands execution for you.\n", (unsigned long long)server.latency_monitor_threshold*1000);
+            report = sdscatprintf(report,"- There are latency issues with potentially slow commands you are using. Try to enable the Slow Log Sider feature using the command 'CONFIG SET slowlog-log-slower-than %llu'. If the Slow log is disabled Sider is not able to log slow commands execution for you.\n", (unsigned long long)server.latency_monitor_threshold*1000);
         }
 
         if (advise_slowlog_tuning) {
@@ -394,17 +394,17 @@ sds createLatencyReport(void) {
         }
 
         if (advise_slowlog_inspect) {
-            report = sdscat(report,"- Check your Slow Log to understand what are the commands you are running which are too slow to execute. Please check https://redis.io/commands/slowlog for more information.\n");
+            report = sdscat(report,"- Check your Slow Log to understand what are the commands you are running which are too slow to execute. Please check https://sider.io/commands/slowlog for more information.\n");
         }
 
         /* Intrinsic latency. */
         if (advise_scheduler) {
-            report = sdscat(report,"- The system is slow to execute Redis code paths not containing system calls. This usually means the system does not provide Redis CPU time to run for long periods. You should try to:\n"
+            report = sdscat(report,"- The system is slow to execute Sider code paths not containing system calls. This usually means the system does not provide Sider CPU time to run for long periods. You should try to:\n"
             "  1) Lower the system load.\n"
-            "  2) Use a computer / VM just for Redis if you are running other software in the same system.\n"
+            "  2) Use a computer / VM just for Sider if you are running other software in the same system.\n"
             "  3) Check if you have a \"noisy neighbour\" problem.\n"
-            "  4) Check with 'redis-cli --intrinsic-latency 100' what is the intrinsic latency in your system.\n"
-            "  5) Check if the problem is allocator-related by recompiling Redis with MALLOC=libc, if you are using Jemalloc. However this may create fragmentation problems.\n");
+            "  4) Check with 'sider-cli --intrinsic-latency 100' what is the intrinsic latency in your system.\n"
+            "  5) Check if the problem is allocator-related by recompiling Sider with MALLOC=libc, if you are using Jemalloc. However this may create fragmentation problems.\n");
         }
 
         /* AOF / Disk latency. */
@@ -413,15 +413,15 @@ sds createLatencyReport(void) {
         }
 
         if (advise_ssd) {
-            report = sdscat(report,"- SSD disks are able to reduce fsync latency, and total time needed for snapshotting and AOF log rewriting (resulting in smaller memory usage). With extremely high write load SSD disks can be a good option. However Redis should perform reasonably with high load using normal disks. Use this advice as a last resort.\n");
+            report = sdscat(report,"- SSD disks are able to reduce fsync latency, and total time needed for snapshotting and AOF log rewriting (resulting in smaller memory usage). With extremely high write load SSD disks can be a good option. However Sider should perform reasonably with high load using normal disks. Use this advice as a last resort.\n");
         }
 
         if (advise_data_writeback) {
-            report = sdscat(report,"- Mounting ext3/4 filesystems with data=writeback can provide a performance boost compared to data=ordered, however this mode of operation provides less guarantees, and sometimes it can happen that after a hard crash the AOF file will have a half-written command at the end and will require to be repaired before Redis restarts.\n");
+            report = sdscat(report,"- Mounting ext3/4 filesystems with data=writeback can provide a performance boost compared to data=ordered, however this mode of operation provides less guarantees, and sometimes it can happen that after a hard crash the AOF file will have a half-written command at the end and will require to be repaired before Sider restarts.\n");
         }
 
         if (advise_disk_contention) {
-            report = sdscat(report,"- Try to lower the disk contention. This is often caused by other disk intensive processes running in the same computer (including other Redis instances).\n");
+            report = sdscat(report,"- Try to lower the disk contention. This is often caused by other disk intensive processes running in the same computer (including other Sider instances).\n");
         }
 
         if (advise_no_appendfsync) {
@@ -437,7 +437,7 @@ sds createLatencyReport(void) {
         }
 
         if (advise_hz && server.hz < 100) {
-            report = sdscat(report,"- In order to make the Redis keys expiring process more incremental, try to set the 'hz' configuration parameter to 100 using 'CONFIG SET hz 100'.\n");
+            report = sdscat(report,"- In order to make the Sider keys expiring process more incremental, try to set the 'hz' configuration parameter to 100 using 'CONFIG SET hz 100'.\n");
         }
 
         if (advise_large_objects) {
@@ -445,11 +445,11 @@ sds createLatencyReport(void) {
         }
 
         if (advise_mass_eviction) {
-            report = sdscat(report,"- Sudden changes to the 'maxmemory' setting via 'CONFIG SET', or allocation of large objects via sets or sorted sets intersections, STORE option of SORT, Redis Cluster large keys migrations (RESTORE command), may create sudden memory pressure forcing the server to block trying to evict keys. \n");
+            report = sdscat(report,"- Sudden changes to the 'maxmemory' setting via 'CONFIG SET', or allocation of large objects via sets or sorted sets intersections, STORE option of SORT, Sider Cluster large keys migrations (RESTORE command), may create sudden memory pressure forcing the server to block trying to evict keys. \n");
         }
 
         if (advise_disable_thp) {
-            report = sdscat(report,"- I detected a non zero amount of anonymous huge pages used by your process. This creates very serious latency events in different conditions, especially when Redis is persisting on disk. To disable THP support use the command 'echo never > /sys/kernel/mm/transparent_hugepage/enabled', make sure to also add it into /etc/rc.local so that the command will be executed again after a reboot. Note that even if you have already disabled THP, you still need to restart the Redis process to get rid of the huge pages already created.\n");
+            report = sdscat(report,"- I detected a non zero amount of anonymous huge pages used by your process. This creates very serious latency events in different conditions, especially when Sider is persisting on disk. To disable THP support use the command 'echo never > /sys/kernel/mm/transparent_hugepage/enabled', make sure to also add it into /etc/rc.local so that the command will be executed again after a reboot. Note that even if you have already disabled THP, you still need to restart the Sider process to get rid of the huge pages already created.\n");
         }
     }
 
@@ -493,10 +493,10 @@ void fillCommandCDF(client *c, struct hdr_histogram* histogram) {
 void latencyAllCommandsFillCDF(client *c, dict *commands, int *command_with_data) {
     dictIterator *di = dictGetSafeIterator(commands);
     dictEntry *de;
-    struct redisCommand *cmd;
+    struct siderCommand *cmd;
 
     while((de = dictNext(di)) != NULL) {
-        cmd = (struct redisCommand *) dictGetVal(de);
+        cmd = (struct siderCommand *) dictGetVal(de);
         if (cmd->latency_histogram) {
             addReplyBulkCBuffer(c, cmd->fullname, sdslen(cmd->fullname));
             fillCommandCDF(c, cmd->latency_histogram);
@@ -516,7 +516,7 @@ void latencySpecificCommandsFillCDF(client *c) {
     void *replylen = addReplyDeferredLen(c);
     int command_with_data = 0;
     for (int j = 2; j < c->argc; j++){
-        struct redisCommand *cmd = lookupCommandBySds(c->argv[j]->ptr);
+        struct siderCommand *cmd = lookupCommandBySds(c->argv[j]->ptr);
         /* If the command does not exist we skip the reply */
         if (cmd == NULL) {
             continue;
@@ -533,7 +533,7 @@ void latencySpecificCommandsFillCDF(client *c) {
             dictIterator *di = dictGetSafeIterator(cmd->subcommands_dict);
 
             while ((de = dictNext(di)) != NULL) {
-                struct redisCommand *sub = dictGetVal(de);
+                struct siderCommand *sub = dictGetVal(de);
                 if (sub->latency_histogram) {
                     addReplyBulkCBuffer(c, sub->fullname, sdslen(sub->fullname));
                     fillCommandCDF(c, sub->latency_histogram);

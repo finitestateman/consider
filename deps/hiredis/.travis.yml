@@ -18,9 +18,9 @@ branches:
 
 install:
     - if [ "$TRAVIS_COMPILER" != "mingw" ]; then
-        wget https://github.com/redis/redis/archive/6.0.6.tar.gz;
+        wget https://github.com/sider/sider/archive/6.0.6.tar.gz;
         tar -xzvf 6.0.6.tar.gz;
-        pushd redis-6.0.6 && BUILD_TLS=yes make && export PATH=$PWD/src:$PATH && popd;
+        pushd sider-6.0.6 && BUILD_TLS=yes make && export PATH=$PWD/src:$PATH && popd;
       fi;
 
 before_script:
@@ -28,7 +28,7 @@ before_script:
         curl -O https://distfiles.macports.org/MacPorts/MacPorts-2.6.2-10.13-HighSierra.pkg;
         sudo installer -pkg MacPorts-2.6.2-10.13-HighSierra.pkg -target /;
         export PATH=$PATH:/opt/local/bin && sudo port -v selfupdate;
-        sudo port -N install openssl redis;
+        sudo port -N install openssl sider;
       fi;
 
 addons:
@@ -122,4 +122,4 @@ jobs:
         - mkdir build && cd build
         - cmd.exe //C 'C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat' amd64 '&&'
           cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DENABLE_EXAMPLES=ON '&&' ninja -v
-        - ./hiredis-test.exe
+        - ./hisider-test.exe

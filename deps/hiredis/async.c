@@ -4,15 +4,15 @@
  *
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -52,9 +52,9 @@
 #define assert(e) (void)(e)
 #endif
 
-/* Forward declarations of hiredis.c functions */
-int __redisAppendCommand(redisContext *c, const char *cmd, size_t len);
-void __redisSetError(redisContext *c, int type, const char *str);
+/* Forward declarations of hisider.c functions */
+int __siderAppendCommand(siderContext *c, const char *cmd, size_t len);
+void __siderSetError(siderContext *c, int type, const char *str);
 
 /* Functions managing dictionary of callbacks for pub/sub. */
 static unsigned int callbackHash(const void *key) {
@@ -64,7 +64,7 @@ static unsigned int callbackHash(const void *key) {
 
 static void *callbackValDup(void *privdata, const void *src) {
     ((void) privdata);
-    redisCallback *dup;
+    siderCallback *dup;
 
     dup = hi_malloc(sizeof(*dup));
     if (dup == NULL)
@@ -103,8 +103,8 @@ static dictType callbackDict = {
     callbackValDestructor
 };
 
-static redisAsyncContext *redisAsyncInitialize(redisContext *c) {
-    redisAsyncContext *ac;
+static siderAsyncContext *siderAsyncInitialize(siderContext *c) {
+    siderAsyncContext *ac;
     dict *channels = NULL, *patterns = NULL;
 
     channels = dictCreate(&callbackDict,NULL);
@@ -115,7 +115,7 @@ static redisAsyncContext *redisAsyncInitialize(redisContext *c) {
     if (patterns == NULL)
         goto oom;
 
-    ac = hi_realloc(c,sizeof(redisAsyncContext));
+    ac = hi_realloc(c,sizeof(siderAsyncContext));
     if (ac == NULL)
         goto oom;
 
@@ -159,20 +159,20 @@ oom:
 }
 
 /* We want the error field to be accessible directly instead of requiring
- * an indirection to the redisContext struct. */
-static void __redisAsyncCopyError(redisAsyncContext *ac) {
+ * an indirection to the siderContext struct. */
+static void __siderAsyncCopyError(siderAsyncContext *ac) {
     if (!ac)
         return;
 
-    redisContext *c = &(ac->c);
+    siderContext *c = &(ac->c);
     ac->err = c->err;
     ac->errstr = c->errstr;
 }
 
-redisAsyncContext *redisAsyncConnectWithOptions(const redisOptions *options) {
-    redisOptions myOptions = *options;
-    redisContext *c;
-    redisAsyncContext *ac;
+siderAsyncContext *siderAsyncConnectWithOptions(const siderOptions *options) {
+    siderOptions myOptions = *options;
+    siderContext *c;
+    siderAsyncContext *ac;
 
     /* Clear any erroneously set sync callback and flag that we don't want to
      * use freeReplyObject by default. */
@@ -180,56 +180,56 @@ redisAsyncContext *redisAsyncConnectWithOptions(const redisOptions *options) {
     myOptions.options |= REDIS_OPT_NO_PUSH_AUTOFREE;
 
     myOptions.options |= REDIS_OPT_NONBLOCK;
-    c = redisConnectWithOptions(&myOptions);
+    c = siderConnectWithOptions(&myOptions);
     if (c == NULL) {
         return NULL;
     }
 
-    ac = redisAsyncInitialize(c);
+    ac = siderAsyncInitialize(c);
     if (ac == NULL) {
-        redisFree(c);
+        siderFree(c);
         return NULL;
     }
 
     /* Set any configured async push handler */
-    redisAsyncSetPushCallback(ac, myOptions.async_push_cb);
+    siderAsyncSetPushCallback(ac, myOptions.async_push_cb);
 
-    __redisAsyncCopyError(ac);
+    __siderAsyncCopyError(ac);
     return ac;
 }
 
-redisAsyncContext *redisAsyncConnect(const char *ip, int port) {
-    redisOptions options = {0};
+siderAsyncContext *siderAsyncConnect(const char *ip, int port) {
+    siderOptions options = {0};
     REDIS_OPTIONS_SET_TCP(&options, ip, port);
-    return redisAsyncConnectWithOptions(&options);
+    return siderAsyncConnectWithOptions(&options);
 }
 
-redisAsyncContext *redisAsyncConnectBind(const char *ip, int port,
+siderAsyncContext *siderAsyncConnectBind(const char *ip, int port,
                                          const char *source_addr) {
-    redisOptions options = {0};
+    siderOptions options = {0};
     REDIS_OPTIONS_SET_TCP(&options, ip, port);
     options.endpoint.tcp.source_addr = source_addr;
-    return redisAsyncConnectWithOptions(&options);
+    return siderAsyncConnectWithOptions(&options);
 }
 
-redisAsyncContext *redisAsyncConnectBindWithReuse(const char *ip, int port,
+siderAsyncContext *siderAsyncConnectBindWithReuse(const char *ip, int port,
                                                   const char *source_addr) {
-    redisOptions options = {0};
+    siderOptions options = {0};
     REDIS_OPTIONS_SET_TCP(&options, ip, port);
     options.options |= REDIS_OPT_REUSEADDR;
     options.endpoint.tcp.source_addr = source_addr;
-    return redisAsyncConnectWithOptions(&options);
+    return siderAsyncConnectWithOptions(&options);
 }
 
-redisAsyncContext *redisAsyncConnectUnix(const char *path) {
-    redisOptions options = {0};
+siderAsyncContext *siderAsyncConnectUnix(const char *path) {
+    siderOptions options = {0};
     REDIS_OPTIONS_SET_UNIX(&options, path);
-    return redisAsyncConnectWithOptions(&options);
+    return siderAsyncConnectWithOptions(&options);
 }
 
 static int
-redisAsyncSetConnectCallbackImpl(redisAsyncContext *ac, redisConnectCallback *fn,
-                                 redisConnectCallbackNC *fn_nc)
+siderAsyncSetConnectCallbackImpl(siderAsyncContext *ac, siderConnectCallback *fn,
+                                 siderConnectCallbackNC *fn_nc)
 {
     /* If either are already set, this is an error */
     if (ac->onConnect || ac->onConnectNC)
@@ -249,15 +249,15 @@ redisAsyncSetConnectCallbackImpl(redisAsyncContext *ac, redisConnectCallback *fn
     return REDIS_OK;
 }
 
-int redisAsyncSetConnectCallback(redisAsyncContext *ac, redisConnectCallback *fn) {
-    return redisAsyncSetConnectCallbackImpl(ac, fn, NULL);
+int siderAsyncSetConnectCallback(siderAsyncContext *ac, siderConnectCallback *fn) {
+    return siderAsyncSetConnectCallbackImpl(ac, fn, NULL);
 }
 
-int redisAsyncSetConnectCallbackNC(redisAsyncContext *ac, redisConnectCallbackNC *fn) {
-    return redisAsyncSetConnectCallbackImpl(ac, NULL, fn);
+int siderAsyncSetConnectCallbackNC(siderAsyncContext *ac, siderConnectCallbackNC *fn) {
+    return siderAsyncSetConnectCallbackImpl(ac, NULL, fn);
 }
 
-int redisAsyncSetDisconnectCallback(redisAsyncContext *ac, redisDisconnectCallback *fn) {
+int siderAsyncSetDisconnectCallback(siderAsyncContext *ac, siderDisconnectCallback *fn) {
     if (ac->onDisconnect == NULL) {
         ac->onDisconnect = fn;
         return REDIS_OK;
@@ -266,8 +266,8 @@ int redisAsyncSetDisconnectCallback(redisAsyncContext *ac, redisDisconnectCallba
 }
 
 /* Helper functions to push/shift callbacks */
-static int __redisPushCallback(redisCallbackList *list, redisCallback *source) {
-    redisCallback *cb;
+static int __siderPushCallback(siderCallbackList *list, siderCallback *source) {
+    siderCallback *cb;
 
     /* Copy callback from stack to heap */
     cb = hi_malloc(sizeof(*cb));
@@ -288,8 +288,8 @@ static int __redisPushCallback(redisCallbackList *list, redisCallback *source) {
     return REDIS_OK;
 }
 
-static int __redisShiftCallback(redisCallbackList *list, redisCallback *target) {
-    redisCallback *cb = list->head;
+static int __siderShiftCallback(siderCallbackList *list, siderCallback *target) {
+    siderCallback *cb = list->head;
     if (cb != NULL) {
         list->head = cb->next;
         if (cb == list->tail)
@@ -304,8 +304,8 @@ static int __redisShiftCallback(redisCallbackList *list, redisCallback *target) 
     return REDIS_ERR;
 }
 
-static void __redisRunCallback(redisAsyncContext *ac, redisCallback *cb, redisReply *reply) {
-    redisContext *c = &(ac->c);
+static void __siderRunCallback(siderAsyncContext *ac, siderCallback *cb, siderReply *reply) {
+    siderContext *c = &(ac->c);
     if (cb->fn != NULL) {
         c->flags |= REDIS_IN_CALLBACK;
         cb->fn(ac,reply,cb->privdata);
@@ -313,7 +313,7 @@ static void __redisRunCallback(redisAsyncContext *ac, redisCallback *cb, redisRe
     }
 }
 
-static void __redisRunPushCallback(redisAsyncContext *ac, redisReply *reply) {
+static void __siderRunPushCallback(siderAsyncContext *ac, siderReply *reply) {
     if (ac->push_cb != NULL) {
         ac->c.flags |= REDIS_IN_CALLBACK;
         ac->push_cb(ac, reply);
@@ -321,7 +321,7 @@ static void __redisRunPushCallback(redisAsyncContext *ac, redisReply *reply) {
     }
 }
 
-static void __redisRunConnectCallback(redisAsyncContext *ac, int status)
+static void __siderRunConnectCallback(siderAsyncContext *ac, int status)
 {
     if (ac->onConnect == NULL && ac->onConnectNC == NULL)
         return;
@@ -344,7 +344,7 @@ static void __redisRunConnectCallback(redisAsyncContext *ac, int status)
     }
 }
 
-static void __redisRunDisconnectCallback(redisAsyncContext *ac, int status)
+static void __siderRunDisconnectCallback(siderAsyncContext *ac, int status)
 {
     if (ac->onDisconnect) {
         if (!(ac->c.flags & REDIS_IN_CALLBACK)) {
@@ -359,23 +359,23 @@ static void __redisRunDisconnectCallback(redisAsyncContext *ac, int status)
 }
 
 /* Helper function to free the context. */
-static void __redisAsyncFree(redisAsyncContext *ac) {
-    redisContext *c = &(ac->c);
-    redisCallback cb;
+static void __siderAsyncFree(siderAsyncContext *ac) {
+    siderContext *c = &(ac->c);
+    siderCallback cb;
     dictIterator it;
     dictEntry *de;
 
     /* Execute pending callbacks with NULL reply. */
-    while (__redisShiftCallback(&ac->replies,&cb) == REDIS_OK)
-        __redisRunCallback(ac,&cb,NULL);
-    while (__redisShiftCallback(&ac->sub.replies,&cb) == REDIS_OK)
-        __redisRunCallback(ac,&cb,NULL);
+    while (__siderShiftCallback(&ac->replies,&cb) == REDIS_OK)
+        __siderRunCallback(ac,&cb,NULL);
+    while (__siderShiftCallback(&ac->sub.replies,&cb) == REDIS_OK)
+        __siderRunCallback(ac,&cb,NULL);
 
     /* Run subscription callbacks with NULL reply */
     if (ac->sub.channels) {
         dictInitIterator(&it,ac->sub.channels);
         while ((de = dictNext(&it)) != NULL)
-            __redisRunCallback(ac,dictGetEntryVal(de),NULL);
+            __siderRunCallback(ac,dictGetEntryVal(de),NULL);
 
         dictRelease(ac->sub.channels);
     }
@@ -383,7 +383,7 @@ static void __redisAsyncFree(redisAsyncContext *ac) {
     if (ac->sub.patterns) {
         dictInitIterator(&it,ac->sub.patterns);
         while ((de = dictNext(&it)) != NULL)
-            __redisRunCallback(ac,dictGetEntryVal(de),NULL);
+            __siderRunCallback(ac,dictGetEntryVal(de),NULL);
 
         dictRelease(ac->sub.patterns);
     }
@@ -391,13 +391,13 @@ static void __redisAsyncFree(redisAsyncContext *ac) {
     /* Signal event lib to clean up */
     _EL_CLEANUP(ac);
 
-    /* Execute disconnect callback. When redisAsyncFree() initiated destroying
+    /* Execute disconnect callback. When siderAsyncFree() initiated destroying
      * this context, the status will always be REDIS_OK. */
     if (c->flags & REDIS_CONNECTED) {
         int status = ac->err == 0 ? REDIS_OK : REDIS_ERR;
         if (c->flags & REDIS_FREEING)
             status = REDIS_OK;
-        __redisRunDisconnectCallback(ac, status);
+        __siderRunDisconnectCallback(ac, status);
     }
 
     if (ac->dataCleanup) {
@@ -405,34 +405,34 @@ static void __redisAsyncFree(redisAsyncContext *ac) {
     }
 
     /* Cleanup self */
-    redisFree(c);
+    siderFree(c);
 }
 
 /* Free the async context. When this function is called from a callback,
- * control needs to be returned to redisProcessCallbacks() before actual
+ * control needs to be returned to siderProcessCallbacks() before actual
  * free'ing. To do so, a flag is set on the context which is picked up by
- * redisProcessCallbacks(). Otherwise, the context is immediately free'd. */
-void redisAsyncFree(redisAsyncContext *ac) {
+ * siderProcessCallbacks(). Otherwise, the context is immediately free'd. */
+void siderAsyncFree(siderAsyncContext *ac) {
     if (ac == NULL)
         return;
 
-    redisContext *c = &(ac->c);
+    siderContext *c = &(ac->c);
 
     c->flags |= REDIS_FREEING;
     if (!(c->flags & REDIS_IN_CALLBACK))
-        __redisAsyncFree(ac);
+        __siderAsyncFree(ac);
 }
 
 /* Helper function to make the disconnect happen and clean up. */
-void __redisAsyncDisconnect(redisAsyncContext *ac) {
-    redisContext *c = &(ac->c);
+void __siderAsyncDisconnect(siderAsyncContext *ac) {
+    siderContext *c = &(ac->c);
 
     /* Make sure error is accessible if there is any */
-    __redisAsyncCopyError(ac);
+    __siderAsyncCopyError(ac);
 
     if (ac->err == 0) {
         /* For clean disconnects, there should be no pending callbacks. */
-        int ret = __redisShiftCallback(&ac->replies,NULL);
+        int ret = __siderShiftCallback(&ac->replies,NULL);
         assert(ret == REDIS_ERR);
     } else {
         /* Disconnection is caused by an error, make sure that pending
@@ -444,33 +444,33 @@ void __redisAsyncDisconnect(redisAsyncContext *ac) {
      * this is safe to call multiple times */
     _EL_CLEANUP(ac);
 
-    /* For non-clean disconnects, __redisAsyncFree() will execute pending
+    /* For non-clean disconnects, __siderAsyncFree() will execute pending
      * callbacks with a NULL-reply. */
     if (!(c->flags & REDIS_NO_AUTO_FREE)) {
-      __redisAsyncFree(ac);
+      __siderAsyncFree(ac);
     }
 }
 
-/* Tries to do a clean disconnect from Redis, meaning it stops new commands
+/* Tries to do a clean disconnect from Sider, meaning it stops new commands
  * from being issued, but tries to flush the output buffer and execute
  * callbacks for all remaining replies. When this function is called from a
  * callback, there might be more replies and we can safely defer disconnecting
- * to redisProcessCallbacks(). Otherwise, we can only disconnect immediately
+ * to siderProcessCallbacks(). Otherwise, we can only disconnect immediately
  * when there are no pending callbacks. */
-void redisAsyncDisconnect(redisAsyncContext *ac) {
-    redisContext *c = &(ac->c);
+void siderAsyncDisconnect(siderAsyncContext *ac) {
+    siderContext *c = &(ac->c);
     c->flags |= REDIS_DISCONNECTING;
 
     /** unset the auto-free flag here, because disconnect undoes this */
     c->flags &= ~REDIS_NO_AUTO_FREE;
     if (!(c->flags & REDIS_IN_CALLBACK) && ac->replies.head == NULL)
-        __redisAsyncDisconnect(ac);
+        __siderAsyncDisconnect(ac);
 }
 
-static int __redisGetSubscribeCallback(redisAsyncContext *ac, redisReply *reply, redisCallback *dstcb) {
-    redisContext *c = &(ac->c);
+static int __siderGetSubscribeCallback(siderAsyncContext *ac, siderReply *reply, siderCallback *dstcb) {
+    siderContext *c = &(ac->c);
     dict *callbacks;
-    redisCallback *cb = NULL;
+    siderCallback *cb = NULL;
     dictEntry *de;
     int pvariant;
     char *stype;
@@ -478,7 +478,7 @@ static int __redisGetSubscribeCallback(redisAsyncContext *ac, redisReply *reply,
 
     /* Match reply with the expected format of a pushed message.
      * The type and number of elements (3 to 4) are specified at:
-     * https://redis.io/topics/pubsub#format-of-pushed-messages */
+     * https://sider.io/topics/pubsub#format-of-pushed-messages */
     if ((reply->type == REDIS_REPLY_ARRAY && !(c->flags & REDIS_SUPPORTS_PUSH) && reply->elements >= 3) ||
         reply->type == REDIS_REPLY_PUSH) {
         assert(reply->element[0]->type == REDIS_REPLY_STRING);
@@ -525,28 +525,28 @@ static int __redisGetSubscribeCallback(redisAsyncContext *ac, redisReply *reply,
                 c->flags &= ~REDIS_SUBSCRIBED;
 
                 /* Move ongoing regular command callbacks. */
-                redisCallback cb;
-                while (__redisShiftCallback(&ac->sub.replies,&cb) == REDIS_OK) {
-                    __redisPushCallback(&ac->replies,&cb);
+                siderCallback cb;
+                while (__siderShiftCallback(&ac->sub.replies,&cb) == REDIS_OK) {
+                    __siderPushCallback(&ac->replies,&cb);
                 }
             }
         }
         hi_sdsfree(sname);
     } else {
         /* Shift callback for pending command in subscribed context. */
-        __redisShiftCallback(&ac->sub.replies,dstcb);
+        __siderShiftCallback(&ac->sub.replies,dstcb);
     }
     return REDIS_OK;
 oom:
-    __redisSetError(&(ac->c), REDIS_ERR_OOM, "Out of memory");
-    __redisAsyncCopyError(ac);
+    __siderSetError(&(ac->c), REDIS_ERR_OOM, "Out of memory");
+    __siderAsyncCopyError(ac);
     return REDIS_ERR;
 }
 
-#define redisIsSpontaneousPushReply(r) \
-    (redisIsPushReply(r) && !redisIsSubscribeReply(r))
+#define siderIsSpontaneousPushReply(r) \
+    (siderIsPushReply(r) && !siderIsSubscribeReply(r))
 
-static int redisIsSubscribeReply(redisReply *reply) {
+static int siderIsSubscribeReply(siderReply *reply) {
     char *str;
     size_t len, off;
 
@@ -567,18 +567,18 @@ static int redisIsSubscribeReply(redisReply *reply) {
            !strncasecmp(str, "unsubscribe", len);
 }
 
-void redisProcessCallbacks(redisAsyncContext *ac) {
-    redisContext *c = &(ac->c);
+void siderProcessCallbacks(siderAsyncContext *ac) {
+    siderContext *c = &(ac->c);
     void *reply = NULL;
     int status;
 
-    while((status = redisGetReply(c,&reply)) == REDIS_OK) {
+    while((status = siderGetReply(c,&reply)) == REDIS_OK) {
         if (reply == NULL) {
             /* When the connection is being disconnected and there are
              * no more replies, this is the cue to really disconnect. */
             if (c->flags & REDIS_DISCONNECTING && hi_sdslen(c->obuf) == 0
                 && ac->replies.head == NULL) {
-                __redisAsyncDisconnect(ac);
+                __siderAsyncDisconnect(ac);
                 return;
             }
             /* When the connection is not being disconnected, simply stop
@@ -587,22 +587,22 @@ void redisProcessCallbacks(redisAsyncContext *ac) {
         }
 
         /* Keep track of push message support for subscribe handling */
-        if (redisIsPushReply(reply)) c->flags |= REDIS_SUPPORTS_PUSH;
+        if (siderIsPushReply(reply)) c->flags |= REDIS_SUPPORTS_PUSH;
 
         /* Send any non-subscribe related PUSH messages to our PUSH handler
          * while allowing subscribe related PUSH messages to pass through.
          * This allows existing code to be backward compatible and work in
          * either RESP2 or RESP3 mode. */
-        if (redisIsSpontaneousPushReply(reply)) {
-            __redisRunPushCallback(ac, reply);
+        if (siderIsSpontaneousPushReply(reply)) {
+            __siderRunPushCallback(ac, reply);
             c->reader->fn->freeObject(reply);
             continue;
         }
 
         /* Even if the context is subscribed, pending regular
          * callbacks will get a reply before pub/sub messages arrive. */
-        redisCallback cb = {NULL, NULL, 0, 0, NULL};
-        if (__redisShiftCallback(&ac->replies,&cb) != REDIS_OK) {
+        siderCallback cb = {NULL, NULL, 0, 0, NULL};
+        if (__siderShiftCallback(&ac->replies,&cb) != REDIS_OK) {
             /*
              * A spontaneous reply in a not-subscribed context can be the error
              * reply that is sent when a new connection exceeds the maximum
@@ -618,28 +618,28 @@ void redisProcessCallbacks(redisAsyncContext *ac) {
              * In this case we also want to close the connection, and have the
              * user wait until the server is ready to take our request.
              */
-            if (((redisReply*)reply)->type == REDIS_REPLY_ERROR) {
+            if (((siderReply*)reply)->type == REDIS_REPLY_ERROR) {
                 c->err = REDIS_ERR_OTHER;
-                snprintf(c->errstr,sizeof(c->errstr),"%s",((redisReply*)reply)->str);
+                snprintf(c->errstr,sizeof(c->errstr),"%s",((siderReply*)reply)->str);
                 c->reader->fn->freeObject(reply);
-                __redisAsyncDisconnect(ac);
+                __siderAsyncDisconnect(ac);
                 return;
             }
             /* No more regular callbacks and no errors, the context *must* be subscribed. */
             assert(c->flags & REDIS_SUBSCRIBED);
             if (c->flags & REDIS_SUBSCRIBED)
-                __redisGetSubscribeCallback(ac,reply,&cb);
+                __siderGetSubscribeCallback(ac,reply,&cb);
         }
 
         if (cb.fn != NULL) {
-            __redisRunCallback(ac,&cb,reply);
+            __siderRunCallback(ac,&cb,reply);
             if (!(c->flags & REDIS_NO_AUTO_FREE_REPLIES)){
                 c->reader->fn->freeObject(reply);
             }
 
-            /* Proceed with free'ing when redisAsyncFree() was called. */
+            /* Proceed with free'ing when siderAsyncFree() was called. */
             if (c->flags & REDIS_FREEING) {
-                __redisAsyncFree(ac);
+                __siderAsyncFree(ac);
                 return;
             }
         } else {
@@ -652,38 +652,38 @@ void redisProcessCallbacks(redisAsyncContext *ac) {
 
         /* If in monitor mode, repush the callback */
         if (c->flags & REDIS_MONITORING) {
-            __redisPushCallback(&ac->replies,&cb);
+            __siderPushCallback(&ac->replies,&cb);
         }
     }
 
     /* Disconnect when there was an error reading the reply */
     if (status != REDIS_OK)
-        __redisAsyncDisconnect(ac);
+        __siderAsyncDisconnect(ac);
 }
 
-static void __redisAsyncHandleConnectFailure(redisAsyncContext *ac) {
-    __redisRunConnectCallback(ac, REDIS_ERR);
-    __redisAsyncDisconnect(ac);
+static void __siderAsyncHandleConnectFailure(siderAsyncContext *ac) {
+    __siderRunConnectCallback(ac, REDIS_ERR);
+    __siderAsyncDisconnect(ac);
 }
 
 /* Internal helper function to detect socket status the first time a read or
  * write event fires. When connecting was not successful, the connect callback
  * is called with a REDIS_ERR status and the context is free'd. */
-static int __redisAsyncHandleConnect(redisAsyncContext *ac) {
+static int __siderAsyncHandleConnect(siderAsyncContext *ac) {
     int completed = 0;
-    redisContext *c = &(ac->c);
+    siderContext *c = &(ac->c);
 
-    if (redisCheckConnectDone(c, &completed) == REDIS_ERR) {
+    if (siderCheckConnectDone(c, &completed) == REDIS_ERR) {
         /* Error! */
-        if (redisCheckSocketError(c) == REDIS_ERR)
-            __redisAsyncCopyError(ac);
-        __redisAsyncHandleConnectFailure(ac);
+        if (siderCheckSocketError(c) == REDIS_ERR)
+            __siderAsyncCopyError(ac);
+        __siderAsyncHandleConnectFailure(ac);
         return REDIS_ERR;
     } else if (completed == 1) {
         /* connected! */
         if (c->connection_type == REDIS_CONN_TCP &&
-            redisSetTcpNoDelay(c) == REDIS_ERR) {
-            __redisAsyncHandleConnectFailure(ac);
+            siderSetTcpNoDelay(c) == REDIS_ERR) {
+            __siderAsyncHandleConnectFailure(ac);
             return REDIS_ERR;
         }
 
@@ -692,12 +692,12 @@ static int __redisAsyncHandleConnect(redisAsyncContext *ac) {
          * to delete the context here after callback return.
          */
         c->flags |= REDIS_CONNECTED;
-        __redisRunConnectCallback(ac, REDIS_OK);
+        __siderRunConnectCallback(ac, REDIS_OK);
         if ((ac->c.flags & REDIS_DISCONNECTING)) {
-            redisAsyncDisconnect(ac);
+            siderAsyncDisconnect(ac);
             return REDIS_ERR;
         } else if ((ac->c.flags & REDIS_FREEING)) {
-            redisAsyncFree(ac);
+            siderAsyncFree(ac);
             return REDIS_ERR;
         }
         return REDIS_OK;
@@ -706,29 +706,29 @@ static int __redisAsyncHandleConnect(redisAsyncContext *ac) {
     }
 }
 
-void redisAsyncRead(redisAsyncContext *ac) {
-    redisContext *c = &(ac->c);
+void siderAsyncRead(siderAsyncContext *ac) {
+    siderContext *c = &(ac->c);
 
-    if (redisBufferRead(c) == REDIS_ERR) {
-        __redisAsyncDisconnect(ac);
+    if (siderBufferRead(c) == REDIS_ERR) {
+        __siderAsyncDisconnect(ac);
     } else {
         /* Always re-schedule reads */
         _EL_ADD_READ(ac);
-        redisProcessCallbacks(ac);
+        siderProcessCallbacks(ac);
     }
 }
 
 /* This function should be called when the socket is readable.
  * It processes all replies that can be read and executes their callbacks.
  */
-void redisAsyncHandleRead(redisAsyncContext *ac) {
-    redisContext *c = &(ac->c);
+void siderAsyncHandleRead(siderAsyncContext *ac) {
+    siderContext *c = &(ac->c);
     /* must not be called from a callback */
     assert(!(c->flags & REDIS_IN_CALLBACK));
 
     if (!(c->flags & REDIS_CONNECTED)) {
         /* Abort connect was not successful. */
-        if (__redisAsyncHandleConnect(ac) != REDIS_OK)
+        if (__siderAsyncHandleConnect(ac) != REDIS_OK)
             return;
         /* Try again later when the context is still not connected. */
         if (!(c->flags & REDIS_CONNECTED))
@@ -738,12 +738,12 @@ void redisAsyncHandleRead(redisAsyncContext *ac) {
     c->funcs->async_read(ac);
 }
 
-void redisAsyncWrite(redisAsyncContext *ac) {
-    redisContext *c = &(ac->c);
+void siderAsyncWrite(siderAsyncContext *ac) {
+    siderContext *c = &(ac->c);
     int done = 0;
 
-    if (redisBufferWrite(c,&done) == REDIS_ERR) {
-        __redisAsyncDisconnect(ac);
+    if (siderBufferWrite(c,&done) == REDIS_ERR) {
+        __siderAsyncDisconnect(ac);
     } else {
         /* Continue writing when not done, stop writing otherwise */
         if (!done)
@@ -756,14 +756,14 @@ void redisAsyncWrite(redisAsyncContext *ac) {
     }
 }
 
-void redisAsyncHandleWrite(redisAsyncContext *ac) {
-    redisContext *c = &(ac->c);
+void siderAsyncHandleWrite(siderAsyncContext *ac) {
+    siderContext *c = &(ac->c);
     /* must not be called from a callback */
     assert(!(c->flags & REDIS_IN_CALLBACK));
 
     if (!(c->flags & REDIS_CONNECTED)) {
         /* Abort connect was not successful. */
-        if (__redisAsyncHandleConnect(ac) != REDIS_OK)
+        if (__siderAsyncHandleConnect(ac) != REDIS_OK)
             return;
         /* Try again later when the context is still not connected. */
         if (!(c->flags & REDIS_CONNECTED))
@@ -773,9 +773,9 @@ void redisAsyncHandleWrite(redisAsyncContext *ac) {
     c->funcs->async_write(ac);
 }
 
-void redisAsyncHandleTimeout(redisAsyncContext *ac) {
-    redisContext *c = &(ac->c);
-    redisCallback cb;
+void siderAsyncHandleTimeout(siderAsyncContext *ac) {
+    siderContext *c = &(ac->c);
+    siderCallback cb;
     /* must not be called from a callback */
     assert(!(c->flags & REDIS_IN_CALLBACK));
 
@@ -793,23 +793,23 @@ void redisAsyncHandleTimeout(redisAsyncContext *ac) {
     }
 
     if (!c->err) {
-        __redisSetError(c, REDIS_ERR_TIMEOUT, "Timeout");
-        __redisAsyncCopyError(ac);
+        __siderSetError(c, REDIS_ERR_TIMEOUT, "Timeout");
+        __siderAsyncCopyError(ac);
     }
 
     if (!(c->flags & REDIS_CONNECTED)) {
-        __redisRunConnectCallback(ac, REDIS_ERR);
+        __siderRunConnectCallback(ac, REDIS_ERR);
     }
 
-    while (__redisShiftCallback(&ac->replies, &cb) == REDIS_OK) {
-        __redisRunCallback(ac, &cb, NULL);
+    while (__siderShiftCallback(&ac->replies, &cb) == REDIS_OK) {
+        __siderRunCallback(ac, &cb, NULL);
     }
 
     /**
      * TODO: Don't automatically sever the connection,
      * rather, allow to ignore <x> responses before the queue is clear
      */
-    __redisAsyncDisconnect(ac);
+    __siderAsyncDisconnect(ac);
 }
 
 /* Sets a pointer to the first argument and its length starting at p. Returns
@@ -828,16 +828,16 @@ static const char *nextArgument(const char *start, const char **str, size_t *len
     return p+2+(*len)+2;
 }
 
-/* Helper function for the redisAsyncCommand* family of functions. Writes a
+/* Helper function for the siderAsyncCommand* family of functions. Writes a
  * formatted command to the output buffer and registers the provided callback
  * function with the context. */
-static int __redisAsyncCommand(redisAsyncContext *ac, redisCallbackFn *fn, void *privdata, const char *cmd, size_t len) {
-    redisContext *c = &(ac->c);
-    redisCallback cb;
+static int __siderAsyncCommand(siderAsyncContext *ac, siderCallbackFn *fn, void *privdata, const char *cmd, size_t len) {
+    siderContext *c = &(ac->c);
+    siderCallback cb;
     struct dict *cbdict;
     dictIterator it;
     dictEntry *de;
-    redisCallback *existcb;
+    siderCallback *existcb;
     int pvariant, hasnext;
     const char *cstr, *astr;
     size_t clen, alen;
@@ -943,83 +943,83 @@ static int __redisAsyncCommand(redisAsyncContext *ac, redisCallbackFn *fn, void 
     } else if (strncasecmp(cstr,"monitor\r\n",9) == 0) {
         /* Set monitor flag and push callback */
         c->flags |= REDIS_MONITORING;
-        if (__redisPushCallback(&ac->replies,&cb) != REDIS_OK)
+        if (__siderPushCallback(&ac->replies,&cb) != REDIS_OK)
             goto oom;
     } else {
         if (c->flags & REDIS_SUBSCRIBED) {
-            if (__redisPushCallback(&ac->sub.replies,&cb) != REDIS_OK)
+            if (__siderPushCallback(&ac->sub.replies,&cb) != REDIS_OK)
                 goto oom;
         } else {
-            if (__redisPushCallback(&ac->replies,&cb) != REDIS_OK)
+            if (__siderPushCallback(&ac->replies,&cb) != REDIS_OK)
                 goto oom;
         }
     }
 
-    __redisAppendCommand(c,cmd,len);
+    __siderAppendCommand(c,cmd,len);
 
     /* Always schedule a write when the write buffer is non-empty */
     _EL_ADD_WRITE(ac);
 
     return REDIS_OK;
 oom:
-    __redisSetError(&(ac->c), REDIS_ERR_OOM, "Out of memory");
-    __redisAsyncCopyError(ac);
+    __siderSetError(&(ac->c), REDIS_ERR_OOM, "Out of memory");
+    __siderAsyncCopyError(ac);
     return REDIS_ERR;
 }
 
-int redisvAsyncCommand(redisAsyncContext *ac, redisCallbackFn *fn, void *privdata, const char *format, va_list ap) {
+int sidervAsyncCommand(siderAsyncContext *ac, siderCallbackFn *fn, void *privdata, const char *format, va_list ap) {
     char *cmd;
     int len;
     int status;
-    len = redisvFormatCommand(&cmd,format,ap);
+    len = sidervFormatCommand(&cmd,format,ap);
 
     /* We don't want to pass -1 or -2 to future functions as a length. */
     if (len < 0)
         return REDIS_ERR;
 
-    status = __redisAsyncCommand(ac,fn,privdata,cmd,len);
+    status = __siderAsyncCommand(ac,fn,privdata,cmd,len);
     hi_free(cmd);
     return status;
 }
 
-int redisAsyncCommand(redisAsyncContext *ac, redisCallbackFn *fn, void *privdata, const char *format, ...) {
+int siderAsyncCommand(siderAsyncContext *ac, siderCallbackFn *fn, void *privdata, const char *format, ...) {
     va_list ap;
     int status;
     va_start(ap,format);
-    status = redisvAsyncCommand(ac,fn,privdata,format,ap);
+    status = sidervAsyncCommand(ac,fn,privdata,format,ap);
     va_end(ap);
     return status;
 }
 
-int redisAsyncCommandArgv(redisAsyncContext *ac, redisCallbackFn *fn, void *privdata, int argc, const char **argv, const size_t *argvlen) {
+int siderAsyncCommandArgv(siderAsyncContext *ac, siderCallbackFn *fn, void *privdata, int argc, const char **argv, const size_t *argvlen) {
     hisds cmd;
     long long len;
     int status;
-    len = redisFormatSdsCommandArgv(&cmd,argc,argv,argvlen);
+    len = siderFormatSdsCommandArgv(&cmd,argc,argv,argvlen);
     if (len < 0)
         return REDIS_ERR;
-    status = __redisAsyncCommand(ac,fn,privdata,cmd,len);
+    status = __siderAsyncCommand(ac,fn,privdata,cmd,len);
     hi_sdsfree(cmd);
     return status;
 }
 
-int redisAsyncFormattedCommand(redisAsyncContext *ac, redisCallbackFn *fn, void *privdata, const char *cmd, size_t len) {
-    int status = __redisAsyncCommand(ac,fn,privdata,cmd,len);
+int siderAsyncFormattedCommand(siderAsyncContext *ac, siderCallbackFn *fn, void *privdata, const char *cmd, size_t len) {
+    int status = __siderAsyncCommand(ac,fn,privdata,cmd,len);
     return status;
 }
 
-redisAsyncPushFn *redisAsyncSetPushCallback(redisAsyncContext *ac, redisAsyncPushFn *fn) {
-    redisAsyncPushFn *old = ac->push_cb;
+siderAsyncPushFn *siderAsyncSetPushCallback(siderAsyncContext *ac, siderAsyncPushFn *fn) {
+    siderAsyncPushFn *old = ac->push_cb;
     ac->push_cb = fn;
     return old;
 }
 
-int redisAsyncSetTimeout(redisAsyncContext *ac, struct timeval tv) {
+int siderAsyncSetTimeout(siderAsyncContext *ac, struct timeval tv) {
     if (!ac->c.command_timeout) {
         ac->c.command_timeout = hi_calloc(1, sizeof(tv));
         if (ac->c.command_timeout == NULL) {
-            __redisSetError(&ac->c, REDIS_ERR_OOM, "Out of memory");
-            __redisAsyncCopyError(ac);
+            __siderSetError(&ac->c, REDIS_ERR_OOM, "Out of memory");
+            __siderAsyncCopyError(ac);
             return REDIS_ERR;
         }
     }

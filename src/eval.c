@@ -2,15 +2,15 @@
  * Copyright (c) 2009-2012, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -72,7 +72,7 @@ dictType shaScriptObjectDictType = {
 /* Lua context */
 struct luaCtx {
     lua_State *lua; /* The Lua interpreter. We use just one for all clients */
-    client *lua_client;   /* The "fake client" to query Redis from Lua */
+    client *lua_client;   /* The "fake client" to query Sider from Lua */
     dict *lua_scripts;         /* A dictionary of SHA1 -> Lua scripts */
     unsigned long long lua_scripts_mem;  /* Cached scripts' memory + oh */
 } lctx;
@@ -85,12 +85,12 @@ struct ldbState {
     int active; /* Are we debugging EVAL right now? */
     int forked; /* Is this a fork()ed debugging session? */
     list *logs; /* List of messages to send to the client. */
-    list *traces; /* Messages about Redis commands executed since last stop.*/
+    list *traces; /* Messages about Sider commands executed since last stop.*/
     list *children; /* All forked debugging sessions pids. */
     int bp[LDB_BREAKPOINTS_MAX]; /* An array of breakpoints line numbers. */
     int bpcount; /* Number of valid entries inside bp. */
     int step;   /* Stop at next line regardless of breakpoints. */
-    int luabp;  /* Stop at next line because redis.breakpoint() was called. */
+    int luabp;  /* Stop at next line because sider.breakpoint() was called. */
     sds *src;   /* Lua script source code split by line. */
     int lines;  /* Number of lines in 'src'. */
     int currentline;    /* Current line number. */
@@ -105,7 +105,7 @@ struct ldbState {
 
 /* Perform the SHA1 of the input string. We use this both for hashing script
  * bodies in order to obtain the Lua function name, and in the implementation
- * of redis.sha1().
+ * of sider.sha1().
  *
  * 'digest' should point to a 41 bytes buffer: 40 for SHA1 converted into an
  * hexadecimal number, plus 1 byte for null term. */
@@ -126,12 +126,12 @@ void sha1hex(char *digest, char *script, size_t len) {
     digest[40] = '\0';
 }
 
-/* redis.breakpoint()
+/* sider.breakpoint()
  *
  * Allows to stop execution during a debugging session from within
  * the Lua code implementation, like if a breakpoint was set in the code
  * immediately after the function. */
-int luaRedisBreakpointCommand(lua_State *lua) {
+int luaSiderBreakpointCommand(lua_State *lua) {
     if (ldb.active) {
         ldb.luabp = 1;
         lua_pushboolean(lua,1);
@@ -141,12 +141,12 @@ int luaRedisBreakpointCommand(lua_State *lua) {
     return 1;
 }
 
-/* redis.debug()
+/* sider.debug()
  *
  * Log a string message into the output console.
  * Can take multiple arguments that will be separated by commas.
  * Nothing is returned to the caller. */
-int luaRedisDebugCommand(lua_State *lua) {
+int luaSiderDebugCommand(lua_State *lua) {
     if (!ldb.active) return 0;
     int argc = lua_gettop(lua);
     sds log = sdscatprintf(sdsempty(),"<debug> line %d: ", ldb.currentline);
@@ -158,14 +158,14 @@ int luaRedisDebugCommand(lua_State *lua) {
     return 0;
 }
 
-/* redis.replicate_commands()
+/* sider.replicate_commands()
  *
  * DEPRECATED: Now do nothing and always return true.
  * Turn on single commands replication if the script never called
  * a write command so far, and returns true. Otherwise if the script
  * already started to write, returns false and stick to whole scripts
  * replication, which is our default. */
-int luaRedisReplicateCommandsCommand(lua_State *lua) {
+int luaSiderReplicateCommandsCommand(lua_State *lua) {
     lua_pushboolean(lua,1);
     return 1;
 }
@@ -175,7 +175,7 @@ int luaRedisReplicateCommandsCommand(lua_State *lua) {
  * This function is called the first time at server startup with
  * the 'setup' argument set to 1.
  *
- * It can be called again multiple times during the lifetime of the Redis
+ * It can be called again multiple times during the lifetime of the Sider
  * process, with 'setup' set to 0, and following a scriptingRelease() call,
  * in order to reset the Lua scripting environment.
  *
@@ -195,27 +195,27 @@ void scriptingInit(int setup) {
     lctx.lua_scripts = dictCreate(&shaScriptObjectDictType);
     lctx.lua_scripts_mem = 0;
 
-    luaRegisterRedisAPI(lua);
+    luaRegisterSiderAPI(lua);
 
     /* register debug commands */
-    lua_getglobal(lua,"redis");
+    lua_getglobal(lua,"sider");
 
-    /* redis.breakpoint */
+    /* sider.breakpoint */
     lua_pushstring(lua,"breakpoint");
-    lua_pushcfunction(lua,luaRedisBreakpointCommand);
+    lua_pushcfunction(lua,luaSiderBreakpointCommand);
     lua_settable(lua,-3);
 
-    /* redis.debug */
+    /* sider.debug */
     lua_pushstring(lua,"debug");
-    lua_pushcfunction(lua,luaRedisDebugCommand);
+    lua_pushcfunction(lua,luaSiderDebugCommand);
     lua_settable(lua,-3);
 
-    /* redis.replicate_commands */
+    /* sider.replicate_commands */
     lua_pushstring(lua, "replicate_commands");
-    lua_pushcfunction(lua, luaRedisReplicateCommandsCommand);
+    lua_pushcfunction(lua, luaSiderReplicateCommandsCommand);
     lua_settable(lua, -3);
 
-    lua_setglobal(lua,"redis");
+    lua_setglobal(lua,"sider");
 
     /* Add a helper function we use for pcall error reporting.
      * Note that when the error is in the C function we want to report the
@@ -224,7 +224,7 @@ void scriptingInit(int setup) {
     {
         char *errh_func =       "local dbg = debug\n"
                                 "debug = nil\n"
-                                "function __redis__err__handler(err)\n"
+                                "function __sider__err__handler(err)\n"
                                 "  local i = dbg.getinfo(2,'nSl')\n"
                                 "  if i and i.what == 'C' then\n"
                                 "    i = dbg.getinfo(3,'nSl')\n"
@@ -242,7 +242,7 @@ void scriptingInit(int setup) {
         lua_pcall(lua,0,0,0);
     }
 
-    /* Create the (non connected) client that we use to execute Redis commands
+    /* Create the (non connected) client that we use to execute Sider commands
      * inside the Lua interpreter.
      * Note: there is no need to create it again when this function is called
      * by scriptingReset(). */
@@ -493,7 +493,7 @@ void evalGenericCommand(client *c, int evalsha) {
         evalCalcFunctionName(evalsha, c->argv[1]->ptr, funcname);
 
     /* Push the pcall error handler function on the stack. */
-    lua_getglobal(lua, "__redis__err__handler");
+    lua_getglobal(lua, "__sider__err__handler");
 
     /* Try to lookup the Lua function */
     lua_getfield(lua, LUA_REGISTRYINDEX, funcname);
@@ -665,7 +665,7 @@ unsigned long evalScriptsMemory(void) {
 }
 
 /* ---------------------------------------------------------------------------
- * LDB: Redis Lua debugging facilities
+ * LDB: Sider Lua debugging facilities
  * ------------------------------------------------------------------------- */
 
 /* Initialize Lua debugger data structures. */
@@ -762,7 +762,7 @@ void ldbSendLogs(void) {
 /* Start a debugging session before calling EVAL implementation.
  * The technique we use is to capture the client socket file descriptor,
  * in order to perform direct I/O with it from within Lua hooks. This
- * way we don't have to re-enter Redis in order to handle I/O.
+ * way we don't have to re-enter Sider in order to handle I/O.
  *
  * The function returns 1 if the caller should proceed to call EVAL,
  * and 0 if instead the caller should abort the operation (this happens
@@ -774,7 +774,7 @@ void ldbSendLogs(void) {
 int ldbStartSession(client *c) {
     ldb.forked = (c->flags & CLIENT_LUA_DEBUG_SYNC) == 0;
     if (ldb.forked) {
-        pid_t cp = redisFork(CHILD_TYPE_LDB);
+        pid_t cp = siderFork(CHILD_TYPE_LDB);
         if (cp == -1) {
             addReplyErrorFormat(c,"Fork() failed: can't run EVAL in debugging mode: %s", strerror(errno));
             return 0;
@@ -790,7 +790,7 @@ int ldbStartSession(client *c) {
             /* Log the creation of the child and close the listening
              * socket to make sure if the parent crashes a reset is sent
              * to the clients. */
-            serverLog(LL_NOTICE,"Redis forked for debugging eval");
+            serverLog(LL_NOTICE,"Sider forked for debugging eval");
         } else {
             /* Parent */
             listAddNodeTail(ldb.children,(void*)(unsigned long)cp);
@@ -799,7 +799,7 @@ int ldbStartSession(client *c) {
         }
     } else {
         serverLog(LL_NOTICE,
-            "Redis synchronous debugging eval session started");
+            "Sider synchronous debugging eval session started");
     }
 
     /* Setup our debugging session. */
@@ -836,7 +836,7 @@ void ldbEndSession(client *c) {
         exitFromChild(0);
     } else {
         serverLog(LL_NOTICE,
-            "Redis synchronous debugging eval session ended");
+            "Sider synchronous debugging eval session ended");
     }
 
     /* Otherwise let's restore client's state. */
@@ -955,7 +955,7 @@ sds *ldbReplParseCommand(int *argcp, char** err) {
     sds copy = sdsdup(ldb.cbuf);
     char *p = copy;
 
-    /* This Redis protocol parser is a joke... just the simplest thing that
+    /* This Sider protocol parser is a joke... just the simplest thing that
      * works in this context. It is also very forgiving regarding broken
      * protocol. */
 
@@ -1136,48 +1136,48 @@ void ldbLogStackValue(lua_State *lua, char *prefix) {
     ldbLogWithMaxLen(s);
 }
 
-char *ldbRedisProtocolToHuman_Int(sds *o, char *reply);
-char *ldbRedisProtocolToHuman_Bulk(sds *o, char *reply);
-char *ldbRedisProtocolToHuman_Status(sds *o, char *reply);
-char *ldbRedisProtocolToHuman_MultiBulk(sds *o, char *reply);
-char *ldbRedisProtocolToHuman_Set(sds *o, char *reply);
-char *ldbRedisProtocolToHuman_Map(sds *o, char *reply);
-char *ldbRedisProtocolToHuman_Null(sds *o, char *reply);
-char *ldbRedisProtocolToHuman_Bool(sds *o, char *reply);
-char *ldbRedisProtocolToHuman_Double(sds *o, char *reply);
+char *ldbSiderProtocolToHuman_Int(sds *o, char *reply);
+char *ldbSiderProtocolToHuman_Bulk(sds *o, char *reply);
+char *ldbSiderProtocolToHuman_Status(sds *o, char *reply);
+char *ldbSiderProtocolToHuman_MultiBulk(sds *o, char *reply);
+char *ldbSiderProtocolToHuman_Set(sds *o, char *reply);
+char *ldbSiderProtocolToHuman_Map(sds *o, char *reply);
+char *ldbSiderProtocolToHuman_Null(sds *o, char *reply);
+char *ldbSiderProtocolToHuman_Bool(sds *o, char *reply);
+char *ldbSiderProtocolToHuman_Double(sds *o, char *reply);
 
-/* Get Redis protocol from 'reply' and appends it in human readable form to
+/* Get Sider protocol from 'reply' and appends it in human readable form to
  * the passed SDS string 'o'.
  *
  * Note that the SDS string is passed by reference (pointer of pointer to
  * char*) so that we can return a modified pointer, as for SDS semantics. */
-char *ldbRedisProtocolToHuman(sds *o, char *reply) {
+char *ldbSiderProtocolToHuman(sds *o, char *reply) {
     char *p = reply;
     switch(*p) {
-    case ':': p = ldbRedisProtocolToHuman_Int(o,reply); break;
-    case '$': p = ldbRedisProtocolToHuman_Bulk(o,reply); break;
-    case '+': p = ldbRedisProtocolToHuman_Status(o,reply); break;
-    case '-': p = ldbRedisProtocolToHuman_Status(o,reply); break;
-    case '*': p = ldbRedisProtocolToHuman_MultiBulk(o,reply); break;
-    case '~': p = ldbRedisProtocolToHuman_Set(o,reply); break;
-    case '%': p = ldbRedisProtocolToHuman_Map(o,reply); break;
-    case '_': p = ldbRedisProtocolToHuman_Null(o,reply); break;
-    case '#': p = ldbRedisProtocolToHuman_Bool(o,reply); break;
-    case ',': p = ldbRedisProtocolToHuman_Double(o,reply); break;
+    case ':': p = ldbSiderProtocolToHuman_Int(o,reply); break;
+    case '$': p = ldbSiderProtocolToHuman_Bulk(o,reply); break;
+    case '+': p = ldbSiderProtocolToHuman_Status(o,reply); break;
+    case '-': p = ldbSiderProtocolToHuman_Status(o,reply); break;
+    case '*': p = ldbSiderProtocolToHuman_MultiBulk(o,reply); break;
+    case '~': p = ldbSiderProtocolToHuman_Set(o,reply); break;
+    case '%': p = ldbSiderProtocolToHuman_Map(o,reply); break;
+    case '_': p = ldbSiderProtocolToHuman_Null(o,reply); break;
+    case '#': p = ldbSiderProtocolToHuman_Bool(o,reply); break;
+    case ',': p = ldbSiderProtocolToHuman_Double(o,reply); break;
     }
     return p;
 }
 
-/* The following functions are helpers for ldbRedisProtocolToHuman(), each
- * take care of a given Redis return type. */
+/* The following functions are helpers for ldbSiderProtocolToHuman(), each
+ * take care of a given Sider return type. */
 
-char *ldbRedisProtocolToHuman_Int(sds *o, char *reply) {
+char *ldbSiderProtocolToHuman_Int(sds *o, char *reply) {
     char *p = strchr(reply+1,'\r');
     *o = sdscatlen(*o,reply+1,p-reply-1);
     return p+2;
 }
 
-char *ldbRedisProtocolToHuman_Bulk(sds *o, char *reply) {
+char *ldbSiderProtocolToHuman_Bulk(sds *o, char *reply) {
     char *p = strchr(reply+1,'\r');
     long long bulklen;
 
@@ -1191,14 +1191,14 @@ char *ldbRedisProtocolToHuman_Bulk(sds *o, char *reply) {
     }
 }
 
-char *ldbRedisProtocolToHuman_Status(sds *o, char *reply) {
+char *ldbSiderProtocolToHuman_Status(sds *o, char *reply) {
     char *p = strchr(reply+1,'\r');
 
     *o = sdscatrepr(*o,reply,p-reply);
     return p+2;
 }
 
-char *ldbRedisProtocolToHuman_MultiBulk(sds *o, char *reply) {
+char *ldbSiderProtocolToHuman_MultiBulk(sds *o, char *reply) {
     char *p = strchr(reply+1,'\r');
     long long mbulklen;
     int j = 0;
@@ -1211,14 +1211,14 @@ char *ldbRedisProtocolToHuman_MultiBulk(sds *o, char *reply) {
     }
     *o = sdscatlen(*o,"[",1);
     for (j = 0; j < mbulklen; j++) {
-        p = ldbRedisProtocolToHuman(o,p);
+        p = ldbSiderProtocolToHuman(o,p);
         if (j != mbulklen-1) *o = sdscatlen(*o,",",1);
     }
     *o = sdscatlen(*o,"]",1);
     return p;
 }
 
-char *ldbRedisProtocolToHuman_Set(sds *o, char *reply) {
+char *ldbSiderProtocolToHuman_Set(sds *o, char *reply) {
     char *p = strchr(reply+1,'\r');
     long long mbulklen;
     int j = 0;
@@ -1227,14 +1227,14 @@ char *ldbRedisProtocolToHuman_Set(sds *o, char *reply) {
     p += 2;
     *o = sdscatlen(*o,"~(",2);
     for (j = 0; j < mbulklen; j++) {
-        p = ldbRedisProtocolToHuman(o,p);
+        p = ldbSiderProtocolToHuman(o,p);
         if (j != mbulklen-1) *o = sdscatlen(*o,",",1);
     }
     *o = sdscatlen(*o,")",1);
     return p;
 }
 
-char *ldbRedisProtocolToHuman_Map(sds *o, char *reply) {
+char *ldbSiderProtocolToHuman_Map(sds *o, char *reply) {
     char *p = strchr(reply+1,'\r');
     long long mbulklen;
     int j = 0;
@@ -1243,22 +1243,22 @@ char *ldbRedisProtocolToHuman_Map(sds *o, char *reply) {
     p += 2;
     *o = sdscatlen(*o,"{",1);
     for (j = 0; j < mbulklen; j++) {
-        p = ldbRedisProtocolToHuman(o,p);
+        p = ldbSiderProtocolToHuman(o,p);
         *o = sdscatlen(*o," => ",4);
-        p = ldbRedisProtocolToHuman(o,p);
+        p = ldbSiderProtocolToHuman(o,p);
         if (j != mbulklen-1) *o = sdscatlen(*o,",",1);
     }
     *o = sdscatlen(*o,"}",1);
     return p;
 }
 
-char *ldbRedisProtocolToHuman_Null(sds *o, char *reply) {
+char *ldbSiderProtocolToHuman_Null(sds *o, char *reply) {
     char *p = strchr(reply+1,'\r');
     *o = sdscatlen(*o,"(null)",6);
     return p+2;
 }
 
-char *ldbRedisProtocolToHuman_Bool(sds *o, char *reply) {
+char *ldbSiderProtocolToHuman_Bool(sds *o, char *reply) {
     char *p = strchr(reply+1,'\r');
     if (reply[1] == 't')
         *o = sdscatlen(*o,"#true",5);
@@ -1267,19 +1267,19 @@ char *ldbRedisProtocolToHuman_Bool(sds *o, char *reply) {
     return p+2;
 }
 
-char *ldbRedisProtocolToHuman_Double(sds *o, char *reply) {
+char *ldbSiderProtocolToHuman_Double(sds *o, char *reply) {
     char *p = strchr(reply+1,'\r');
     *o = sdscatlen(*o,"(double) ",9);
     *o = sdscatlen(*o,reply+1,p-reply-1);
     return p+2;
 }
 
-/* Log a Redis reply as debugger output, in a human readable format.
+/* Log a Sider reply as debugger output, in a human readable format.
  * If the resulting string is longer than 'len' plus a few more chars
  * used as prefix, it gets truncated. */
-void ldbLogRedisReply(char *reply) {
+void ldbLogSiderReply(char *reply) {
     sds log = sdsnew("<reply> ");
-    ldbRedisProtocolToHuman(&log,reply);
+    ldbSiderProtocolToHuman(&log,reply);
     ldbLogWithMaxLen(log);
 }
 
@@ -1417,31 +1417,31 @@ void ldbEval(lua_State *lua, sds *argv, int argc) {
     lua_pop(lua,1);
 }
 
-/* Implement the debugger "redis" command. We use a trick in order to make
- * the implementation very simple: we just call the Lua redis.call() command
- * implementation, with ldb.step enabled, so as a side effect the Redis command
+/* Implement the debugger "sider" command. We use a trick in order to make
+ * the implementation very simple: we just call the Lua sider.call() command
+ * implementation, with ldb.step enabled, so as a side effect the Sider command
  * and its reply are logged. */
-void ldbRedis(lua_State *lua, sds *argv, int argc) {
+void ldbSider(lua_State *lua, sds *argv, int argc) {
     int j;
 
     if (!lua_checkstack(lua, argc + 1)) {
         /* Increase the Lua stack if needed to make sure there is enough room
          * to push 'argc + 1' elements to the stack. On failure, return error.
          * Notice that we need, in worst case, 'argc + 1' elements because we push all the arguments
-         * given by the user (without the first argument) and we also push the 'redis' global table and
-         * 'redis.call' function so:
-         * (1 (redis table)) + (1 (redis.call function)) + (argc - 1 (all arguments without the first)) = argc + 1*/
-        ldbLogRedisReply("max lua stack reached");
+         * given by the user (without the first argument) and we also push the 'sider' global table and
+         * 'sider.call' function so:
+         * (1 (sider table)) + (1 (sider.call function)) + (argc - 1 (all arguments without the first)) = argc + 1*/
+        ldbLogSiderReply("max lua stack reached");
         return;
     }
 
-    lua_getglobal(lua,"redis");
+    lua_getglobal(lua,"sider");
     lua_pushstring(lua,"call");
-    lua_gettable(lua,-2);       /* Stack: redis, redis.call */
+    lua_gettable(lua,-2);       /* Stack: sider, sider.call */
     for (j = 1; j < argc; j++)
         lua_pushlstring(lua,argv[j],sdslen(argv[j]));
-    ldb.step = 1;               /* Force redis.call() to log. */
-    lua_pcall(lua,argc-1,1,0);  /* Stack: redis, result */
+    ldb.step = 1;               /* Force sider.call() to log. */
+    lua_pcall(lua,argc-1,1,0);  /* Stack: sider, result */
     ldb.step = 0;               /* Disable logging. */
     lua_pop(lua,2);             /* Discard the result and clean the stack. */
 }
@@ -1526,7 +1526,7 @@ int ldbRepl(lua_State *lua) {
 
         /* Execute the command. */
         if (!strcasecmp(argv[0],"h") || !strcasecmp(argv[0],"help")) {
-ldbLog(sdsnew("Redis Lua debugger help:"));
+ldbLog(sdsnew("Sider Lua debugger help:"));
 ldbLog(sdsnew("[h]elp               Show this help."));
 ldbLog(sdsnew("[s]tep               Run current line and stop again."));
 ldbLog(sdsnew("[n]ext               Alias for step."));
@@ -1546,15 +1546,15 @@ ldbLog(sdsnew("[b]reak -<line>      Remove breakpoint from the specified line.")
 ldbLog(sdsnew("[b]reak 0            Remove all breakpoints."));
 ldbLog(sdsnew("[t]race              Show a backtrace."));
 ldbLog(sdsnew("[e]val <code>        Execute some Lua code (in a different callframe)."));
-ldbLog(sdsnew("[r]edis <cmd>        Execute a Redis command."));
-ldbLog(sdsnew("[m]axlen [len]       Trim logged Redis replies and Lua var dumps to len."));
+ldbLog(sdsnew("[r]edis <cmd>        Execute a Sider command."));
+ldbLog(sdsnew("[m]axlen [len]       Trim logged Sider replies and Lua var dumps to len."));
 ldbLog(sdsnew("                     Specifying zero as <len> means unlimited."));
 ldbLog(sdsnew("[a]bort              Stop the execution of the script. In sync"));
 ldbLog(sdsnew("                     mode dataset changes will be retained."));
 ldbLog(sdsnew(""));
 ldbLog(sdsnew("Debugger functions you can call from Lua scripts:"));
-ldbLog(sdsnew("redis.debug()        Produce logs in the debugger console."));
-ldbLog(sdsnew("redis.breakpoint()   Stop execution like if there was a breakpoint in the"));
+ldbLog(sdsnew("sider.debug()        Produce logs in the debugger console."));
+ldbLog(sdsnew("sider.breakpoint()   Stop execution like if there was a breakpoint in the"));
 ldbLog(sdsnew("                     next line of code."));
             ldbSendLogs();
         } else if (!strcasecmp(argv[0],"s") || !strcasecmp(argv[0],"step") ||
@@ -1579,8 +1579,8 @@ ldbLog(sdsnew("                     next line of code."));
             luaPushError(lua, "script aborted for user request");
             luaError(lua);
         } else if (argc > 1 &&
-                   (!strcasecmp(argv[0],"r") || !strcasecmp(argv[0],"redis"))) {
-            ldbRedis(lua,argv,argc);
+                   (!strcasecmp(argv[0],"r") || !strcasecmp(argv[0],"sider"))) {
+            ldbSider(lua,argv,argc);
             ldbSendLogs();
         } else if ((!strcasecmp(argv[0],"p") || !strcasecmp(argv[0],"print"))) {
             if (argc == 2)
@@ -1601,7 +1601,7 @@ ldbLog(sdsnew("                     next line of code."));
             ldbList(1,1000000);
             ldbSendLogs();
         } else {
-            ldbLog(sdsnew("<error> Unknown Redis Lua debugger command or "
+            ldbLog(sdsnew("<error> Unknown Sider Lua debugger command or "
                           "wrong number of arguments."));
             ldbSendLogs();
         }
@@ -1645,7 +1645,7 @@ void luaLdbLineHook(lua_State *lua, lua_Debug *ar) {
 
     if (ldb.step || bp) {
         char *reason = "step over";
-        if (bp) reason = ldb.luabp ? "redis.breakpoint() called" :
+        if (bp) reason = ldb.luabp ? "sider.breakpoint() called" :
                                      "break point";
         else if (timeout) reason = "timeout reached, infinite loop?";
         ldb.step = 0;

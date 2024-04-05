@@ -22,11 +22,11 @@ class ExampleQt : public QObject {
 
     private:
         const char * m_value;
-        redisAsyncContext * m_ctx;
-        RedisQtAdapter m_adapter;
+        siderAsyncContext * m_ctx;
+        SiderQtAdapter m_adapter;
 
     friend
-    void getCallback(redisAsyncContext *, void *, void *);
+    void getCallback(siderAsyncContext *, void *, void *);
 };
 
 #endif /* !__HIREDIS_EXAMPLE_QT_H */

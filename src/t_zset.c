@@ -3,15 +3,15 @@
  * Copyright (c) 2009-2012, Pieter Noordhuis <pcnoordhuis at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -36,9 +36,9 @@
  * in order to get O(log(N)) INSERT and REMOVE operations into a sorted
  * data structure.
  *
- * The elements are added to a hash table mapping Redis objects to scores.
+ * The elements are added to a hash table mapping Sider objects to scores.
  * At the same time the elements are added to a skip list mapping scores
- * to Redis objects (so objects are sorted by scores in this "view").
+ * to Sider objects (so objects are sorted by scores in this "view").
  *
  * Note that the SDS string representing the element is the same in both
  * the hash table and skiplist in order to save memory. What we do in order
@@ -563,7 +563,7 @@ static int zslParseRange(robj *min, robj *max, zrangespec *spec) {
   * - means the min string possible
   * + means the max string possible
   *
-  * If the string is valid the *dest pointer is set to the redis object
+  * If the string is valid the *dest pointer is set to the sider object
   * that will be used for the comparison, and ex will be set to 0 or 1
   * respectively if the item is exclusive or inclusive. C_OK will be
   * returned.

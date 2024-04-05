@@ -199,7 +199,7 @@
                     },
                     {
                         "token": "STOREDIST",
-                        "name": "storedistkey",
+                        "name": "stosidertkey",
                         "display": "key",
                         "type": "key",
                         "key_spec_index": 2

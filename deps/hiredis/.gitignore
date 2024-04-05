@@ -1,5 +1,5 @@
-/hiredis-test
-/examples/hiredis-example*
+/hisider-test
+/examples/hisider-example*
 /*.o
 /*.so
 /*.dylib

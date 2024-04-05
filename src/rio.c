@@ -19,15 +19,15 @@
  * Copyright (c) 2009-2012, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -149,7 +149,7 @@ static size_t rioFileWrite(rio *r, const void *buf, size_t len) {
                     return 0;
             }
 #else
-            if (redis_fsync(fileno(r->io.file.fp)) == -1) return 0;
+            if (sider_fsync(fileno(r->io.file.fp)) == -1) return 0;
 #endif
             if (r->io.file.reclaim_cache) {
                 /* In Linux sync_file_range just issue a writeback request to
@@ -476,7 +476,7 @@ uint8_t rioCheckType(rio *r) {
 /* --------------------------- Higher level interface --------------------------
  *
  * The following higher level functions use lower level rio.c functions to help
- * generating the Redis protocol for the Append Only File. */
+ * generating the Sider protocol for the Append Only File. */
 
 /* Write multi bulk count in the format: "*<count>\r\n". */
 size_t rioWriteBulkCount(rio *r, char prefix, long count) {

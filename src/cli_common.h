@@ -1,8 +1,8 @@
 #ifndef __CLICOMMON_H
 #define __CLICOMMON_H
 
-#include <hiredis.h>
-#include <sdscompat.h> /* Use hiredis' sds compat header that maps sds calls to their hi_ variants */
+#include <hisider.h>
+#include <sdscompat.h> /* Use hisider' sds compat header that maps sds calls to their hi_ variants */
 
 typedef struct cliSSLconfig {
     /* Requested SNI, or NULL */
@@ -33,9 +33,9 @@ typedef struct cliConnInfo {
     char *user;
 } cliConnInfo;
 
-int cliSecureConnection(redisContext *c, cliSSLconfig config, const char **err);
+int cliSecureConnection(siderContext *c, cliSSLconfig config, const char **err);
 
-ssize_t cliWriteConn(redisContext *c, const char *buf, size_t buf_len);
+ssize_t cliWriteConn(siderContext *c, const char *buf, size_t buf_len);
 
 int cliSecureInit(void);
 
@@ -45,7 +45,7 @@ sds *getSdsArrayFromArgv(int argc,char **argv, int quoted);
 
 sds unquoteCString(char *str);
 
-void parseRedisUri(const char *uri, const char* tool_name, cliConnInfo *connInfo, int *tls_flag);
+void parseSiderUri(const char *uri, const char* tool_name, cliConnInfo *connInfo, int *tls_flag);
 
 void freeCliConnInfo(cliConnInfo connInfo);
 

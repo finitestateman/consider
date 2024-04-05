@@ -5,20 +5,20 @@
 
 #include <stdio.h>
 
-#include <hiredis.h>
+#include <hisider.h>
 #include <async.h>
 #include <adapters/macosx.h>
 
-void getCallback(redisAsyncContext *c, void *r, void *privdata) {
-    redisReply *reply = r;
+void getCallback(siderAsyncContext *c, void *r, void *privdata) {
+    siderReply *reply = r;
     if (reply == NULL) return;
     printf("argv[%s]: %s\n", (char*)privdata, reply->str);
 
     /* Disconnect after receiving the reply to GET */
-    redisAsyncDisconnect(c);
+    siderAsyncDisconnect(c);
 }
 
-void connectCallback(const redisAsyncContext *c, int status) {
+void connectCallback(const siderAsyncContext *c, int status) {
     if (status != REDIS_OK) {
         printf("Error: %s\n", c->errstr);
         return;
@@ -26,7 +26,7 @@ void connectCallback(const redisAsyncContext *c, int status) {
     printf("Connected...\n");
 }
 
-void disconnectCallback(const redisAsyncContext *c, int status) {
+void disconnectCallback(const siderAsyncContext *c, int status) {
     if (status != REDIS_OK) {
         printf("Error: %s\n", c->errstr);
         return;
@@ -44,20 +44,20 @@ int main (int argc, char **argv) {
         return 1;
     }
 
-    redisAsyncContext *c = redisAsyncConnect("127.0.0.1", 6379);
+    siderAsyncContext *c = siderAsyncConnect("127.0.0.1", 6379);
     if (c->err) {
         /* Let *c leak for now... */
         printf("Error: %s\n", c->errstr);
         return 1;
     }
 
-    redisMacOSAttach(c, loop);
+    siderMacOSAttach(c, loop);
 
-    redisAsyncSetConnectCallback(c,connectCallback);
-    redisAsyncSetDisconnectCallback(c,disconnectCallback);
+    siderAsyncSetConnectCallback(c,connectCallback);
+    siderAsyncSetDisconnectCallback(c,disconnectCallback);
 
-    redisAsyncCommand(c, NULL, NULL, "SET key %b", argv[argc-1], strlen(argv[argc-1]));
-    redisAsyncCommand(c, getCallback, (char*)"end-1", "GET key");
+    siderAsyncCommand(c, NULL, NULL, "SET key %b", argv[argc-1], strlen(argv[argc-1]));
+    siderAsyncCommand(c, getCallback, (char*)"end-1", "GET key");
 
     CFRunLoopRun();
 

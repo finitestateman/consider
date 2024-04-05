@@ -5,9 +5,9 @@ then
     exit 1
 fi
 
-SHA=$(curl -s http://download.redis.io/releases/redis-${1}.tar.gz | shasum -a 256 | cut -f 1 -d' ')
-ENTRY="hash redis-${1}.tar.gz sha256 $SHA http://download.redis.io/releases/redis-${1}.tar.gz"
-echo $ENTRY >> ../redis-hashes/README
+SHA=$(curl -s http://download.sider.io/releases/sider-${1}.tar.gz | shasum -a 256 | cut -f 1 -d' ')
+ENTRY="hash sider-${1}.tar.gz sha256 $SHA http://download.sider.io/releases/sider-${1}.tar.gz"
+echo $ENTRY >> ../sider-hashes/README
 echo "Press any key to commit, Ctrl-C to abort)."
 read yes
-(cd ../redis-hashes; git commit -a -m "${1} hash."; git push)
+(cd ../sider-hashes; git commit -a -m "${1} hash."; git push)

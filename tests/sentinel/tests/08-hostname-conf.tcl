@@ -1,7 +1,7 @@
 source "../tests/includes/utils.tcl"
 
-proc set_redis_announce_ip {addr} {
-    foreach_redis_id id {
+proc set_sider_announce_ip {addr} {
+    foreach_sider_id id {
         R $id config set replica-announce-ip $addr
     }
 }
@@ -16,8 +16,8 @@ proc set_all_instances_hostname {hostname} {
     foreach_sentinel_id id {
         set_instance_attrib sentinel $id host $hostname
     }
-    foreach_redis_id id {
-        set_instance_attrib redis $id host $hostname
+    foreach_sider_id id {
+        set_instance_attrib sider $id host $hostname
     }
 }
 
@@ -25,7 +25,7 @@ test "(pre-init) Configure instances and sentinel for hostname use" {
     set ::host "localhost"
     restart_killed_instances
     set_all_instances_hostname $::host
-    set_redis_announce_ip $::host
+    set_sider_announce_ip $::host
     set_sentinel_config resolve-hostnames yes
     set_sentinel_config announce-hostnames yes
 }
@@ -63,7 +63,7 @@ test "Sentinel announces hostnames" {
 test "(post-cleanup) Configure instances and sentinel for IPs" {
     set ::host "127.0.0.1"
     set_all_instances_hostname $::host
-    set_redis_announce_ip $::host
+    set_sider_announce_ip $::host
     set_sentinel_config resolve-hostnames no
     set_sentinel_config announce-hostnames no
 }

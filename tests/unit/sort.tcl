@@ -12,7 +12,7 @@ start_server {
         r del tosort
         for {set i 0} {$i < $num} {incr i} {
             # Make sure all the weights are different because
-            # Redis does not use a stable sort but Tcl does.
+            # Sider does not use a stable sort but Tcl does.
             while 1 {
                 randpath {
                     set rint [expr int(rand()*1000000)]
@@ -179,8 +179,8 @@ foreach command {SORT SORT_RO} {
         r zadd zset 10 d
         r zadd zset 3 e
         r eval {
-            return {redis.call('sort',KEYS[1],'by','nosort','asc'),
-                    redis.call('sort',KEYS[1],'by','nosort','desc')}
+            return {sider.call('sort',KEYS[1],'by','nosort','asc'),
+                    sider.call('sort',KEYS[1],'by','nosort','desc')}
         } 1 zset
     } {{a c e b d} {d b e c a}}
 

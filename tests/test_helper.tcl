@@ -1,11 +1,11 @@
-# Redis test suite. Copyright (C) 2009 Salvatore Sanfilippo antirez@gmail.com
+# Sider test suite. Copyright (C) 2009 Salvatore Sanfilippo antirez@gmail.com
 # This software is released under the BSD License. See the COPYING file for
 # more information.
 
 package require Tcl 8.5
 
 set tcl_precision 17
-source tests/support/redis.tcl
+source tests/support/sider.tcl
 source tests/support/aofmanifest.tcl
 source tests/support/server.tcl
 source tests/support/cluster_util.tcl
@@ -64,8 +64,8 @@ set ::all_tests {
     integration/psync2-pingoff
     integration/psync2-master-restart
     integration/failover
-    integration/redis-cli
-    integration/redis-benchmark
+    integration/sider-cli
+    integration/sider-benchmark
     integration/dismiss-mem
     unit/pubsub
     unit/pubsubshard
@@ -109,7 +109,7 @@ set ::next_test 0
 
 set ::host 127.0.0.1
 set ::port 6379; # port for external server
-set ::baseport 21111; # initial port for spawned redis servers
+set ::baseport 21111; # initial port for spawned sider servers
 set ::portcount 8000; # we don't wanna use more than 10000 to avoid collision with cluster bus ports
 set ::traceleaks 0
 set ::valgrind 0
@@ -135,7 +135,7 @@ set ::accurate 0; # If true runs fuzz tests with more iterations
 set ::force_failure 0
 set ::timeout 1200; # 20 minutes without progresses will quit the test.
 set ::last_progress [clock seconds]
-set ::active_servers {} ; # Pids of active Redis instances.
+set ::active_servers {} ; # Pids of active Sider instances.
 set ::dont_clean 0
 set ::dont_pre_clean 0
 set ::wait_server 0
@@ -151,7 +151,7 @@ set ::large_memory 0
 set ::log_req_res 0
 set ::force_resp3 0
 
-# Set to 1 when we are running in client mode. The Redis test uses a
+# Set to 1 when we are running in client mode. The Sider test uses a
 # server-client model to run tests simultaneously. The server instance
 # runs the specified number of client instances that will actually run tests.
 # The server is responsible of showing the result to the user, and exit with
@@ -209,7 +209,7 @@ proc r {args} {
     [srv $level "client"] {*}$args
 }
 
-# Returns a Redis instance by index.
+# Returns a Sider instance by index.
 proc Rn {n} {
     set level [expr -1*$n]
     return [srv $level "client"]
@@ -231,7 +231,7 @@ proc reconnect {args} {
     set host [dict get $srv "host"]
     set port [dict get $srv "port"]
     set config [dict get $srv "config"]
-    set client [redis $host $port 0 $::tls]
+    set client [sider $host $port 0 $::tls]
     if {[dict exists $srv "client"]} {
         set old [dict get $srv "client"]
         $old close
@@ -247,7 +247,7 @@ proc reconnect {args} {
     lset ::servers end+$level $srv
 }
 
-proc redis_deferring_client {args} {
+proc sider_deferring_client {args} {
     set level 0
     if {[llength $args] > 0 && [string is integer [lindex $args 0]]} {
         set level [lindex $args 0]
@@ -255,7 +255,7 @@ proc redis_deferring_client {args} {
     }
 
     # create client that defers reading reply
-    set client [redis [srv $level "host"] [srv $level "port"] 1 $::tls]
+    set client [sider [srv $level "host"] [srv $level "port"] 1 $::tls]
 
     # select the right db and read the response (OK)
     if {!$::singledb} {
@@ -269,7 +269,7 @@ proc redis_deferring_client {args} {
     return $client
 }
 
-proc redis_client {args} {
+proc sider_client {args} {
     set level 0
     if {[llength $args] > 0 && [string is integer [lindex $args 0]]} {
         set level [lindex $args 0]
@@ -277,7 +277,7 @@ proc redis_client {args} {
     }
 
     # create client that defers reading reply
-    set client [redis [srv $level "host"] [srv $level "port"] 0 $::tls]
+    set client [sider [srv $level "host"] [srv $level "port"] 0 $::tls]
 
     # select the right db and read the response (OK), or at least ping
     # the server if we're in a singledb mode.
@@ -319,7 +319,7 @@ proc run_solo {name code} {
 proc cleanup {} {
     if {!$::quiet} {puts -nonewline "Cleanup: may take some time... "}
     flush stdout
-    catch {exec rm -rf {*}[glob tests/tmp/redis.conf.*]}
+    catch {exec rm -rf {*}[glob tests/tmp/sider.conf.*]}
     catch {exec rm -rf {*}[glob tests/tmp/server.*]}
     if {!$::quiet} {puts "OK"}
 }
@@ -491,7 +491,7 @@ proc kill_clients {} {
 
 proc force_kill_all_servers {} {
     foreach p $::active_servers {
-        puts "Killing still running Redis server $p"
+        puts "Killing still running Sider server $p"
         catch {exec kill -9 $p}
     }
 }
@@ -618,8 +618,8 @@ proc print_help_screen {} {
         "--skipfile <file>  Name of a file containing test names or regexp patterns (if <test> starts with '/') that should be skipped (one per line). This option can be repeated."
         "--skiptest <test>  Test name or regexp pattern (if <test> starts with '/') to skip. This option can be repeated."
         "--tags <tags>      Run only tests having specified tags or not having '-' prefixed tags."
-        "--dont-clean       Don't delete redis log files after the run."
-        "--dont-pre-clean   Don't delete existing redis log files before the run."
+        "--dont-clean       Don't delete sider log files after the run."
+        "--dont-pre-clean   Don't delete existing sider log files before the run."
         "--no-latency       Skip latency measurements and validation by some tests."
         "--stop             Blocks once the first test fails."
         "--loop             Execute the specified set of tests forever."
@@ -627,11 +627,11 @@ proc print_help_screen {} {
         "--wait-server      Wait after server is started (so that you can attach a debugger)."
         "--dump-logs        Dump server log on test failure."
         "--tls              Run tests in TLS mode."
-        "--tls-module       Run tests in TLS mode with Redis module."
+        "--tls-module       Run tests in TLS mode with Sider module."
         "--host <addr>      Run tests against an external host."
         "--port <port>      TCP port to use against external host."
-        "--baseport <port>  Initial port number for spawned redis servers."
-        "--portcount <num>  Port range for spawned redis servers."
+        "--baseport <port>  Initial port number for spawned sider servers."
+        "--portcount <num>  Port range for spawned sider servers."
         "--singledb         Use a single database, avoid SELECT."
         "--cluster-mode     Run tests in cluster protocol compatible mode."
         "--ignore-encoding  Don't validate object encoding."
@@ -867,7 +867,7 @@ proc read_from_replication_stream {s} {
     set res {}
     for {set j 0} {$j < $count} {incr j} {
         read $s 1
-        set arg [::redis::redis_bulk_read $s]
+        set arg [::sider::sider_bulk_read $s]
         if {$j == 0} {set arg [string tolower $arg]}
         lappend res $arg
     }
@@ -899,7 +899,7 @@ proc close_replication_stream {s} {
     return
 }
 
-# With the parallel test running multiple Redis instances at the same time
+# With the parallel test running multiple Sider instances at the same time
 # we need a fast enough computer, otherwise a lot of tests may generate
 # false positives.
 # If the computer is too slow we revert the sequential test without any

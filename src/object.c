@@ -1,17 +1,17 @@
-/* Redis Object implementation.
+/* Sider Object implementation.
  *
  * Copyright (c) 2009-2012, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -173,7 +173,7 @@ robj *createStringObjectFromLongLong(long long value) {
 
 /* The function avoids returning a shared integer when LFU/LRU info
  * are needed, that is, when the object is used as a value in the key
- * space(for instance when the INCR command is used), and Redis is
+ * space(for instance when the INCR command is used), and Sider is
  * configured to evict based on LFU/LRU, so we want LFU/LRU values
  * specific for each key. */
 robj *createStringObjectFromLongLongForValue(long long value) {
@@ -649,7 +649,7 @@ robj *tryObjectEncodingEx(robj *o, int try_trim) {
     if (!sdsEncodedObject(o)) return o;
 
     /* It's not safe to encode shared objects: shared objects can be shared
-     * everywhere in the "object space" of Redis and may end in places where
+     * everywhere in the "object space" of Sider and may end in places where
      * they are not handled. We handle them only as values in the keyspace. */
      if (o->refcount > 1) return o;
 
@@ -1161,20 +1161,20 @@ size_t objectComputeSize(robj *key, robj *o, size_t sample_size, int dbid) {
 }
 
 /* Release data obtained with getMemoryOverheadData(). */
-void freeMemoryOverheadData(struct redisMemOverhead *mh) {
+void freeMemoryOverheadData(struct siderMemOverhead *mh) {
     zfree(mh->db);
     zfree(mh);
 }
 
-/* Return a struct redisMemOverhead filled with memory overhead
+/* Return a struct siderMemOverhead filled with memory overhead
  * information used for the MEMORY OVERHEAD and INFO command. The returned
  * structure pointer should be freed calling freeMemoryOverheadData(). */
-struct redisMemOverhead *getMemoryOverheadData(void) {
+struct siderMemOverhead *getMemoryOverheadData(void) {
     int j;
     size_t mem_total = 0;
     size_t mem = 0;
     size_t zmalloc_used = zmalloc_used_memory();
-    struct redisMemOverhead *mh = zcalloc(sizeof(*mh));
+    struct siderMemOverhead *mh = zcalloc(sizeof(*mh));
 
     mh->total_allocated = zmalloc_used;
     mh->startup_allocated = server.initial_memory_usage;
@@ -1245,7 +1245,7 @@ struct redisMemOverhead *getMemoryOverheadData(void) {
     mem_total+=mh->functions_caches;
 
     for (j = 0; j < server.dbnum; j++) {
-        redisDb *db = server.db+j;
+        siderDb *db = server.db+j;
         long long keyscount = dictSize(db->dict);
         if (keyscount==0) continue;
 
@@ -1294,7 +1294,7 @@ void inputCatSds(void *result, const char *str) {
     *info = sdscat(*info, str);
 }
 
-/* This implements MEMORY DOCTOR. An human readable analysis of the Redis
+/* This implements MEMORY DOCTOR. An human readable analysis of the Sider
  * memory condition. */
 sds getMemoryDoctorReport(void) {
     int empty = 0;          /* Instance is empty or almost empty. */
@@ -1307,7 +1307,7 @@ sds getMemoryDoctorReport(void) {
     int big_client_buf = 0; /* Client buffers are too big. */
     int many_scripts = 0;   /* Script cache has too many scripts. */
     int num_reports = 0;
-    struct redisMemOverhead *mh = getMemoryOverheadData();
+    struct siderMemOverhead *mh = getMemoryOverheadData();
 
     if (mh->total_allocated < (1024*1024*5)) {
         empty = 1;
@@ -1377,12 +1377,12 @@ sds getMemoryDoctorReport(void) {
         "The new Sam and I will be back to our programming as soon as I "
         "finished rebooting.\n");
     } else {
-        s = sdsnew("Sam, I detected a few issues in this Redis instance memory implants:\n\n");
+        s = sdsnew("Sam, I detected a few issues in this Sider instance memory implants:\n\n");
         if (big_peak) {
-            s = sdscat(s," * Peak memory: In the past this instance used more than 150% the memory that is currently using. The allocator is normally not able to release memory after a peak, so you can expect to see a big fragmentation ratio, however this is actually harmless and is only due to the memory peak, and if the Redis instance Resident Set Size (RSS) is currently bigger than expected, the memory will be used as soon as you fill the Redis instance with more data. If the memory peak was only occasional and you want to try to reclaim memory, please try the MEMORY PURGE command, otherwise the only other option is to shutdown and restart the instance.\n\n");
+            s = sdscat(s," * Peak memory: In the past this instance used more than 150% the memory that is currently using. The allocator is normally not able to release memory after a peak, so you can expect to see a big fragmentation ratio, however this is actually harmless and is only due to the memory peak, and if the Sider instance Resident Set Size (RSS) is currently bigger than expected, the memory will be used as soon as you fill the Sider instance with more data. If the memory peak was only occasional and you want to try to reclaim memory, please try the MEMORY PURGE command, otherwise the only other option is to shutdown and restart the instance.\n\n");
         }
         if (high_frag) {
-            s = sdscatprintf(s," * High total RSS: This instance has a memory fragmentation and RSS overhead greater than 1.4 (this means that the Resident Set Size of the Redis process is much larger than the sum of the logical allocations Redis performed). This problem is usually due either to a large peak memory (check if there is a peak memory entry above in the report) or may result from a workload that causes the allocator to fragment memory a lot. If the problem is a large peak memory, then there is no issue. Otherwise, make sure you are using the Jemalloc allocator and not the default libc malloc. Note: The currently used allocator is \"%s\".\n\n", ZMALLOC_LIB);
+            s = sdscatprintf(s," * High total RSS: This instance has a memory fragmentation and RSS overhead greater than 1.4 (this means that the Resident Set Size of the Sider process is much larger than the sum of the logical allocations Sider performed). This problem is usually due either to a large peak memory (check if there is a peak memory entry above in the report) or may result from a workload that causes the allocator to fragment memory a lot. If the problem is a large peak memory, then there is no issue. Otherwise, make sure you are using the Jemalloc allocator and not the default libc malloc. Note: The currently used allocator is \"%s\".\n\n", ZMALLOC_LIB);
         }
         if (high_alloc_frag) {
             s = sdscatprintf(s," * High allocator fragmentation: This instance has an allocator external fragmentation greater than 1.1. This problem is usually due either to a large peak memory (check if there is a peak memory entry above in the report) or may result from a workload that causes the allocator to fragment memory a lot. You can try enabling 'activedefrag' config option.\n\n");
@@ -1391,13 +1391,13 @@ sds getMemoryDoctorReport(void) {
             s = sdscatprintf(s," * High allocator RSS overhead: This instance has an RSS memory overhead is greater than 1.1 (this means that the Resident Set Size of the allocator is much larger than the sum what the allocator actually holds). This problem is usually due to a large peak memory (check if there is a peak memory entry above in the report), you can try the MEMORY PURGE command to reclaim it.\n\n");
         }
         if (high_proc_rss) {
-            s = sdscatprintf(s," * High process RSS overhead: This instance has non-allocator RSS memory overhead is greater than 1.1 (this means that the Resident Set Size of the Redis process is much larger than the RSS the allocator holds). This problem may be due to Lua scripts or Modules.\n\n");
+            s = sdscatprintf(s," * High process RSS overhead: This instance has non-allocator RSS memory overhead is greater than 1.1 (this means that the Resident Set Size of the Sider process is much larger than the RSS the allocator holds). This problem may be due to Lua scripts or Modules.\n\n");
         }
         if (big_slave_buf) {
             s = sdscat(s," * Big replica buffers: The replica output buffers in this instance are greater than 10MB for each replica (on average). This likely means that there is some replica instance that is struggling receiving data, either because it is too slow or because of networking issues. As a result, data piles on the master output buffers. Please try to identify what replica is not receiving data correctly and why. You can use the INFO output in order to check the replicas delays and the CLIENT LIST command to check the output buffers of each replica.\n\n");
         }
         if (big_client_buf) {
-            s = sdscat(s," * Big client buffers: The clients output buffers in this instance are greater than 200K per client (on average). This may result from different causes, like Pub/Sub clients subscribed to channels bot not receiving data fast enough, so that data piles on the Redis instance output buffer, or clients sending commands with large replies or very large sequences of commands in the same pipeline. Please use the CLIENT LIST command in order to investigate the issue if it causes problems in your instance, or to understand better why certain clients are using a big amount of memory.\n\n");
+            s = sdscat(s," * Big client buffers: The clients output buffers in this instance are greater than 200K per client (on average). This may result from different causes, like Pub/Sub clients subscribed to channels bot not receiving data fast enough, so that data piles on the Sider instance output buffer, or clients sending commands with large replies or very large sequences of commands in the same pipeline. Please use the CLIENT LIST command in order to investigate the issue if it causes problems in your instance, or to understand better why certain clients are using a big amount of memory.\n\n");
         }
         if (many_scripts) {
             s = sdscat(s," * Many scripts: There seem to be many cached scripts in this instance (more than 1000). This may be because scripts are generated and `EVAL`ed, instead of being parameterized (with KEYS and ARGV), `SCRIPT LOAD`ed and `EVALSHA`ed. Unless `SCRIPT FLUSH` is called periodically, the scripts' caches may end up consuming most of your memory.\n\n");
@@ -1423,7 +1423,7 @@ int objectSetLRUOrLFU(robj *val, long long lfu_freq, long long lru_idle,
         }
     } else if (lru_idle >= 0) {
         /* Provided LRU idle time is in seconds. Scale
-         * according to the LRU clock resolution this Redis
+         * according to the LRU clock resolution this Sider
          * instance was compiled with (normally 1000 ms, so the
          * below statement will expand to lru_idle*1000/1000. */
         lru_idle = lru_idle*lru_multiplier/LRU_CLOCK_RESOLUTION;
@@ -1455,7 +1455,7 @@ robj *objectCommandLookupOrReply(client *c, robj *key, robj *reply) {
     return o;
 }
 
-/* Object command allows to inspect the internals of a Redis Object.
+/* Object command allows to inspect the internals of a Sider Object.
  * Usage: OBJECT <refcount|encoding|idletime|freq> <key> */
 void objectCommand(client *c) {
     robj *o;
@@ -1511,7 +1511,7 @@ NULL
 }
 
 /* The memory command will eventually be a complete interface for the
- * memory introspection capabilities of Redis.
+ * memory introspection capabilities of Sider.
  *
  * Usage: MEMORY usage <key> */
 void memoryCommand(client *c) {
@@ -1561,7 +1561,7 @@ NULL
         usage += dictMetadataSize(c->db->dict);
         addReplyLongLong(c,usage);
     } else if (!strcasecmp(c->argv[1]->ptr,"stats") && c->argc == 2) {
-        struct redisMemOverhead *mh = getMemoryOverheadData();
+        struct siderMemOverhead *mh = getMemoryOverheadData();
 
         addReplyMapLen(c,27+mh->num_dbs);
 

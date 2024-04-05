@@ -60,7 +60,7 @@ start_server {tags {"info" "external:skip"}} {
             r config resetstat
             r CONFIG SET latency-tracking yes
             r CONFIG SET latency-tracking-info-percentiles "50.0 99.0 99.9"
-            set rd [redis_deferring_client]
+            set rd [sider_deferring_client]
             r del list1{t}
 
             $rd blpop list1{t} 0
@@ -140,7 +140,7 @@ start_server {tags {"info" "external:skip"}} {
             r config resetstat
             assert_match {} [errorstat ERR]
             assert_equal [s total_error_replies] 0
-            catch {r eval {redis.pcall('XGROUP', 'CREATECONSUMER', 's1', 'mygroup', 'consumer') return } 0} e
+            catch {r eval {sider.pcall('XGROUP', 'CREATECONSUMER', 's1', 'mygroup', 'consumer') return } 0} e
             assert_match {*count=1*} [errorstat ERR]
             assert_match {*calls=1,*,rejected_calls=0,failed_calls=1} [cmdstat xgroup\\|createconsumer]
             assert_match {*calls=1,*,rejected_calls=0,failed_calls=0} [cmdstat eval]
@@ -259,7 +259,7 @@ start_server {tags {"info" "external:skip"}} {
 
         test {errorstats: blocking commands} {
             r config resetstat
-            set rd [redis_deferring_client]
+            set rd [sider_deferring_client]
             $rd client id
             set rd_id [$rd read]
             r del list1{t}

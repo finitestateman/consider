@@ -2,19 +2,19 @@
 start_server {tags {"tracking network logreqres:skip"}} {
     # Create a deferred client we'll use to redirect invalidation
     # messages to.
-    set rd_redirection [redis_deferring_client]
+    set rd_redirection [sider_deferring_client]
     $rd_redirection client id
     set redir_id [$rd_redirection read]
-    $rd_redirection subscribe __redis__:invalidate
+    $rd_redirection subscribe __sider__:invalidate
     $rd_redirection read ; # Consume the SUBSCRIBE reply.
 
     # Create another client that's not used as a redirection client
     # We should always keep this client's buffer clean
-    set rd [redis_deferring_client]
+    set rd [sider_deferring_client]
 
     # Client to be used for SET and GET commands
     # We don't read this client's buffer
-    set rd_sg [redis_client] 
+    set rd_sg [sider_client] 
 
     proc clean_all {} {
         uplevel {
@@ -24,11 +24,11 @@ start_server {tags {"tracking network logreqres:skip"}} {
             r CLIENT TRACKING off
             $rd QUIT
             $rd_redirection QUIT
-            set rd [redis_deferring_client]
-            set rd_redirection [redis_deferring_client]
+            set rd [sider_deferring_client]
+            set rd_redirection [sider_deferring_client]
             $rd_redirection client id
             set redir_id [$rd_redirection read]
-            $rd_redirection subscribe __redis__:invalidate
+            $rd_redirection subscribe __sider__:invalidate
             $rd_redirection read ; # Consume the SUBSCRIBE reply.
             r FLUSHALL
             r HELLO 2
@@ -217,7 +217,7 @@ start_server {tags {"tracking network logreqres:skip"}} {
         assert_equal "1" [$rd_sg GET key1]
 
         # For write command in script, invalid key should not be tracked with NOLOOP flag
-        $rd_sg eval "return redis.call('set', 'key1', '2')" 1 key1
+        $rd_sg eval "return sider.call('set', 'key1', '2')" 1 key1
         assert_equal "2" [$rd_sg GET key1]
         $rd_sg CLIENT TRACKING off
     }
@@ -228,12 +228,12 @@ start_server {tags {"tracking network logreqres:skip"}} {
         $rd_sg MSET key2{t} 1 key2{t} 1
 
         # If a script doesn't call any read command, don't track any keys
-        r EVAL "redis.call('set', 'key3{t}', 'bar')" 2 key1{t} key2{t} 
+        r EVAL "sider.call('set', 'key3{t}', 'bar')" 2 key1{t} key2{t} 
         $rd_sg MSET key2{t} 2 key1{t} 2
         assert_equal "PONG" [r ping]
 
         # If a script calls a read command, just the read keys
-        r EVAL "redis.call('get', 'key2{t}')" 2 key1{t} key2{t}
+        r EVAL "sider.call('get', 'key2{t}')" 2 key1{t} key2{t}
         $rd_sg MSET key2{t} 2 key3{t} 2
         assert_equal {invalidate key2{t}} [r read]
         assert_equal "PONG" [r ping]
@@ -241,12 +241,12 @@ start_server {tags {"tracking network logreqres:skip"}} {
         # RO variants work like the normal variants
 
         # If a RO script doesn't call any read command, don't track any keys
-        r EVAL_RO "redis.call('ping')" 2 key1{t} key2{t}
+        r EVAL_RO "sider.call('ping')" 2 key1{t} key2{t}
         $rd_sg MSET key2{t} 2 key1{t} 2
         assert_equal "PONG" [r ping]
 
         # If a RO script calls a read command, just the read keys
-        r EVAL_RO "redis.call('get', 'key2{t}')" 2 key1{t} key2{t}
+        r EVAL_RO "sider.call('get', 'key2{t}')" 2 key1{t} key2{t}
         $rd_sg MSET key2{t} 2 key3{t} 2
         assert_equal {invalidate key2{t}} [r read]
         assert_equal "PONG" [r ping]
@@ -269,10 +269,10 @@ start_server {tags {"tracking network logreqres:skip"}} {
         assert_equal PONG [r read]
 
         # Reinstantiating after QUIT
-        set rd_redirection [redis_deferring_client]
+        set rd_redirection [sider_deferring_client]
         $rd_redirection CLIENT ID
         set redir_id [$rd_redirection read]
-        $rd_redirection SUBSCRIBE __redis__:invalidate
+        $rd_redirection SUBSCRIBE __sider__:invalidate
         $rd_redirection read ; # Consume the SUBSCRIBE reply
     }
 
@@ -360,15 +360,15 @@ start_server {tags {"tracking network logreqres:skip"}} {
     }
 
     test {Able to redirect to a RESP3 client} {
-        $rd_redirection UNSUBSCRIBE __redis__:invalidate ; # Need to unsub first before we can do HELLO 3
+        $rd_redirection UNSUBSCRIBE __sider__:invalidate ; # Need to unsub first before we can do HELLO 3
         set res [$rd_redirection read] ; # Consume the UNSUBSCRIBE reply
-        assert_equal {__redis__:invalidate} [lindex $res 1]
+        assert_equal {__sider__:invalidate} [lindex $res 1]
         $rd_redirection HELLO 3
         set res [$rd_redirection read] ; # Consume the HELLO reply
         assert_equal [dict get $reply proto] 3
-        $rd_redirection SUBSCRIBE __redis__:invalidate
+        $rd_redirection SUBSCRIBE __sider__:invalidate
         set res [$rd_redirection read] ; # Consume the SUBSCRIBE reply
-        assert_equal {__redis__:invalidate} [lindex $res 1]
+        assert_equal {__sider__:invalidate} [lindex $res 1]
         r CLIENT TRACKING on REDIRECT $redir_id
         $rd_sg SET key1 1
         r GET key1
@@ -396,7 +396,7 @@ start_server {tags {"tracking network logreqres:skip"}} {
     }
 
     test {BCAST with prefix collisions throw errors} {
-        set r [redis_client] 
+        set r [sider_client] 
         catch {$r CLIENT TRACKING ON BCAST PREFIX FOOBAR PREFIX FOO} output
         assert_match {ERR Prefix 'FOOBAR'*'FOO'*} $output
 
@@ -745,7 +745,7 @@ start_server {tags {"tracking network logreqres:skip"}} {
 
     test {Regression test for #11715} {
         # This issue manifests when a client invalidates keys through the max key
-        # limit, which invalidates keys to get Redis below the limit, but no command is
+        # limit, which invalidates keys to get Sider below the limit, but no command is
         # then executed. This can occur in several ways but the simplest is through 
         # multi-exec which queues commands.
         clean_all
@@ -814,7 +814,7 @@ start_server {tags {"tracking network logreqres:skip"}} {
     test {RESP3 based basic redirect invalidation with client reply off} {
         clean_all
 
-        set rd_redir [redis_deferring_client]
+        set rd_redir [sider_deferring_client]
         $rd_redir hello 3
         $rd_redir read
 
@@ -880,7 +880,7 @@ start_server {tags {"tracking network logreqres:skip"}} {
 # run the full tracking unit in that mode
 start_server {tags {"tracking network"}} {
     test {Coverage: Basic CLIENT CACHING} {
-        set rd_redirection [redis_deferring_client]
+        set rd_redirection [sider_deferring_client]
         $rd_redirection client id
         set redir_id [$rd_redirection read]
         assert_equal {OK} [r CLIENT TRACKING on OPTIN REDIRECT $redir_id]

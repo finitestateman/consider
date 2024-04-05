@@ -7,8 +7,8 @@
 #include <stdlib.h>
 
 
-typedef struct RedisModuleString RedisModuleString;
-typedef struct RedisModuleKey RedisModuleKey;
+typedef struct SiderModuleString SiderModuleString;
+typedef struct SiderModuleKey SiderModuleKey;
 
 /* -------------- Defines NOT common between core and modules ------------- */
 
@@ -16,7 +16,7 @@ typedef struct RedisModuleKey RedisModuleKey;
 /* Things only defined for the modules core (server), not exported to modules
  * that include this file. */
 
-#define RedisModuleString robj
+#define SiderModuleString robj
 
 #endif /* defined REDISMODULE_CORE */
 
@@ -41,7 +41,7 @@ typedef long long ustime_t;
 /* API versions. */
 #define REDISMODULE_APIVER_1 1
 
-/* Version of the RedisModuleTypeMethods structure. Once the RedisModuleTypeMethods 
+/* Version of the SiderModuleTypeMethods structure. Once the SiderModuleTypeMethods 
  * structure is changed, this version number needs to be changed synchronistically. */
 #define REDISMODULE_TYPE_METHOD_VERSION 5
 
@@ -49,7 +49,7 @@ typedef long long ustime_t;
 #define REDISMODULE_READ (1<<0)
 #define REDISMODULE_WRITE (1<<1)
 
-/* RedisModule_OpenKey extra flags for the 'mode' argument.
+/* SiderModule_OpenKey extra flags for the 'mode' argument.
  * Avoid touching the LRU/LFU of the key when opened. */
 #define REDISMODULE_OPEN_KEY_NOTOUCH (1<<16)
 /* Don't trigger keyspace event on key misses. */
@@ -130,10 +130,10 @@ typedef long long ustime_t;
 #define REDISMODULE_CONFIG_BITFLAGS (1ULL<<8) /* Indicates if this value can be set as a multiple enum values */
 
 /* StreamID type. */
-typedef struct RedisModuleStreamID {
+typedef struct SiderModuleStreamID {
     uint64_t ms;
     uint64_t seq;
-} RedisModuleStreamID;
+} SiderModuleStreamID;
 
 /* StreamAdd() flags. */
 #define REDISMODULE_STREAM_ADD_AUTOID (1<<0)
@@ -148,7 +148,7 @@ typedef struct RedisModuleStreamID {
 
 /* The command is running in the context of a Lua script */
 #define REDISMODULE_CTX_FLAGS_LUA (1<<0)
-/* The command is running inside a Redis transaction */
+/* The command is running inside a Sider transaction */
 #define REDISMODULE_CTX_FLAGS_MULTI (1<<1)
 /* The instance is a master */
 #define REDISMODULE_CTX_FLAGS_MASTER (1<<2)
@@ -166,13 +166,13 @@ typedef struct RedisModuleStreamID {
 #define REDISMODULE_CTX_FLAGS_MAXMEMORY (1<<8)
 /* Maxmemory is set and has an eviction policy that may delete keys */
 #define REDISMODULE_CTX_FLAGS_EVICT (1<<9)
-/* Redis is out of memory according to the maxmemory flag. */
+/* Sider is out of memory according to the maxmemory flag. */
 #define REDISMODULE_CTX_FLAGS_OOM (1<<10)
 /* Less than 25% of memory available according to maxmemory. */
 #define REDISMODULE_CTX_FLAGS_OOM_WARNING (1<<11)
 /* The command was sent over the replication link. */
 #define REDISMODULE_CTX_FLAGS_REPLICATED (1<<12)
-/* Redis is currently loading either from AOF or RDB. */
+/* Sider is currently loading either from AOF or RDB. */
 #define REDISMODULE_CTX_FLAGS_LOADING (1<<13)
 /* The replica has no link with its master, note that
  * there is the inverse flag as well:
@@ -192,21 +192,21 @@ typedef struct RedisModuleStreamID {
 #define REDISMODULE_CTX_FLAGS_ACTIVE_CHILD (1<<18)
 /* The next EXEC will fail due to dirty CAS (touched keys). */
 #define REDISMODULE_CTX_FLAGS_MULTI_DIRTY (1<<19)
-/* Redis is currently running inside background child process. */
+/* Sider is currently running inside background child process. */
 #define REDISMODULE_CTX_FLAGS_IS_CHILD (1<<20)
 /* The current client does not allow blocking, either called from
  * within multi, lua, or from another module using RM_Call */
 #define REDISMODULE_CTX_FLAGS_DENY_BLOCKING (1<<21)
 /* The current client uses RESP3 protocol */
 #define REDISMODULE_CTX_FLAGS_RESP3 (1<<22)
-/* Redis is currently async loading database for diskless replication. */
+/* Sider is currently async loading database for diskless replication. */
 #define REDISMODULE_CTX_FLAGS_ASYNC_LOADING (1<<23)
-/* Redis is starting. */
+/* Sider is starting. */
 #define REDISMODULE_CTX_FLAGS_SERVER_STARTUP (1<<24)
 
 /* Next context flag, must be updated when adding new flags above!
 This flag should not be used directly by the module.
- * Use RedisModule_GetContextFlagsAll instead. */
+ * Use SiderModule_GetContextFlagsAll instead. */
 #define _REDISMODULE_CTX_FLAGS_NEXT (1<<25)
 
 /* Keyspace changes notification classes. Every class is associated with a
@@ -230,14 +230,14 @@ This flag should not be used directly by the module.
 
 /* Next notification flag, must be updated when adding new flags above!
 This flag should not be used directly by the module.
- * Use RedisModule_GetKeyspaceNotificationFlagsAll instead. */
+ * Use SiderModule_GetKeyspaceNotificationFlagsAll instead. */
 #define _REDISMODULE_NOTIFY_NEXT (1<<15)
 
 #define REDISMODULE_NOTIFY_ALL (REDISMODULE_NOTIFY_GENERIC | REDISMODULE_NOTIFY_STRING | REDISMODULE_NOTIFY_LIST | REDISMODULE_NOTIFY_SET | REDISMODULE_NOTIFY_HASH | REDISMODULE_NOTIFY_ZSET | REDISMODULE_NOTIFY_EXPIRED | REDISMODULE_NOTIFY_EVICTED | REDISMODULE_NOTIFY_STREAM | REDISMODULE_NOTIFY_MODULE)      /* A */
 
 /* A special pointer that we can use between the core and the module to signal
  * field deletion, and that is impossible to be a valid pointer. */
-#define REDISMODULE_HASH_DELETE ((RedisModuleString*)(long)1)
+#define REDISMODULE_HASH_DELETE ((SiderModuleString*)(long)1)
 
 /* Error messages. */
 #define REDISMODULE_ERRORMSG_WRONGTYPE "WRONGTYPE Operation against a key holding the wrong kind of value"
@@ -282,22 +282,22 @@ This flag should not be used directly by the module.
  * registered and used in order to invalidate a timer. It's just a 64 bit
  * number, because this is how each timer is represented inside the radix tree
  * of timers that are going to expire, sorted by expire time. */
-typedef uint64_t RedisModuleTimerID;
+typedef uint64_t SiderModuleTimerID;
 
 /* CommandFilter Flags */
 
-/* Do filter RedisModule_Call() commands initiated by module itself. */
+/* Do filter SiderModule_Call() commands initiated by module itself. */
 #define REDISMODULE_CMDFILTER_NOSELF    (1<<0)
 
-/* Declare that the module can handle errors with RedisModule_SetModuleOptions. */
+/* Declare that the module can handle errors with SiderModule_SetModuleOptions. */
 #define REDISMODULE_OPTIONS_HANDLE_IO_ERRORS    (1<<0)
 
-/* When set, Redis will not call RedisModule_SignalModifiedKey(), implicitly in
- * RedisModule_CloseKey, and the module needs to do that when manually when keys
+/* When set, Sider will not call SiderModule_SignalModifiedKey(), implicitly in
+ * SiderModule_CloseKey, and the module needs to do that when manually when keys
  * are modified from the user's perspective, to invalidate WATCH. */
 #define REDISMODULE_OPTION_NO_IMPLICIT_SIGNAL_MODIFIED (1<<1)
 
-/* Declare that the module can handle diskless async replication with RedisModule_SetModuleOptions. */
+/* Declare that the module can handle diskless async replication with SiderModule_SetModuleOptions. */
 #define REDISMODULE_OPTIONS_HANDLE_REPL_ASYNC_LOAD    (1<<2)
 
 /* Declare that the module want to get nested key space notifications.
@@ -306,10 +306,10 @@ typedef uint64_t RedisModuleTimerID;
 
 /* Next option flag, must be updated when adding new module flags above!
  * This flag should not be used directly by the module.
- * Use RedisModule_GetModuleOptionsAll instead. */
+ * Use SiderModule_GetModuleOptionsAll instead. */
 #define _REDISMODULE_OPTIONS_FLAGS_NEXT (1<<4)
 
-/* Definitions for RedisModule_SetCommandInfo. */
+/* Definitions for SiderModule_SetCommandInfo. */
 
 typedef enum {
     REDISMODULE_ARG_TYPE_STRING,
@@ -321,7 +321,7 @@ typedef enum {
     REDISMODULE_ARG_TYPE_PURE_TOKEN,
     REDISMODULE_ARG_TYPE_ONEOF, /* Must have sub-arguments */
     REDISMODULE_ARG_TYPE_BLOCK /* Must have sub-arguments */
-} RedisModuleCommandArgType;
+} SiderModuleCommandArgType;
 
 #define REDISMODULE_CMD_ARG_NONE            (0)
 #define REDISMODULE_CMD_ARG_OPTIONAL        (1<<0) /* The argument is optional (like GET in SET command) */
@@ -336,7 +336,7 @@ typedef enum {
     REDISMODULE_KSPEC_BS_UNKNOWN,
     REDISMODULE_KSPEC_BS_INDEX,
     REDISMODULE_KSPEC_BS_KEYWORD
-} RedisModuleKeySpecBeginSearchType;
+} SiderModuleKeySpecBeginSearchType;
 
 typedef enum {
     REDISMODULE_KSPEC_FK_OMITTED = 0, /* Used when the field is absent in a
@@ -345,10 +345,10 @@ typedef enum {
     REDISMODULE_KSPEC_FK_UNKNOWN,
     REDISMODULE_KSPEC_FK_RANGE,
     REDISMODULE_KSPEC_FK_KEYNUM
-} RedisModuleKeySpecFindKeysType;
+} SiderModuleKeySpecFindKeysType;
 
 /* Key-spec flags. For details, see the documentation of
- * RedisModule_SetCommandInfo and the key-spec flags in server.h. */
+ * SiderModule_SetCommandInfo and the key-spec flags in server.h. */
 #define REDISMODULE_CMD_KEY_RO (1ULL<<0)
 #define REDISMODULE_CMD_KEY_RW (1ULL<<1)
 #define REDISMODULE_CMD_KEY_OW (1ULL<<2)
@@ -362,15 +362,15 @@ typedef enum {
 #define REDISMODULE_CMD_KEY_VARIABLE_FLAGS (1ULL<<10)
 
 /* Channel flags, for details see the documentation of
- * RedisModule_ChannelAtPosWithFlags. */
+ * SiderModule_ChannelAtPosWithFlags. */
 #define REDISMODULE_CMD_CHANNEL_PATTERN (1ULL<<0)
 #define REDISMODULE_CMD_CHANNEL_PUBLISH (1ULL<<1)
 #define REDISMODULE_CMD_CHANNEL_SUBSCRIBE (1ULL<<2)
 #define REDISMODULE_CMD_CHANNEL_UNSUBSCRIBE (1ULL<<3)
 
-typedef struct RedisModuleCommandArg {
+typedef struct SiderModuleCommandArg {
     const char *name;
-    RedisModuleCommandArgType type;
+    SiderModuleCommandArgType type;
     int key_spec_index;       /* If type is KEY, this is a zero-based index of
                                * the key_spec in the command. For other types,
                                * you may specify -1. */
@@ -379,19 +379,19 @@ typedef struct RedisModuleCommandArg {
     const char *since;
     int flags;                /* The REDISMODULE_CMD_ARG_* macros. */
     const char *deprecated_since;
-    struct RedisModuleCommandArg *subargs;
+    struct SiderModuleCommandArg *subargs;
     const char *display_text;
-} RedisModuleCommandArg;
+} SiderModuleCommandArg;
 
 typedef struct {
     const char *since;
     const char *changes;
-} RedisModuleCommandHistoryEntry;
+} SiderModuleCommandHistoryEntry;
 
 typedef struct {
     const char *notes;
     uint64_t flags; /* REDISMODULE_CMD_KEY_* macros. */
-    RedisModuleKeySpecBeginSearchType begin_search_type;
+    SiderModuleKeySpecBeginSearchType begin_search_type;
     union {
         struct {
             /* The index from which we start the search for keys */
@@ -406,7 +406,7 @@ typedef struct {
             int startfrom;
         } keyword;
     } bs;
-    RedisModuleKeySpecFindKeysType find_keys_type;
+    SiderModuleKeySpecFindKeysType find_keys_type;
     union {
         struct {
             /* Index of the last key relative to the result of the begin search
@@ -435,50 +435,50 @@ typedef struct {
             int keystep;
         } keynum;
     } fk;
-} RedisModuleCommandKeySpec;
+} SiderModuleCommandKeySpec;
 
 typedef struct {
     int version;
     size_t sizeof_historyentry;
     size_t sizeof_keyspec;
     size_t sizeof_arg;
-} RedisModuleCommandInfoVersion;
+} SiderModuleCommandInfoVersion;
 
-static const RedisModuleCommandInfoVersion RedisModule_CurrentCommandInfoVersion = {
+static const SiderModuleCommandInfoVersion SiderModule_CurrentCommandInfoVersion = {
     .version = 1,
-    .sizeof_historyentry = sizeof(RedisModuleCommandHistoryEntry),
-    .sizeof_keyspec = sizeof(RedisModuleCommandKeySpec),
-    .sizeof_arg = sizeof(RedisModuleCommandArg)
+    .sizeof_historyentry = sizeof(SiderModuleCommandHistoryEntry),
+    .sizeof_keyspec = sizeof(SiderModuleCommandKeySpec),
+    .sizeof_arg = sizeof(SiderModuleCommandArg)
 };
 
-#define REDISMODULE_COMMAND_INFO_VERSION (&RedisModule_CurrentCommandInfoVersion)
+#define REDISMODULE_COMMAND_INFO_VERSION (&SiderModule_CurrentCommandInfoVersion)
 
 typedef struct {
     /* Always set version to REDISMODULE_COMMAND_INFO_VERSION */
-    const RedisModuleCommandInfoVersion *version;
-    /* Version 1 fields (added in Redis 7.0.0) */
+    const SiderModuleCommandInfoVersion *version;
+    /* Version 1 fields (added in Sider 7.0.0) */
     const char *summary;          /* Summary of the command */
     const char *complexity;       /* Complexity description */
     const char *since;            /* Debut module version of the command */
-    RedisModuleCommandHistoryEntry *history; /* History */
+    SiderModuleCommandHistoryEntry *history; /* History */
     /* A string of space-separated tips meant for clients/proxies regarding this
      * command */
     const char *tips;
     /* Number of arguments, it is possible to use -N to say >= N */
     int arity;
-    RedisModuleCommandKeySpec *key_specs;
-    RedisModuleCommandArg *args;
-} RedisModuleCommandInfo;
+    SiderModuleCommandKeySpec *key_specs;
+    SiderModuleCommandArg *args;
+} SiderModuleCommandInfo;
 
 /* Eventloop definitions. */
 #define REDISMODULE_EVENTLOOP_READABLE 1
 #define REDISMODULE_EVENTLOOP_WRITABLE 2
-typedef void (*RedisModuleEventLoopFunc)(int fd, void *user_data, int mask);
-typedef void (*RedisModuleEventLoopOneShotFunc)(void *user_data);
+typedef void (*SiderModuleEventLoopFunc)(int fd, void *user_data, int mask);
+typedef void (*SiderModuleEventLoopOneShotFunc)(void *user_data);
 
 /* Server events definitions.
  * Those flags should not be used directly by the module, instead
- * the module should use RedisModuleEvent_* variables.
+ * the module should use SiderModuleEvent_* variables.
  * Note: This must be synced with moduleEventVersions */
 #define REDISMODULE_EVENT_REPLICATION_ROLE_CHANGED 0
 #define REDISMODULE_EVENT_PERSISTENCE 1
@@ -492,7 +492,7 @@ typedef void (*RedisModuleEventLoopOneShotFunc)(void *user_data);
 #define REDISMODULE_EVENT_MODULE_CHANGE 9
 #define REDISMODULE_EVENT_LOADING_PROGRESS 10
 #define REDISMODULE_EVENT_SWAPDB 11
-#define REDISMODULE_EVENT_REPL_BACKUP 12 /* Deprecated since Redis 7.0, not used anymore. */
+#define REDISMODULE_EVENT_REPL_BACKUP 12 /* Deprecated since Sider 7.0, not used anymore. */
 #define REDISMODULE_EVENT_FORK_CHILD 13
 #define REDISMODULE_EVENT_REPL_ASYNC_LOAD 14
 #define REDISMODULE_EVENT_EVENTLOOP 15
@@ -500,113 +500,113 @@ typedef void (*RedisModuleEventLoopOneShotFunc)(void *user_data);
 #define REDISMODULE_EVENT_KEY 17
 #define _REDISMODULE_EVENT_NEXT 18 /* Next event flag, should be updated if a new event added. */
 
-typedef struct RedisModuleEvent {
+typedef struct SiderModuleEvent {
     uint64_t id;        /* REDISMODULE_EVENT_... defines. */
     uint64_t dataver;   /* Version of the structure we pass as 'data'. */
-} RedisModuleEvent;
+} SiderModuleEvent;
 
-struct RedisModuleCtx;
-struct RedisModuleDefragCtx;
-typedef void (*RedisModuleEventCallback)(struct RedisModuleCtx *ctx, RedisModuleEvent eid, uint64_t subevent, void *data);
+struct SiderModuleCtx;
+struct SiderModuleDefragCtx;
+typedef void (*SiderModuleEventCallback)(struct SiderModuleCtx *ctx, SiderModuleEvent eid, uint64_t subevent, void *data);
 
 /* IMPORTANT: When adding a new version of one of below structures that contain
- * event data (RedisModuleFlushInfoV1 for example) we have to avoid renaming the
- * old RedisModuleEvent structure.
- * For example, if we want to add RedisModuleFlushInfoV2, the RedisModuleEvent
+ * event data (SiderModuleFlushInfoV1 for example) we have to avoid renaming the
+ * old SiderModuleEvent structure.
+ * For example, if we want to add SiderModuleFlushInfoV2, the SiderModuleEvent
  * structures should be:
- *      RedisModuleEvent_FlushDB = {
+ *      SiderModuleEvent_FlushDB = {
  *          REDISMODULE_EVENT_FLUSHDB,
  *          1
  *      },
- *      RedisModuleEvent_FlushDBV2 = {
+ *      SiderModuleEvent_FlushDBV2 = {
  *          REDISMODULE_EVENT_FLUSHDB,
  *          2
  *      }
  * and NOT:
- *      RedisModuleEvent_FlushDBV1 = {
+ *      SiderModuleEvent_FlushDBV1 = {
  *          REDISMODULE_EVENT_FLUSHDB,
  *          1
  *      },
- *      RedisModuleEvent_FlushDB = {
+ *      SiderModuleEvent_FlushDB = {
  *          REDISMODULE_EVENT_FLUSHDB,
  *          2
  *      }
  * The reason for that is forward-compatibility: We want that module that
- * compiled with a new redismodule.h to be able to work with a old server,
+ * compiled with a new sidermodule.h to be able to work with a old server,
  * unless the author explicitly decided to use the newer event type.
  */
-static const RedisModuleEvent
-    RedisModuleEvent_ReplicationRoleChanged = {
+static const SiderModuleEvent
+    SiderModuleEvent_ReplicationRoleChanged = {
         REDISMODULE_EVENT_REPLICATION_ROLE_CHANGED,
         1
     },
-    RedisModuleEvent_Persistence = {
+    SiderModuleEvent_Persistence = {
         REDISMODULE_EVENT_PERSISTENCE,
         1
     },
-    RedisModuleEvent_FlushDB = {
+    SiderModuleEvent_FlushDB = {
         REDISMODULE_EVENT_FLUSHDB,
         1
     },
-    RedisModuleEvent_Loading = {
+    SiderModuleEvent_Loading = {
         REDISMODULE_EVENT_LOADING,
         1
     },
-    RedisModuleEvent_ClientChange = {
+    SiderModuleEvent_ClientChange = {
         REDISMODULE_EVENT_CLIENT_CHANGE,
         1
     },
-    RedisModuleEvent_Shutdown = {
+    SiderModuleEvent_Shutdown = {
         REDISMODULE_EVENT_SHUTDOWN,
         1
     },
-    RedisModuleEvent_ReplicaChange = {
+    SiderModuleEvent_ReplicaChange = {
         REDISMODULE_EVENT_REPLICA_CHANGE,
         1
     },
-    RedisModuleEvent_CronLoop = {
+    SiderModuleEvent_CronLoop = {
         REDISMODULE_EVENT_CRON_LOOP,
         1
     },
-    RedisModuleEvent_MasterLinkChange = {
+    SiderModuleEvent_MasterLinkChange = {
         REDISMODULE_EVENT_MASTER_LINK_CHANGE,
         1
     },
-    RedisModuleEvent_ModuleChange = {
+    SiderModuleEvent_ModuleChange = {
         REDISMODULE_EVENT_MODULE_CHANGE,
         1
     },
-    RedisModuleEvent_LoadingProgress = {
+    SiderModuleEvent_LoadingProgress = {
         REDISMODULE_EVENT_LOADING_PROGRESS,
         1
     },
-    RedisModuleEvent_SwapDB = {
+    SiderModuleEvent_SwapDB = {
         REDISMODULE_EVENT_SWAPDB,
         1
     },
-    /* Deprecated since Redis 7.0, not used anymore. */
+    /* Deprecated since Sider 7.0, not used anymore. */
     __attribute__ ((deprecated))
-    RedisModuleEvent_ReplBackup = {
+    SiderModuleEvent_ReplBackup = {
         REDISMODULE_EVENT_REPL_BACKUP, 
         1
     },
-    RedisModuleEvent_ReplAsyncLoad = {
+    SiderModuleEvent_ReplAsyncLoad = {
         REDISMODULE_EVENT_REPL_ASYNC_LOAD,
         1
     },
-    RedisModuleEvent_ForkChild = {
+    SiderModuleEvent_ForkChild = {
         REDISMODULE_EVENT_FORK_CHILD,
         1
     },
-    RedisModuleEvent_EventLoop = {
+    SiderModuleEvent_EventLoop = {
         REDISMODULE_EVENT_EVENTLOOP,
         1
     },
-    RedisModuleEvent_Config = {
+    SiderModuleEvent_Config = {
         REDISMODULE_EVENT_CONFIG,
         1
     },
-    RedisModuleEvent_Key = {
+    SiderModuleEvent_Key = {
         REDISMODULE_EVENT_KEY,
         1
     };
@@ -658,7 +658,7 @@ static const RedisModuleEvent
 #define REDISMODULE_SUBEVENT_LOADING_PROGRESS_AOF 1
 #define _REDISMODULE_SUBEVENT_LOADING_PROGRESS_NEXT 2
 
-/* Replication Backup events are deprecated since Redis 7.0 and are never fired. */
+/* Replication Backup events are deprecated since Sider 7.0 and are never fired. */
 #define REDISMODULE_SUBEVENT_REPL_BACKUP_CREATE 0
 #define REDISMODULE_SUBEVENT_REPL_BACKUP_RESTORE 1
 #define REDISMODULE_SUBEVENT_REPL_BACKUP_DISCARD 2
@@ -687,7 +687,7 @@ static const RedisModuleEvent
 #define _REDISMODULE_SUBEVENT_CRON_LOOP_NEXT 0
 #define _REDISMODULE_SUBEVENT_SWAPDB_NEXT 0
 
-/* RedisModuleClientInfo flags. */
+/* SiderModuleClientInfo flags. */
 #define REDISMODULE_CLIENTINFO_FLAG_SSL (1<<0)
 #define REDISMODULE_CLIENTINFO_FLAG_PUBSUB (1<<1)
 #define REDISMODULE_CLIENTINFO_FLAG_BLOCKED (1<<2)
@@ -697,7 +697,7 @@ static const RedisModuleEvent
 
 /* Here we take all the structures that the module pass to the core
  * and the other way around. Notably the list here contains the structures
- * used by the hooks API RedisModule_RegisterToServerEvent().
+ * used by the hooks API SiderModule_RegisterToServerEvent().
  *
  * The structures always start with a 'version' field. This is useful
  * when we want to pass a reference to the structure to the core APIs,
@@ -711,21 +711,21 @@ static const RedisModuleEvent
  * public name for the module to use. */
 
 #define REDISMODULE_CLIENTINFO_VERSION 1
-typedef struct RedisModuleClientInfo {
+typedef struct SiderModuleClientInfo {
     uint64_t version;       /* Version of this structure for ABI compat. */
     uint64_t flags;         /* REDISMODULE_CLIENTINFO_FLAG_* */
     uint64_t id;            /* Client ID. */
     char addr[46];          /* IPv4 or IPv6 address. */
     uint16_t port;          /* TCP port. */
     uint16_t db;            /* Selected DB. */
-} RedisModuleClientInfoV1;
+} SiderModuleClientInfoV1;
 
-#define RedisModuleClientInfo RedisModuleClientInfoV1
+#define SiderModuleClientInfo SiderModuleClientInfoV1
 
 #define REDISMODULE_CLIENTINFO_INITIALIZER_V1 { .version = 1 }
 
 #define REDISMODULE_REPLICATIONINFO_VERSION 1
-typedef struct RedisModuleReplicationInfo {
+typedef struct SiderModuleReplicationInfo {
     uint64_t version;       /* Not used since this structure is never passed
                                from the module to the core right now. Here
                                for future compatibility. */
@@ -736,104 +736,104 @@ typedef struct RedisModuleReplicationInfo {
     char *replid2;          /* Secondary replication ID */
     uint64_t repl1_offset;  /* Main replication offset */
     uint64_t repl2_offset;  /* Offset of replid2 validity */
-} RedisModuleReplicationInfoV1;
+} SiderModuleReplicationInfoV1;
 
-#define RedisModuleReplicationInfo RedisModuleReplicationInfoV1
+#define SiderModuleReplicationInfo SiderModuleReplicationInfoV1
 
 #define REDISMODULE_FLUSHINFO_VERSION 1
-typedef struct RedisModuleFlushInfo {
+typedef struct SiderModuleFlushInfo {
     uint64_t version;       /* Not used since this structure is never passed
                                from the module to the core right now. Here
                                for future compatibility. */
     int32_t sync;           /* Synchronous or threaded flush?. */
     int32_t dbnum;          /* Flushed database number, -1 for ALL. */
-} RedisModuleFlushInfoV1;
+} SiderModuleFlushInfoV1;
 
-#define RedisModuleFlushInfo RedisModuleFlushInfoV1
+#define SiderModuleFlushInfo SiderModuleFlushInfoV1
 
 #define REDISMODULE_MODULE_CHANGE_VERSION 1
-typedef struct RedisModuleModuleChange {
+typedef struct SiderModuleModuleChange {
     uint64_t version;       /* Not used since this structure is never passed
                                from the module to the core right now. Here
                                for future compatibility. */
     const char* module_name;/* Name of module loaded or unloaded. */
     int32_t module_version; /* Module version. */
-} RedisModuleModuleChangeV1;
+} SiderModuleModuleChangeV1;
 
-#define RedisModuleModuleChange RedisModuleModuleChangeV1
+#define SiderModuleModuleChange SiderModuleModuleChangeV1
 
 #define REDISMODULE_CONFIGCHANGE_VERSION 1
-typedef struct RedisModuleConfigChange {
+typedef struct SiderModuleConfigChange {
     uint64_t version;       /* Not used since this structure is never passed
                                from the module to the core right now. Here
                                for future compatibility. */
-    uint32_t num_changes;   /* how many redis config options were changed */
+    uint32_t num_changes;   /* how many sider config options were changed */
     const char **config_names; /* the config names that were changed */
-} RedisModuleConfigChangeV1;
+} SiderModuleConfigChangeV1;
 
-#define RedisModuleConfigChange RedisModuleConfigChangeV1
+#define SiderModuleConfigChange SiderModuleConfigChangeV1
 
 #define REDISMODULE_CRON_LOOP_VERSION 1
-typedef struct RedisModuleCronLoopInfo {
+typedef struct SiderModuleCronLoopInfo {
     uint64_t version;       /* Not used since this structure is never passed
                                from the module to the core right now. Here
                                for future compatibility. */
     int32_t hz;             /* Approximate number of events per second. */
-} RedisModuleCronLoopV1;
+} SiderModuleCronLoopV1;
 
-#define RedisModuleCronLoop RedisModuleCronLoopV1
+#define SiderModuleCronLoop SiderModuleCronLoopV1
 
 #define REDISMODULE_LOADING_PROGRESS_VERSION 1
-typedef struct RedisModuleLoadingProgressInfo {
+typedef struct SiderModuleLoadingProgressInfo {
     uint64_t version;       /* Not used since this structure is never passed
                                from the module to the core right now. Here
                                for future compatibility. */
     int32_t hz;             /* Approximate number of events per second. */
     int32_t progress;       /* Approximate progress between 0 and 1024, or -1
                              * if unknown. */
-} RedisModuleLoadingProgressV1;
+} SiderModuleLoadingProgressV1;
 
-#define RedisModuleLoadingProgress RedisModuleLoadingProgressV1
+#define SiderModuleLoadingProgress SiderModuleLoadingProgressV1
 
 #define REDISMODULE_SWAPDBINFO_VERSION 1
-typedef struct RedisModuleSwapDbInfo {
+typedef struct SiderModuleSwapDbInfo {
     uint64_t version;       /* Not used since this structure is never passed
                                from the module to the core right now. Here
                                for future compatibility. */
     int32_t dbnum_first;    /* Swap Db first dbnum */
     int32_t dbnum_second;   /* Swap Db second dbnum */
-} RedisModuleSwapDbInfoV1;
+} SiderModuleSwapDbInfoV1;
 
-#define RedisModuleSwapDbInfo RedisModuleSwapDbInfoV1
+#define SiderModuleSwapDbInfo SiderModuleSwapDbInfoV1
 
 #define REDISMODULE_KEYINFO_VERSION 1
-typedef struct RedisModuleKeyInfo {
+typedef struct SiderModuleKeyInfo {
     uint64_t version;       /* Not used since this structure is never passed
                                from the module to the core right now. Here
                                for future compatibility. */
-    RedisModuleKey *key;    /* Opened key. */
-} RedisModuleKeyInfoV1;
+    SiderModuleKey *key;    /* Opened key. */
+} SiderModuleKeyInfoV1;
 
-#define RedisModuleKeyInfo RedisModuleKeyInfoV1
+#define SiderModuleKeyInfo SiderModuleKeyInfoV1
 
 typedef enum {
     REDISMODULE_ACL_LOG_AUTH = 0, /* Authentication failure */
     REDISMODULE_ACL_LOG_CMD, /* Command authorization failure */
     REDISMODULE_ACL_LOG_KEY, /* Key authorization failure */
     REDISMODULE_ACL_LOG_CHANNEL /* Channel authorization failure */
-} RedisModuleACLLogEntryReason;
+} SiderModuleACLLogEntryReason;
 
 /* Incomplete structures needed by both the core and modules. */
-typedef struct RedisModuleIO RedisModuleIO;
-typedef struct RedisModuleDigest RedisModuleDigest;
-typedef struct RedisModuleInfoCtx RedisModuleInfoCtx;
-typedef struct RedisModuleDefragCtx RedisModuleDefragCtx;
+typedef struct SiderModuleIO SiderModuleIO;
+typedef struct SiderModuleDigest SiderModuleDigest;
+typedef struct SiderModuleInfoCtx SiderModuleInfoCtx;
+typedef struct SiderModuleDefragCtx SiderModuleDefragCtx;
 
 /* Function pointers needed by both the core and modules, these needs to be
  * exposed since you can't cast a function pointer to (void *). */
-typedef void (*RedisModuleInfoFunc)(RedisModuleInfoCtx *ctx, int for_crash_report);
-typedef void (*RedisModuleDefragFunc)(RedisModuleDefragCtx *ctx);
-typedef void (*RedisModuleUserChangedFunc) (uint64_t client_id, void *privdata);
+typedef void (*SiderModuleInfoFunc)(SiderModuleInfoCtx *ctx, int for_crash_report);
+typedef void (*SiderModuleDefragFunc)(SiderModuleDefragCtx *ctx);
+typedef void (*SiderModuleUserChangedFunc) (uint64_t client_id, void *privdata);
 
 /* ------------------------- End of common defines ------------------------ */
 
@@ -867,84 +867,84 @@ typedef void (*RedisModuleUserChangedFunc) (uint64_t client_id, void *privdata);
 #endif
 
 /* Incomplete structures for compiler checks but opaque access. */
-typedef struct RedisModuleCtx RedisModuleCtx;
-typedef struct RedisModuleCommand RedisModuleCommand;
-typedef struct RedisModuleCallReply RedisModuleCallReply;
-typedef struct RedisModuleType RedisModuleType;
-typedef struct RedisModuleBlockedClient RedisModuleBlockedClient;
-typedef struct RedisModuleClusterInfo RedisModuleClusterInfo;
-typedef struct RedisModuleDict RedisModuleDict;
-typedef struct RedisModuleDictIter RedisModuleDictIter;
-typedef struct RedisModuleCommandFilterCtx RedisModuleCommandFilterCtx;
-typedef struct RedisModuleCommandFilter RedisModuleCommandFilter;
-typedef struct RedisModuleServerInfoData RedisModuleServerInfoData;
-typedef struct RedisModuleScanCursor RedisModuleScanCursor;
-typedef struct RedisModuleUser RedisModuleUser;
-typedef struct RedisModuleKeyOptCtx RedisModuleKeyOptCtx;
-typedef struct RedisModuleRdbStream RedisModuleRdbStream;
+typedef struct SiderModuleCtx SiderModuleCtx;
+typedef struct SiderModuleCommand SiderModuleCommand;
+typedef struct SiderModuleCallReply SiderModuleCallReply;
+typedef struct SiderModuleType SiderModuleType;
+typedef struct SiderModuleBlockedClient SiderModuleBlockedClient;
+typedef struct SiderModuleClusterInfo SiderModuleClusterInfo;
+typedef struct SiderModuleDict SiderModuleDict;
+typedef struct SiderModuleDictIter SiderModuleDictIter;
+typedef struct SiderModuleCommandFilterCtx SiderModuleCommandFilterCtx;
+typedef struct SiderModuleCommandFilter SiderModuleCommandFilter;
+typedef struct SiderModuleServerInfoData SiderModuleServerInfoData;
+typedef struct SiderModuleScanCursor SiderModuleScanCursor;
+typedef struct SiderModuleUser SiderModuleUser;
+typedef struct SiderModuleKeyOptCtx SiderModuleKeyOptCtx;
+typedef struct SiderModuleRdbStream SiderModuleRdbStream;
 
-typedef int (*RedisModuleCmdFunc)(RedisModuleCtx *ctx, RedisModuleString **argv, int argc);
-typedef void (*RedisModuleDisconnectFunc)(RedisModuleCtx *ctx, RedisModuleBlockedClient *bc);
-typedef int (*RedisModuleNotificationFunc)(RedisModuleCtx *ctx, int type, const char *event, RedisModuleString *key);
-typedef void (*RedisModulePostNotificationJobFunc) (RedisModuleCtx *ctx, void *pd);
-typedef void *(*RedisModuleTypeLoadFunc)(RedisModuleIO *rdb, int encver);
-typedef void (*RedisModuleTypeSaveFunc)(RedisModuleIO *rdb, void *value);
-typedef int (*RedisModuleTypeAuxLoadFunc)(RedisModuleIO *rdb, int encver, int when);
-typedef void (*RedisModuleTypeAuxSaveFunc)(RedisModuleIO *rdb, int when);
-typedef void (*RedisModuleTypeRewriteFunc)(RedisModuleIO *aof, RedisModuleString *key, void *value);
-typedef size_t (*RedisModuleTypeMemUsageFunc)(const void *value);
-typedef size_t (*RedisModuleTypeMemUsageFunc2)(RedisModuleKeyOptCtx *ctx, const void *value, size_t sample_size);
-typedef void (*RedisModuleTypeDigestFunc)(RedisModuleDigest *digest, void *value);
-typedef void (*RedisModuleTypeFreeFunc)(void *value);
-typedef size_t (*RedisModuleTypeFreeEffortFunc)(RedisModuleString *key, const void *value);
-typedef size_t (*RedisModuleTypeFreeEffortFunc2)(RedisModuleKeyOptCtx *ctx, const void *value);
-typedef void (*RedisModuleTypeUnlinkFunc)(RedisModuleString *key, const void *value);
-typedef void (*RedisModuleTypeUnlinkFunc2)(RedisModuleKeyOptCtx *ctx, const void *value);
-typedef void *(*RedisModuleTypeCopyFunc)(RedisModuleString *fromkey, RedisModuleString *tokey, const void *value);
-typedef void *(*RedisModuleTypeCopyFunc2)(RedisModuleKeyOptCtx *ctx, const void *value);
-typedef int (*RedisModuleTypeDefragFunc)(RedisModuleDefragCtx *ctx, RedisModuleString *key, void **value);
-typedef void (*RedisModuleClusterMessageReceiver)(RedisModuleCtx *ctx, const char *sender_id, uint8_t type, const unsigned char *payload, uint32_t len);
-typedef void (*RedisModuleTimerProc)(RedisModuleCtx *ctx, void *data);
-typedef void (*RedisModuleCommandFilterFunc) (RedisModuleCommandFilterCtx *filter);
-typedef void (*RedisModuleForkDoneHandler) (int exitcode, int bysignal, void *user_data);
-typedef void (*RedisModuleScanCB)(RedisModuleCtx *ctx, RedisModuleString *keyname, RedisModuleKey *key, void *privdata);
-typedef void (*RedisModuleScanKeyCB)(RedisModuleKey *key, RedisModuleString *field, RedisModuleString *value, void *privdata);
-typedef RedisModuleString * (*RedisModuleConfigGetStringFunc)(const char *name, void *privdata);
-typedef long long (*RedisModuleConfigGetNumericFunc)(const char *name, void *privdata);
-typedef int (*RedisModuleConfigGetBoolFunc)(const char *name, void *privdata);
-typedef int (*RedisModuleConfigGetEnumFunc)(const char *name, void *privdata);
-typedef int (*RedisModuleConfigSetStringFunc)(const char *name, RedisModuleString *val, void *privdata, RedisModuleString **err);
-typedef int (*RedisModuleConfigSetNumericFunc)(const char *name, long long val, void *privdata, RedisModuleString **err);
-typedef int (*RedisModuleConfigSetBoolFunc)(const char *name, int val, void *privdata, RedisModuleString **err);
-typedef int (*RedisModuleConfigSetEnumFunc)(const char *name, int val, void *privdata, RedisModuleString **err);
-typedef int (*RedisModuleConfigApplyFunc)(RedisModuleCtx *ctx, void *privdata, RedisModuleString **err);
-typedef void (*RedisModuleOnUnblocked)(RedisModuleCtx *ctx, RedisModuleCallReply *reply, void *private_data);
-typedef int (*RedisModuleAuthCallback)(RedisModuleCtx *ctx, RedisModuleString *username, RedisModuleString *password, RedisModuleString **err);
+typedef int (*SiderModuleCmdFunc)(SiderModuleCtx *ctx, SiderModuleString **argv, int argc);
+typedef void (*SiderModuleDisconnectFunc)(SiderModuleCtx *ctx, SiderModuleBlockedClient *bc);
+typedef int (*SiderModuleNotificationFunc)(SiderModuleCtx *ctx, int type, const char *event, SiderModuleString *key);
+typedef void (*SiderModulePostNotificationJobFunc) (SiderModuleCtx *ctx, void *pd);
+typedef void *(*SiderModuleTypeLoadFunc)(SiderModuleIO *rdb, int encver);
+typedef void (*SiderModuleTypeSaveFunc)(SiderModuleIO *rdb, void *value);
+typedef int (*SiderModuleTypeAuxLoadFunc)(SiderModuleIO *rdb, int encver, int when);
+typedef void (*SiderModuleTypeAuxSaveFunc)(SiderModuleIO *rdb, int when);
+typedef void (*SiderModuleTypeRewriteFunc)(SiderModuleIO *aof, SiderModuleString *key, void *value);
+typedef size_t (*SiderModuleTypeMemUsageFunc)(const void *value);
+typedef size_t (*SiderModuleTypeMemUsageFunc2)(SiderModuleKeyOptCtx *ctx, const void *value, size_t sample_size);
+typedef void (*SiderModuleTypeDigestFunc)(SiderModuleDigest *digest, void *value);
+typedef void (*SiderModuleTypeFreeFunc)(void *value);
+typedef size_t (*SiderModuleTypeFreeEffortFunc)(SiderModuleString *key, const void *value);
+typedef size_t (*SiderModuleTypeFreeEffortFunc2)(SiderModuleKeyOptCtx *ctx, const void *value);
+typedef void (*SiderModuleTypeUnlinkFunc)(SiderModuleString *key, const void *value);
+typedef void (*SiderModuleTypeUnlinkFunc2)(SiderModuleKeyOptCtx *ctx, const void *value);
+typedef void *(*SiderModuleTypeCopyFunc)(SiderModuleString *fromkey, SiderModuleString *tokey, const void *value);
+typedef void *(*SiderModuleTypeCopyFunc2)(SiderModuleKeyOptCtx *ctx, const void *value);
+typedef int (*SiderModuleTypeDefragFunc)(SiderModuleDefragCtx *ctx, SiderModuleString *key, void **value);
+typedef void (*SiderModuleClusterMessageReceiver)(SiderModuleCtx *ctx, const char *sender_id, uint8_t type, const unsigned char *payload, uint32_t len);
+typedef void (*SiderModuleTimerProc)(SiderModuleCtx *ctx, void *data);
+typedef void (*SiderModuleCommandFilterFunc) (SiderModuleCommandFilterCtx *filter);
+typedef void (*SiderModuleForkDoneHandler) (int exitcode, int bysignal, void *user_data);
+typedef void (*SiderModuleScanCB)(SiderModuleCtx *ctx, SiderModuleString *keyname, SiderModuleKey *key, void *privdata);
+typedef void (*SiderModuleScanKeyCB)(SiderModuleKey *key, SiderModuleString *field, SiderModuleString *value, void *privdata);
+typedef SiderModuleString * (*SiderModuleConfigGetStringFunc)(const char *name, void *privdata);
+typedef long long (*SiderModuleConfigGetNumericFunc)(const char *name, void *privdata);
+typedef int (*SiderModuleConfigGetBoolFunc)(const char *name, void *privdata);
+typedef int (*SiderModuleConfigGetEnumFunc)(const char *name, void *privdata);
+typedef int (*SiderModuleConfigSetStringFunc)(const char *name, SiderModuleString *val, void *privdata, SiderModuleString **err);
+typedef int (*SiderModuleConfigSetNumericFunc)(const char *name, long long val, void *privdata, SiderModuleString **err);
+typedef int (*SiderModuleConfigSetBoolFunc)(const char *name, int val, void *privdata, SiderModuleString **err);
+typedef int (*SiderModuleConfigSetEnumFunc)(const char *name, int val, void *privdata, SiderModuleString **err);
+typedef int (*SiderModuleConfigApplyFunc)(SiderModuleCtx *ctx, void *privdata, SiderModuleString **err);
+typedef void (*SiderModuleOnUnblocked)(SiderModuleCtx *ctx, SiderModuleCallReply *reply, void *private_data);
+typedef int (*SiderModuleAuthCallback)(SiderModuleCtx *ctx, SiderModuleString *username, SiderModuleString *password, SiderModuleString **err);
 
-typedef struct RedisModuleTypeMethods {
+typedef struct SiderModuleTypeMethods {
     uint64_t version;
-    RedisModuleTypeLoadFunc rdb_load;
-    RedisModuleTypeSaveFunc rdb_save;
-    RedisModuleTypeRewriteFunc aof_rewrite;
-    RedisModuleTypeMemUsageFunc mem_usage;
-    RedisModuleTypeDigestFunc digest;
-    RedisModuleTypeFreeFunc free;
-    RedisModuleTypeAuxLoadFunc aux_load;
-    RedisModuleTypeAuxSaveFunc aux_save;
+    SiderModuleTypeLoadFunc rdb_load;
+    SiderModuleTypeSaveFunc rdb_save;
+    SiderModuleTypeRewriteFunc aof_rewrite;
+    SiderModuleTypeMemUsageFunc mem_usage;
+    SiderModuleTypeDigestFunc digest;
+    SiderModuleTypeFreeFunc free;
+    SiderModuleTypeAuxLoadFunc aux_load;
+    SiderModuleTypeAuxSaveFunc aux_save;
     int aux_save_triggers;
-    RedisModuleTypeFreeEffortFunc free_effort;
-    RedisModuleTypeUnlinkFunc unlink;
-    RedisModuleTypeCopyFunc copy;
-    RedisModuleTypeDefragFunc defrag;
-    RedisModuleTypeMemUsageFunc2 mem_usage2;
-    RedisModuleTypeFreeEffortFunc2 free_effort2;
-    RedisModuleTypeUnlinkFunc2 unlink2;
-    RedisModuleTypeCopyFunc2 copy2;
-    RedisModuleTypeAuxSaveFunc aux_save2;
-} RedisModuleTypeMethods;
+    SiderModuleTypeFreeEffortFunc free_effort;
+    SiderModuleTypeUnlinkFunc unlink;
+    SiderModuleTypeCopyFunc copy;
+    SiderModuleTypeDefragFunc defrag;
+    SiderModuleTypeMemUsageFunc2 mem_usage2;
+    SiderModuleTypeFreeEffortFunc2 free_effort2;
+    SiderModuleTypeUnlinkFunc2 unlink2;
+    SiderModuleTypeCopyFunc2 copy2;
+    SiderModuleTypeAuxSaveFunc aux_save2;
+} SiderModuleTypeMethods;
 
 #define REDISMODULE_GET_API(name) \
-    RedisModule_GetApi("RedisModule_" #name, ((void **)&RedisModule_ ## name))
+    SiderModule_GetApi("SiderModule_" #name, ((void **)&SiderModule_ ## name))
 
 /* Default API declaration prefix (not 'extern' for backwards compatibility) */
 #ifndef REDISMODULE_API
@@ -956,368 +956,368 @@ typedef struct RedisModuleTypeMethods {
 #define REDISMODULE_ATTR REDISMODULE_ATTR_COMMON
 #endif
 
-REDISMODULE_API void * (*RedisModule_Alloc)(size_t bytes) REDISMODULE_ATTR;
-REDISMODULE_API void * (*RedisModule_TryAlloc)(size_t bytes) REDISMODULE_ATTR;
-REDISMODULE_API void * (*RedisModule_Realloc)(void *ptr, size_t bytes) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_Free)(void *ptr) REDISMODULE_ATTR;
-REDISMODULE_API void * (*RedisModule_Calloc)(size_t nmemb, size_t size) REDISMODULE_ATTR;
-REDISMODULE_API char * (*RedisModule_Strdup)(const char *str) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_GetApi)(const char *, void *) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_CreateCommand)(RedisModuleCtx *ctx, const char *name, RedisModuleCmdFunc cmdfunc, const char *strflags, int firstkey, int lastkey, int keystep) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleCommand *(*RedisModule_GetCommand)(RedisModuleCtx *ctx, const char *name) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_CreateSubcommand)(RedisModuleCommand *parent, const char *name, RedisModuleCmdFunc cmdfunc, const char *strflags, int firstkey, int lastkey, int keystep) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_SetCommandInfo)(RedisModuleCommand *command, const RedisModuleCommandInfo *info) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_SetCommandACLCategories)(RedisModuleCommand *command, const char *ctgrsflags) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_SetModuleAttribs)(RedisModuleCtx *ctx, const char *name, int ver, int apiver) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_IsModuleNameBusy)(const char *name) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_WrongArity)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ReplyWithLongLong)(RedisModuleCtx *ctx, long long ll) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_GetSelectedDb)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_SelectDb)(RedisModuleCtx *ctx, int newid) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_KeyExists)(RedisModuleCtx *ctx, RedisModuleString *keyname) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleKey * (*RedisModule_OpenKey)(RedisModuleCtx *ctx, RedisModuleString *keyname, int mode) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_GetOpenKeyModesAll)(void) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_CloseKey)(RedisModuleKey *kp) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_KeyType)(RedisModuleKey *kp) REDISMODULE_ATTR;
-REDISMODULE_API size_t (*RedisModule_ValueLength)(RedisModuleKey *kp) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ListPush)(RedisModuleKey *kp, int where, RedisModuleString *ele) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_ListPop)(RedisModuleKey *key, int where) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_ListGet)(RedisModuleKey *key, long index) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ListSet)(RedisModuleKey *key, long index, RedisModuleString *value) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ListInsert)(RedisModuleKey *key, long index, RedisModuleString *value) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ListDelete)(RedisModuleKey *key, long index) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleCallReply * (*RedisModule_Call)(RedisModuleCtx *ctx, const char *cmdname, const char *fmt, ...) REDISMODULE_ATTR;
-REDISMODULE_API const char * (*RedisModule_CallReplyProto)(RedisModuleCallReply *reply, size_t *len) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_FreeCallReply)(RedisModuleCallReply *reply) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_CallReplyType)(RedisModuleCallReply *reply) REDISMODULE_ATTR;
-REDISMODULE_API long long (*RedisModule_CallReplyInteger)(RedisModuleCallReply *reply) REDISMODULE_ATTR;
-REDISMODULE_API double (*RedisModule_CallReplyDouble)(RedisModuleCallReply *reply) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_CallReplyBool)(RedisModuleCallReply *reply) REDISMODULE_ATTR;
-REDISMODULE_API const char* (*RedisModule_CallReplyBigNumber)(RedisModuleCallReply *reply, size_t *len) REDISMODULE_ATTR;
-REDISMODULE_API const char* (*RedisModule_CallReplyVerbatim)(RedisModuleCallReply *reply, size_t *len, const char **format) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleCallReply * (*RedisModule_CallReplySetElement)(RedisModuleCallReply *reply, size_t idx) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_CallReplyMapElement)(RedisModuleCallReply *reply, size_t idx, RedisModuleCallReply **key, RedisModuleCallReply **val) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_CallReplyAttributeElement)(RedisModuleCallReply *reply, size_t idx, RedisModuleCallReply **key, RedisModuleCallReply **val) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_CallReplyPromiseSetUnblockHandler)(RedisModuleCallReply *reply, RedisModuleOnUnblocked on_unblock, void *private_data) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_CallReplyPromiseAbort)(RedisModuleCallReply *reply, void **private_data) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleCallReply * (*RedisModule_CallReplyAttribute)(RedisModuleCallReply *reply) REDISMODULE_ATTR;
-REDISMODULE_API size_t (*RedisModule_CallReplyLength)(RedisModuleCallReply *reply) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleCallReply * (*RedisModule_CallReplyArrayElement)(RedisModuleCallReply *reply, size_t idx) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_CreateString)(RedisModuleCtx *ctx, const char *ptr, size_t len) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_CreateStringFromLongLong)(RedisModuleCtx *ctx, long long ll) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_CreateStringFromULongLong)(RedisModuleCtx *ctx, unsigned long long ull) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_CreateStringFromDouble)(RedisModuleCtx *ctx, double d) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_CreateStringFromLongDouble)(RedisModuleCtx *ctx, long double ld, int humanfriendly) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_CreateStringFromString)(RedisModuleCtx *ctx, const RedisModuleString *str) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_CreateStringFromStreamID)(RedisModuleCtx *ctx, const RedisModuleStreamID *id) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_CreateStringPrintf)(RedisModuleCtx *ctx, const char *fmt, ...) REDISMODULE_ATTR_PRINTF(2,3) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_FreeString)(RedisModuleCtx *ctx, RedisModuleString *str) REDISMODULE_ATTR;
-REDISMODULE_API const char * (*RedisModule_StringPtrLen)(const RedisModuleString *str, size_t *len) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ReplyWithError)(RedisModuleCtx *ctx, const char *err) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ReplyWithErrorFormat)(RedisModuleCtx *ctx, const char *fmt, ...) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ReplyWithSimpleString)(RedisModuleCtx *ctx, const char *msg) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ReplyWithArray)(RedisModuleCtx *ctx, long len) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ReplyWithMap)(RedisModuleCtx *ctx, long len) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ReplyWithSet)(RedisModuleCtx *ctx, long len) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ReplyWithAttribute)(RedisModuleCtx *ctx, long len) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ReplyWithNullArray)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ReplyWithEmptyArray)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_ReplySetArrayLength)(RedisModuleCtx *ctx, long len) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_ReplySetMapLength)(RedisModuleCtx *ctx, long len) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_ReplySetSetLength)(RedisModuleCtx *ctx, long len) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_ReplySetAttributeLength)(RedisModuleCtx *ctx, long len) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_ReplySetPushLength)(RedisModuleCtx *ctx, long len) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ReplyWithStringBuffer)(RedisModuleCtx *ctx, const char *buf, size_t len) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ReplyWithCString)(RedisModuleCtx *ctx, const char *buf) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ReplyWithString)(RedisModuleCtx *ctx, RedisModuleString *str) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ReplyWithEmptyString)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ReplyWithVerbatimString)(RedisModuleCtx *ctx, const char *buf, size_t len) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ReplyWithVerbatimStringType)(RedisModuleCtx *ctx, const char *buf, size_t len, const char *ext) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ReplyWithNull)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ReplyWithBool)(RedisModuleCtx *ctx, int b) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ReplyWithLongDouble)(RedisModuleCtx *ctx, long double d) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ReplyWithDouble)(RedisModuleCtx *ctx, double d) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ReplyWithBigNumber)(RedisModuleCtx *ctx, const char *bignum, size_t len) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ReplyWithCallReply)(RedisModuleCtx *ctx, RedisModuleCallReply *reply) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_StringToLongLong)(const RedisModuleString *str, long long *ll) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_StringToULongLong)(const RedisModuleString *str, unsigned long long *ull) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_StringToDouble)(const RedisModuleString *str, double *d) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_StringToLongDouble)(const RedisModuleString *str, long double *d) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_StringToStreamID)(const RedisModuleString *str, RedisModuleStreamID *id) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_AutoMemory)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_Replicate)(RedisModuleCtx *ctx, const char *cmdname, const char *fmt, ...) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ReplicateVerbatim)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API const char * (*RedisModule_CallReplyStringPtr)(RedisModuleCallReply *reply, size_t *len) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_CreateStringFromCallReply)(RedisModuleCallReply *reply) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_DeleteKey)(RedisModuleKey *key) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_UnlinkKey)(RedisModuleKey *key) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_StringSet)(RedisModuleKey *key, RedisModuleString *str) REDISMODULE_ATTR;
-REDISMODULE_API char * (*RedisModule_StringDMA)(RedisModuleKey *key, size_t *len, int mode) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_StringTruncate)(RedisModuleKey *key, size_t newlen) REDISMODULE_ATTR;
-REDISMODULE_API mstime_t (*RedisModule_GetExpire)(RedisModuleKey *key) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_SetExpire)(RedisModuleKey *key, mstime_t expire) REDISMODULE_ATTR;
-REDISMODULE_API mstime_t (*RedisModule_GetAbsExpire)(RedisModuleKey *key) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_SetAbsExpire)(RedisModuleKey *key, mstime_t expire) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_ResetDataset)(int restart_aof, int async) REDISMODULE_ATTR;
-REDISMODULE_API unsigned long long (*RedisModule_DbSize)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_RandomKey)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ZsetAdd)(RedisModuleKey *key, double score, RedisModuleString *ele, int *flagsptr) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ZsetIncrby)(RedisModuleKey *key, double score, RedisModuleString *ele, int *flagsptr, double *newscore) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ZsetScore)(RedisModuleKey *key, RedisModuleString *ele, double *score) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ZsetRem)(RedisModuleKey *key, RedisModuleString *ele, int *deleted) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_ZsetRangeStop)(RedisModuleKey *key) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ZsetFirstInScoreRange)(RedisModuleKey *key, double min, double max, int minex, int maxex) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ZsetLastInScoreRange)(RedisModuleKey *key, double min, double max, int minex, int maxex) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ZsetFirstInLexRange)(RedisModuleKey *key, RedisModuleString *min, RedisModuleString *max) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ZsetLastInLexRange)(RedisModuleKey *key, RedisModuleString *min, RedisModuleString *max) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_ZsetRangeCurrentElement)(RedisModuleKey *key, double *score) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ZsetRangeNext)(RedisModuleKey *key) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ZsetRangePrev)(RedisModuleKey *key) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ZsetRangeEndReached)(RedisModuleKey *key) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_HashSet)(RedisModuleKey *key, int flags, ...) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_HashGet)(RedisModuleKey *key, int flags, ...) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_StreamAdd)(RedisModuleKey *key, int flags, RedisModuleStreamID *id, RedisModuleString **argv, int64_t numfields) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_StreamDelete)(RedisModuleKey *key, RedisModuleStreamID *id) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_StreamIteratorStart)(RedisModuleKey *key, int flags, RedisModuleStreamID *startid, RedisModuleStreamID *endid) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_StreamIteratorStop)(RedisModuleKey *key) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_StreamIteratorNextID)(RedisModuleKey *key, RedisModuleStreamID *id, long *numfields) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_StreamIteratorNextField)(RedisModuleKey *key, RedisModuleString **field_ptr, RedisModuleString **value_ptr) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_StreamIteratorDelete)(RedisModuleKey *key) REDISMODULE_ATTR;
-REDISMODULE_API long long (*RedisModule_StreamTrimByLength)(RedisModuleKey *key, int flags, long long length) REDISMODULE_ATTR;
-REDISMODULE_API long long (*RedisModule_StreamTrimByID)(RedisModuleKey *key, int flags, RedisModuleStreamID *id) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_IsKeysPositionRequest)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_KeyAtPos)(RedisModuleCtx *ctx, int pos) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_KeyAtPosWithFlags)(RedisModuleCtx *ctx, int pos, int flags) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_IsChannelsPositionRequest)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_ChannelAtPosWithFlags)(RedisModuleCtx *ctx, int pos, int flags) REDISMODULE_ATTR;
-REDISMODULE_API unsigned long long (*RedisModule_GetClientId)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_GetClientUserNameById)(RedisModuleCtx *ctx, uint64_t id) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_GetClientInfoById)(void *ci, uint64_t id) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_GetClientNameById)(RedisModuleCtx *ctx, uint64_t id) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_SetClientNameById)(uint64_t id, RedisModuleString *name) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_PublishMessage)(RedisModuleCtx *ctx, RedisModuleString *channel, RedisModuleString *message) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_PublishMessageShard)(RedisModuleCtx *ctx, RedisModuleString *channel, RedisModuleString *message) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_GetContextFlags)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_AvoidReplicaTraffic)(void) REDISMODULE_ATTR;
-REDISMODULE_API void * (*RedisModule_PoolAlloc)(RedisModuleCtx *ctx, size_t bytes) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleType * (*RedisModule_CreateDataType)(RedisModuleCtx *ctx, const char *name, int encver, RedisModuleTypeMethods *typemethods) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ModuleTypeSetValue)(RedisModuleKey *key, RedisModuleType *mt, void *value) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ModuleTypeReplaceValue)(RedisModuleKey *key, RedisModuleType *mt, void *new_value, void **old_value) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleType * (*RedisModule_ModuleTypeGetType)(RedisModuleKey *key) REDISMODULE_ATTR;
-REDISMODULE_API void * (*RedisModule_ModuleTypeGetValue)(RedisModuleKey *key) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_IsIOError)(RedisModuleIO *io) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_SetModuleOptions)(RedisModuleCtx *ctx, int options) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_SignalModifiedKey)(RedisModuleCtx *ctx, RedisModuleString *keyname) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_SaveUnsigned)(RedisModuleIO *io, uint64_t value) REDISMODULE_ATTR;
-REDISMODULE_API uint64_t (*RedisModule_LoadUnsigned)(RedisModuleIO *io) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_SaveSigned)(RedisModuleIO *io, int64_t value) REDISMODULE_ATTR;
-REDISMODULE_API int64_t (*RedisModule_LoadSigned)(RedisModuleIO *io) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_EmitAOF)(RedisModuleIO *io, const char *cmdname, const char *fmt, ...) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_SaveString)(RedisModuleIO *io, RedisModuleString *s) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_SaveStringBuffer)(RedisModuleIO *io, const char *str, size_t len) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_LoadString)(RedisModuleIO *io) REDISMODULE_ATTR;
-REDISMODULE_API char * (*RedisModule_LoadStringBuffer)(RedisModuleIO *io, size_t *lenptr) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_SaveDouble)(RedisModuleIO *io, double value) REDISMODULE_ATTR;
-REDISMODULE_API double (*RedisModule_LoadDouble)(RedisModuleIO *io) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_SaveFloat)(RedisModuleIO *io, float value) REDISMODULE_ATTR;
-REDISMODULE_API float (*RedisModule_LoadFloat)(RedisModuleIO *io) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_SaveLongDouble)(RedisModuleIO *io, long double value) REDISMODULE_ATTR;
-REDISMODULE_API long double (*RedisModule_LoadLongDouble)(RedisModuleIO *io) REDISMODULE_ATTR;
-REDISMODULE_API void * (*RedisModule_LoadDataTypeFromString)(const RedisModuleString *str, const RedisModuleType *mt) REDISMODULE_ATTR;
-REDISMODULE_API void * (*RedisModule_LoadDataTypeFromStringEncver)(const RedisModuleString *str, const RedisModuleType *mt, int encver) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_SaveDataTypeToString)(RedisModuleCtx *ctx, void *data, const RedisModuleType *mt) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_Log)(RedisModuleCtx *ctx, const char *level, const char *fmt, ...) REDISMODULE_ATTR REDISMODULE_ATTR_PRINTF(3,4);
-REDISMODULE_API void (*RedisModule_LogIOError)(RedisModuleIO *io, const char *levelstr, const char *fmt, ...) REDISMODULE_ATTR REDISMODULE_ATTR_PRINTF(3,4);
-REDISMODULE_API void (*RedisModule__Assert)(const char *estr, const char *file, int line) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_LatencyAddSample)(const char *event, mstime_t latency) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_StringAppendBuffer)(RedisModuleCtx *ctx, RedisModuleString *str, const char *buf, size_t len) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_TrimStringAllocation)(RedisModuleString *str) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_RetainString)(RedisModuleCtx *ctx, RedisModuleString *str) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_HoldString)(RedisModuleCtx *ctx, RedisModuleString *str) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_StringCompare)(const RedisModuleString *a, const RedisModuleString *b) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleCtx * (*RedisModule_GetContextFromIO)(RedisModuleIO *io) REDISMODULE_ATTR;
-REDISMODULE_API const RedisModuleString * (*RedisModule_GetKeyNameFromIO)(RedisModuleIO *io) REDISMODULE_ATTR;
-REDISMODULE_API const RedisModuleString * (*RedisModule_GetKeyNameFromModuleKey)(RedisModuleKey *key) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_GetDbIdFromModuleKey)(RedisModuleKey *key) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_GetDbIdFromIO)(RedisModuleIO *io) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_GetDbIdFromOptCtx)(RedisModuleKeyOptCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_GetToDbIdFromOptCtx)(RedisModuleKeyOptCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API const RedisModuleString * (*RedisModule_GetKeyNameFromOptCtx)(RedisModuleKeyOptCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API const RedisModuleString * (*RedisModule_GetToKeyNameFromOptCtx)(RedisModuleKeyOptCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API mstime_t (*RedisModule_Milliseconds)(void) REDISMODULE_ATTR;
-REDISMODULE_API uint64_t (*RedisModule_MonotonicMicroseconds)(void) REDISMODULE_ATTR;
-REDISMODULE_API ustime_t (*RedisModule_Microseconds)(void) REDISMODULE_ATTR;
-REDISMODULE_API ustime_t (*RedisModule_CachedMicroseconds)(void) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_DigestAddStringBuffer)(RedisModuleDigest *md, const char *ele, size_t len) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_DigestAddLongLong)(RedisModuleDigest *md, long long ele) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_DigestEndSequence)(RedisModuleDigest *md) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_GetDbIdFromDigest)(RedisModuleDigest *dig) REDISMODULE_ATTR;
-REDISMODULE_API const RedisModuleString * (*RedisModule_GetKeyNameFromDigest)(RedisModuleDigest *dig) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleDict * (*RedisModule_CreateDict)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_FreeDict)(RedisModuleCtx *ctx, RedisModuleDict *d) REDISMODULE_ATTR;
-REDISMODULE_API uint64_t (*RedisModule_DictSize)(RedisModuleDict *d) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_DictSetC)(RedisModuleDict *d, void *key, size_t keylen, void *ptr) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_DictReplaceC)(RedisModuleDict *d, void *key, size_t keylen, void *ptr) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_DictSet)(RedisModuleDict *d, RedisModuleString *key, void *ptr) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_DictReplace)(RedisModuleDict *d, RedisModuleString *key, void *ptr) REDISMODULE_ATTR;
-REDISMODULE_API void * (*RedisModule_DictGetC)(RedisModuleDict *d, void *key, size_t keylen, int *nokey) REDISMODULE_ATTR;
-REDISMODULE_API void * (*RedisModule_DictGet)(RedisModuleDict *d, RedisModuleString *key, int *nokey) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_DictDelC)(RedisModuleDict *d, void *key, size_t keylen, void *oldval) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_DictDel)(RedisModuleDict *d, RedisModuleString *key, void *oldval) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleDictIter * (*RedisModule_DictIteratorStartC)(RedisModuleDict *d, const char *op, void *key, size_t keylen) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleDictIter * (*RedisModule_DictIteratorStart)(RedisModuleDict *d, const char *op, RedisModuleString *key) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_DictIteratorStop)(RedisModuleDictIter *di) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_DictIteratorReseekC)(RedisModuleDictIter *di, const char *op, void *key, size_t keylen) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_DictIteratorReseek)(RedisModuleDictIter *di, const char *op, RedisModuleString *key) REDISMODULE_ATTR;
-REDISMODULE_API void * (*RedisModule_DictNextC)(RedisModuleDictIter *di, size_t *keylen, void **dataptr) REDISMODULE_ATTR;
-REDISMODULE_API void * (*RedisModule_DictPrevC)(RedisModuleDictIter *di, size_t *keylen, void **dataptr) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_DictNext)(RedisModuleCtx *ctx, RedisModuleDictIter *di, void **dataptr) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_DictPrev)(RedisModuleCtx *ctx, RedisModuleDictIter *di, void **dataptr) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_DictCompareC)(RedisModuleDictIter *di, const char *op, void *key, size_t keylen) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_DictCompare)(RedisModuleDictIter *di, const char *op, RedisModuleString *key) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_RegisterInfoFunc)(RedisModuleCtx *ctx, RedisModuleInfoFunc cb) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_RegisterAuthCallback)(RedisModuleCtx *ctx, RedisModuleAuthCallback cb) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_InfoAddSection)(RedisModuleInfoCtx *ctx, const char *name) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_InfoBeginDictField)(RedisModuleInfoCtx *ctx, const char *name) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_InfoEndDictField)(RedisModuleInfoCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_InfoAddFieldString)(RedisModuleInfoCtx *ctx, const char *field, RedisModuleString *value) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_InfoAddFieldCString)(RedisModuleInfoCtx *ctx, const char *field,const  char *value) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_InfoAddFieldDouble)(RedisModuleInfoCtx *ctx, const char *field, double value) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_InfoAddFieldLongLong)(RedisModuleInfoCtx *ctx, const char *field, long long value) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_InfoAddFieldULongLong)(RedisModuleInfoCtx *ctx, const char *field, unsigned long long value) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleServerInfoData * (*RedisModule_GetServerInfo)(RedisModuleCtx *ctx, const char *section) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_FreeServerInfo)(RedisModuleCtx *ctx, RedisModuleServerInfoData *data) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_ServerInfoGetField)(RedisModuleCtx *ctx, RedisModuleServerInfoData *data, const char* field) REDISMODULE_ATTR;
-REDISMODULE_API const char * (*RedisModule_ServerInfoGetFieldC)(RedisModuleServerInfoData *data, const char* field) REDISMODULE_ATTR;
-REDISMODULE_API long long (*RedisModule_ServerInfoGetFieldSigned)(RedisModuleServerInfoData *data, const char* field, int *out_err) REDISMODULE_ATTR;
-REDISMODULE_API unsigned long long (*RedisModule_ServerInfoGetFieldUnsigned)(RedisModuleServerInfoData *data, const char* field, int *out_err) REDISMODULE_ATTR;
-REDISMODULE_API double (*RedisModule_ServerInfoGetFieldDouble)(RedisModuleServerInfoData *data, const char* field, int *out_err) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_SubscribeToServerEvent)(RedisModuleCtx *ctx, RedisModuleEvent event, RedisModuleEventCallback callback) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_SetLRU)(RedisModuleKey *key, mstime_t lru_idle) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_GetLRU)(RedisModuleKey *key, mstime_t *lru_idle) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_SetLFU)(RedisModuleKey *key, long long lfu_freq) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_GetLFU)(RedisModuleKey *key, long long *lfu_freq) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleBlockedClient * (*RedisModule_BlockClientOnKeys)(RedisModuleCtx *ctx, RedisModuleCmdFunc reply_callback, RedisModuleCmdFunc timeout_callback, void (*free_privdata)(RedisModuleCtx*,void*), long long timeout_ms, RedisModuleString **keys, int numkeys, void *privdata) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleBlockedClient * (*RedisModule_BlockClientOnKeysWithFlags)(RedisModuleCtx *ctx, RedisModuleCmdFunc reply_callback, RedisModuleCmdFunc timeout_callback, void (*free_privdata)(RedisModuleCtx*,void*), long long timeout_ms, RedisModuleString **keys, int numkeys, void *privdata, int flags) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_SignalKeyAsReady)(RedisModuleCtx *ctx, RedisModuleString *key) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_GetBlockedClientReadyKey)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleScanCursor * (*RedisModule_ScanCursorCreate)(void) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_ScanCursorRestart)(RedisModuleScanCursor *cursor) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_ScanCursorDestroy)(RedisModuleScanCursor *cursor) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_Scan)(RedisModuleCtx *ctx, RedisModuleScanCursor *cursor, RedisModuleScanCB fn, void *privdata) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ScanKey)(RedisModuleKey *key, RedisModuleScanCursor *cursor, RedisModuleScanKeyCB fn, void *privdata) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_GetContextFlagsAll)(void) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_GetModuleOptionsAll)(void) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_GetKeyspaceNotificationFlagsAll)(void) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_IsSubEventSupported)(RedisModuleEvent event, uint64_t subevent) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_GetServerVersion)(void) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_GetTypeMethodVersion)(void) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_Yield)(RedisModuleCtx *ctx, int flags, const char *busy_reply) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleBlockedClient * (*RedisModule_BlockClient)(RedisModuleCtx *ctx, RedisModuleCmdFunc reply_callback, RedisModuleCmdFunc timeout_callback, void (*free_privdata)(RedisModuleCtx*,void*), long long timeout_ms) REDISMODULE_ATTR;
-REDISMODULE_API void * (*RedisModule_BlockClientGetPrivateData)(RedisModuleBlockedClient *blocked_client) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_BlockClientSetPrivateData)(RedisModuleBlockedClient *blocked_client, void *private_data) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleBlockedClient * (*RedisModule_BlockClientOnAuth)(RedisModuleCtx *ctx, RedisModuleAuthCallback reply_callback, void (*free_privdata)(RedisModuleCtx*,void*)) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_UnblockClient)(RedisModuleBlockedClient *bc, void *privdata) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_IsBlockedReplyRequest)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_IsBlockedTimeoutRequest)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API void * (*RedisModule_GetBlockedClientPrivateData)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleBlockedClient * (*RedisModule_GetBlockedClientHandle)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_AbortBlock)(RedisModuleBlockedClient *bc) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_BlockedClientMeasureTimeStart)(RedisModuleBlockedClient *bc) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_BlockedClientMeasureTimeEnd)(RedisModuleBlockedClient *bc) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleCtx * (*RedisModule_GetThreadSafeContext)(RedisModuleBlockedClient *bc) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleCtx * (*RedisModule_GetDetachedThreadSafeContext)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_FreeThreadSafeContext)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_ThreadSafeContextLock)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ThreadSafeContextTryLock)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_ThreadSafeContextUnlock)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_SubscribeToKeyspaceEvents)(RedisModuleCtx *ctx, int types, RedisModuleNotificationFunc cb) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_AddPostNotificationJob)(RedisModuleCtx *ctx, RedisModulePostNotificationJobFunc callback, void *pd, void (*free_pd)(void*)) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_NotifyKeyspaceEvent)(RedisModuleCtx *ctx, int type, const char *event, RedisModuleString *key) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_GetNotifyKeyspaceEvents)(void) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_BlockedClientDisconnected)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_RegisterClusterMessageReceiver)(RedisModuleCtx *ctx, uint8_t type, RedisModuleClusterMessageReceiver callback) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_SendClusterMessage)(RedisModuleCtx *ctx, const char *target_id, uint8_t type, const char *msg, uint32_t len) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_GetClusterNodeInfo)(RedisModuleCtx *ctx, const char *id, char *ip, char *master_id, int *port, int *flags) REDISMODULE_ATTR;
-REDISMODULE_API char ** (*RedisModule_GetClusterNodesList)(RedisModuleCtx *ctx, size_t *numnodes) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_FreeClusterNodesList)(char **ids) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleTimerID (*RedisModule_CreateTimer)(RedisModuleCtx *ctx, mstime_t period, RedisModuleTimerProc callback, void *data) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_StopTimer)(RedisModuleCtx *ctx, RedisModuleTimerID id, void **data) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_GetTimerInfo)(RedisModuleCtx *ctx, RedisModuleTimerID id, uint64_t *remaining, void **data) REDISMODULE_ATTR;
-REDISMODULE_API const char * (*RedisModule_GetMyClusterID)(void) REDISMODULE_ATTR;
-REDISMODULE_API size_t (*RedisModule_GetClusterSize)(void) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_GetRandomBytes)(unsigned char *dst, size_t len) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_GetRandomHexChars)(char *dst, size_t len) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_SetDisconnectCallback)(RedisModuleBlockedClient *bc, RedisModuleDisconnectFunc callback) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_SetClusterFlags)(RedisModuleCtx *ctx, uint64_t flags) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ExportSharedAPI)(RedisModuleCtx *ctx, const char *apiname, void *func) REDISMODULE_ATTR;
-REDISMODULE_API void * (*RedisModule_GetSharedAPI)(RedisModuleCtx *ctx, const char *apiname) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleCommandFilter * (*RedisModule_RegisterCommandFilter)(RedisModuleCtx *ctx, RedisModuleCommandFilterFunc cb, int flags) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_UnregisterCommandFilter)(RedisModuleCtx *ctx, RedisModuleCommandFilter *filter) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_CommandFilterArgsCount)(RedisModuleCommandFilterCtx *fctx) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_CommandFilterArgGet)(RedisModuleCommandFilterCtx *fctx, int pos) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_CommandFilterArgInsert)(RedisModuleCommandFilterCtx *fctx, int pos, RedisModuleString *arg) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_CommandFilterArgReplace)(RedisModuleCommandFilterCtx *fctx, int pos, RedisModuleString *arg) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_CommandFilterArgDelete)(RedisModuleCommandFilterCtx *fctx, int pos) REDISMODULE_ATTR;
-REDISMODULE_API unsigned long long (*RedisModule_CommandFilterGetClientId)(RedisModuleCommandFilterCtx *fctx) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_Fork)(RedisModuleForkDoneHandler cb, void *user_data) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_SendChildHeartbeat)(double progress) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ExitFromChild)(int retcode) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_KillForkChild)(int child_pid) REDISMODULE_ATTR;
-REDISMODULE_API float (*RedisModule_GetUsedMemoryRatio)(void) REDISMODULE_ATTR;
-REDISMODULE_API size_t (*RedisModule_MallocSize)(void* ptr) REDISMODULE_ATTR;
-REDISMODULE_API size_t (*RedisModule_MallocUsableSize)(void *ptr) REDISMODULE_ATTR;
-REDISMODULE_API size_t (*RedisModule_MallocSizeString)(RedisModuleString* str) REDISMODULE_ATTR;
-REDISMODULE_API size_t (*RedisModule_MallocSizeDict)(RedisModuleDict* dict) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleUser * (*RedisModule_CreateModuleUser)(const char *name) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_FreeModuleUser)(RedisModuleUser *user) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_SetContextUser)(RedisModuleCtx *ctx, const RedisModuleUser *user) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_SetModuleUserACL)(RedisModuleUser *user, const char* acl) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_SetModuleUserACLString)(RedisModuleCtx * ctx, RedisModuleUser *user, const char* acl, RedisModuleString **error) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_GetModuleUserACLString)(RedisModuleUser *user) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_GetCurrentUserName)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleUser * (*RedisModule_GetModuleUserFromUserName)(RedisModuleString *name) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ACLCheckCommandPermissions)(RedisModuleUser *user, RedisModuleString **argv, int argc) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ACLCheckKeyPermissions)(RedisModuleUser *user, RedisModuleString *key, int flags) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_ACLCheckChannelPermissions)(RedisModuleUser *user, RedisModuleString *ch, int literal) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_ACLAddLogEntry)(RedisModuleCtx *ctx, RedisModuleUser *user, RedisModuleString *object, RedisModuleACLLogEntryReason reason) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_ACLAddLogEntryByUserName)(RedisModuleCtx *ctx, RedisModuleString *user, RedisModuleString *object, RedisModuleACLLogEntryReason reason) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_AuthenticateClientWithACLUser)(RedisModuleCtx *ctx, const char *name, size_t len, RedisModuleUserChangedFunc callback, void *privdata, uint64_t *client_id) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_AuthenticateClientWithUser)(RedisModuleCtx *ctx, RedisModuleUser *user, RedisModuleUserChangedFunc callback, void *privdata, uint64_t *client_id) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_DeauthenticateAndCloseClient)(RedisModuleCtx *ctx, uint64_t client_id) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_RedactClientCommandArgument)(RedisModuleCtx *ctx, int pos) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString * (*RedisModule_GetClientCertificate)(RedisModuleCtx *ctx, uint64_t id) REDISMODULE_ATTR;
-REDISMODULE_API int *(*RedisModule_GetCommandKeys)(RedisModuleCtx *ctx, RedisModuleString **argv, int argc, int *num_keys) REDISMODULE_ATTR;
-REDISMODULE_API int *(*RedisModule_GetCommandKeysWithFlags)(RedisModuleCtx *ctx, RedisModuleString **argv, int argc, int *num_keys, int **out_flags) REDISMODULE_ATTR;
-REDISMODULE_API const char *(*RedisModule_GetCurrentCommandName)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_RegisterDefragFunc)(RedisModuleCtx *ctx, RedisModuleDefragFunc func) REDISMODULE_ATTR;
-REDISMODULE_API void *(*RedisModule_DefragAlloc)(RedisModuleDefragCtx *ctx, void *ptr) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleString *(*RedisModule_DefragRedisModuleString)(RedisModuleDefragCtx *ctx, RedisModuleString *str) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_DefragShouldStop)(RedisModuleDefragCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_DefragCursorSet)(RedisModuleDefragCtx *ctx, unsigned long cursor) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_DefragCursorGet)(RedisModuleDefragCtx *ctx, unsigned long *cursor) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_GetDbIdFromDefragCtx)(RedisModuleDefragCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API const RedisModuleString * (*RedisModule_GetKeyNameFromDefragCtx)(RedisModuleDefragCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_EventLoopAdd)(int fd, int mask, RedisModuleEventLoopFunc func, void *user_data) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_EventLoopDel)(int fd, int mask) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_EventLoopAddOneShot)(RedisModuleEventLoopOneShotFunc func, void *user_data) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_RegisterBoolConfig)(RedisModuleCtx *ctx, const char *name, int default_val, unsigned int flags, RedisModuleConfigGetBoolFunc getfn, RedisModuleConfigSetBoolFunc setfn, RedisModuleConfigApplyFunc applyfn, void *privdata) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_RegisterNumericConfig)(RedisModuleCtx *ctx, const char *name, long long default_val, unsigned int flags, long long min, long long max, RedisModuleConfigGetNumericFunc getfn, RedisModuleConfigSetNumericFunc setfn, RedisModuleConfigApplyFunc applyfn, void *privdata) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_RegisterStringConfig)(RedisModuleCtx *ctx, const char *name, const char *default_val, unsigned int flags, RedisModuleConfigGetStringFunc getfn, RedisModuleConfigSetStringFunc setfn, RedisModuleConfigApplyFunc applyfn, void *privdata) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_RegisterEnumConfig)(RedisModuleCtx *ctx, const char *name, int default_val, unsigned int flags, const char **enum_values, const int *int_values, int num_enum_vals, RedisModuleConfigGetEnumFunc getfn, RedisModuleConfigSetEnumFunc setfn, RedisModuleConfigApplyFunc applyfn, void *privdata) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_LoadConfigs)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
-REDISMODULE_API RedisModuleRdbStream *(*RedisModule_RdbStreamCreateFromFile)(const char *filename) REDISMODULE_ATTR;
-REDISMODULE_API void (*RedisModule_RdbStreamFree)(RedisModuleRdbStream *stream) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_RdbLoad)(RedisModuleCtx *ctx, RedisModuleRdbStream *stream, int flags) REDISMODULE_ATTR;
-REDISMODULE_API int (*RedisModule_RdbSave)(RedisModuleCtx *ctx, RedisModuleRdbStream *stream, int flags) REDISMODULE_ATTR;
+REDISMODULE_API void * (*SiderModule_Alloc)(size_t bytes) REDISMODULE_ATTR;
+REDISMODULE_API void * (*SiderModule_TryAlloc)(size_t bytes) REDISMODULE_ATTR;
+REDISMODULE_API void * (*SiderModule_Realloc)(void *ptr, size_t bytes) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_Free)(void *ptr) REDISMODULE_ATTR;
+REDISMODULE_API void * (*SiderModule_Calloc)(size_t nmemb, size_t size) REDISMODULE_ATTR;
+REDISMODULE_API char * (*SiderModule_Strdup)(const char *str) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_GetApi)(const char *, void *) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_CreateCommand)(SiderModuleCtx *ctx, const char *name, SiderModuleCmdFunc cmdfunc, const char *strflags, int firstkey, int lastkey, int keystep) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleCommand *(*SiderModule_GetCommand)(SiderModuleCtx *ctx, const char *name) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_CreateSubcommand)(SiderModuleCommand *parent, const char *name, SiderModuleCmdFunc cmdfunc, const char *strflags, int firstkey, int lastkey, int keystep) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_SetCommandInfo)(SiderModuleCommand *command, const SiderModuleCommandInfo *info) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_SetCommandACLCategories)(SiderModuleCommand *command, const char *ctgrsflags) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_SetModuleAttribs)(SiderModuleCtx *ctx, const char *name, int ver, int apiver) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_IsModuleNameBusy)(const char *name) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_WrongArity)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ReplyWithLongLong)(SiderModuleCtx *ctx, long long ll) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_GetSelectedDb)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_SelectDb)(SiderModuleCtx *ctx, int newid) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_KeyExists)(SiderModuleCtx *ctx, SiderModuleString *keyname) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleKey * (*SiderModule_OpenKey)(SiderModuleCtx *ctx, SiderModuleString *keyname, int mode) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_GetOpenKeyModesAll)(void) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_CloseKey)(SiderModuleKey *kp) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_KeyType)(SiderModuleKey *kp) REDISMODULE_ATTR;
+REDISMODULE_API size_t (*SiderModule_ValueLength)(SiderModuleKey *kp) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ListPush)(SiderModuleKey *kp, int where, SiderModuleString *ele) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_ListPop)(SiderModuleKey *key, int where) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_ListGet)(SiderModuleKey *key, long index) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ListSet)(SiderModuleKey *key, long index, SiderModuleString *value) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ListInsert)(SiderModuleKey *key, long index, SiderModuleString *value) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ListDelete)(SiderModuleKey *key, long index) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleCallReply * (*SiderModule_Call)(SiderModuleCtx *ctx, const char *cmdname, const char *fmt, ...) REDISMODULE_ATTR;
+REDISMODULE_API const char * (*SiderModule_CallReplyProto)(SiderModuleCallReply *reply, size_t *len) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_FreeCallReply)(SiderModuleCallReply *reply) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_CallReplyType)(SiderModuleCallReply *reply) REDISMODULE_ATTR;
+REDISMODULE_API long long (*SiderModule_CallReplyInteger)(SiderModuleCallReply *reply) REDISMODULE_ATTR;
+REDISMODULE_API double (*SiderModule_CallReplyDouble)(SiderModuleCallReply *reply) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_CallReplyBool)(SiderModuleCallReply *reply) REDISMODULE_ATTR;
+REDISMODULE_API const char* (*SiderModule_CallReplyBigNumber)(SiderModuleCallReply *reply, size_t *len) REDISMODULE_ATTR;
+REDISMODULE_API const char* (*SiderModule_CallReplyVerbatim)(SiderModuleCallReply *reply, size_t *len, const char **format) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleCallReply * (*SiderModule_CallReplySetElement)(SiderModuleCallReply *reply, size_t idx) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_CallReplyMapElement)(SiderModuleCallReply *reply, size_t idx, SiderModuleCallReply **key, SiderModuleCallReply **val) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_CallReplyAttributeElement)(SiderModuleCallReply *reply, size_t idx, SiderModuleCallReply **key, SiderModuleCallReply **val) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_CallReplyPromiseSetUnblockHandler)(SiderModuleCallReply *reply, SiderModuleOnUnblocked on_unblock, void *private_data) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_CallReplyPromiseAbort)(SiderModuleCallReply *reply, void **private_data) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleCallReply * (*SiderModule_CallReplyAttribute)(SiderModuleCallReply *reply) REDISMODULE_ATTR;
+REDISMODULE_API size_t (*SiderModule_CallReplyLength)(SiderModuleCallReply *reply) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleCallReply * (*SiderModule_CallReplyArrayElement)(SiderModuleCallReply *reply, size_t idx) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_CreateString)(SiderModuleCtx *ctx, const char *ptr, size_t len) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_CreateStringFromLongLong)(SiderModuleCtx *ctx, long long ll) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_CreateStringFromULongLong)(SiderModuleCtx *ctx, unsigned long long ull) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_CreateStringFromDouble)(SiderModuleCtx *ctx, double d) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_CreateStringFromLongDouble)(SiderModuleCtx *ctx, long double ld, int humanfriendly) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_CreateStringFromString)(SiderModuleCtx *ctx, const SiderModuleString *str) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_CreateStringFromStreamID)(SiderModuleCtx *ctx, const SiderModuleStreamID *id) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_CreateStringPrintf)(SiderModuleCtx *ctx, const char *fmt, ...) REDISMODULE_ATTR_PRINTF(2,3) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_FreeString)(SiderModuleCtx *ctx, SiderModuleString *str) REDISMODULE_ATTR;
+REDISMODULE_API const char * (*SiderModule_StringPtrLen)(const SiderModuleString *str, size_t *len) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ReplyWithError)(SiderModuleCtx *ctx, const char *err) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ReplyWithErrorFormat)(SiderModuleCtx *ctx, const char *fmt, ...) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ReplyWithSimpleString)(SiderModuleCtx *ctx, const char *msg) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ReplyWithArray)(SiderModuleCtx *ctx, long len) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ReplyWithMap)(SiderModuleCtx *ctx, long len) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ReplyWithSet)(SiderModuleCtx *ctx, long len) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ReplyWithAttribute)(SiderModuleCtx *ctx, long len) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ReplyWithNullArray)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ReplyWithEmptyArray)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_ReplySetArrayLength)(SiderModuleCtx *ctx, long len) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_ReplySetMapLength)(SiderModuleCtx *ctx, long len) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_ReplySetSetLength)(SiderModuleCtx *ctx, long len) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_ReplySetAttributeLength)(SiderModuleCtx *ctx, long len) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_ReplySetPushLength)(SiderModuleCtx *ctx, long len) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ReplyWithStringBuffer)(SiderModuleCtx *ctx, const char *buf, size_t len) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ReplyWithCString)(SiderModuleCtx *ctx, const char *buf) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ReplyWithString)(SiderModuleCtx *ctx, SiderModuleString *str) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ReplyWithEmptyString)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ReplyWithVerbatimString)(SiderModuleCtx *ctx, const char *buf, size_t len) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ReplyWithVerbatimStringType)(SiderModuleCtx *ctx, const char *buf, size_t len, const char *ext) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ReplyWithNull)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ReplyWithBool)(SiderModuleCtx *ctx, int b) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ReplyWithLongDouble)(SiderModuleCtx *ctx, long double d) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ReplyWithDouble)(SiderModuleCtx *ctx, double d) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ReplyWithBigNumber)(SiderModuleCtx *ctx, const char *bignum, size_t len) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ReplyWithCallReply)(SiderModuleCtx *ctx, SiderModuleCallReply *reply) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_StringToLongLong)(const SiderModuleString *str, long long *ll) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_StringToULongLong)(const SiderModuleString *str, unsigned long long *ull) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_StringToDouble)(const SiderModuleString *str, double *d) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_StringToLongDouble)(const SiderModuleString *str, long double *d) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_StringToStreamID)(const SiderModuleString *str, SiderModuleStreamID *id) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_AutoMemory)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_Replicate)(SiderModuleCtx *ctx, const char *cmdname, const char *fmt, ...) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ReplicateVerbatim)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API const char * (*SiderModule_CallReplyStringPtr)(SiderModuleCallReply *reply, size_t *len) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_CreateStringFromCallReply)(SiderModuleCallReply *reply) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_DeleteKey)(SiderModuleKey *key) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_UnlinkKey)(SiderModuleKey *key) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_StringSet)(SiderModuleKey *key, SiderModuleString *str) REDISMODULE_ATTR;
+REDISMODULE_API char * (*SiderModule_StringDMA)(SiderModuleKey *key, size_t *len, int mode) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_StringTruncate)(SiderModuleKey *key, size_t newlen) REDISMODULE_ATTR;
+REDISMODULE_API mstime_t (*SiderModule_GetExpire)(SiderModuleKey *key) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_SetExpire)(SiderModuleKey *key, mstime_t expire) REDISMODULE_ATTR;
+REDISMODULE_API mstime_t (*SiderModule_GetAbsExpire)(SiderModuleKey *key) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_SetAbsExpire)(SiderModuleKey *key, mstime_t expire) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_ResetDataset)(int restart_aof, int async) REDISMODULE_ATTR;
+REDISMODULE_API unsigned long long (*SiderModule_DbSize)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_RandomKey)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ZsetAdd)(SiderModuleKey *key, double score, SiderModuleString *ele, int *flagsptr) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ZsetIncrby)(SiderModuleKey *key, double score, SiderModuleString *ele, int *flagsptr, double *newscore) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ZsetScore)(SiderModuleKey *key, SiderModuleString *ele, double *score) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ZsetRem)(SiderModuleKey *key, SiderModuleString *ele, int *deleted) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_ZsetRangeStop)(SiderModuleKey *key) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ZsetFirstInScoreRange)(SiderModuleKey *key, double min, double max, int minex, int maxex) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ZsetLastInScoreRange)(SiderModuleKey *key, double min, double max, int minex, int maxex) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ZsetFirstInLexRange)(SiderModuleKey *key, SiderModuleString *min, SiderModuleString *max) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ZsetLastInLexRange)(SiderModuleKey *key, SiderModuleString *min, SiderModuleString *max) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_ZsetRangeCurrentElement)(SiderModuleKey *key, double *score) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ZsetRangeNext)(SiderModuleKey *key) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ZsetRangePrev)(SiderModuleKey *key) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ZsetRangeEndReached)(SiderModuleKey *key) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_HashSet)(SiderModuleKey *key, int flags, ...) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_HashGet)(SiderModuleKey *key, int flags, ...) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_StreamAdd)(SiderModuleKey *key, int flags, SiderModuleStreamID *id, SiderModuleString **argv, int64_t numfields) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_StreamDelete)(SiderModuleKey *key, SiderModuleStreamID *id) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_StreamIteratorStart)(SiderModuleKey *key, int flags, SiderModuleStreamID *startid, SiderModuleStreamID *endid) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_StreamIteratorStop)(SiderModuleKey *key) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_StreamIteratorNextID)(SiderModuleKey *key, SiderModuleStreamID *id, long *numfields) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_StreamIteratorNextField)(SiderModuleKey *key, SiderModuleString **field_ptr, SiderModuleString **value_ptr) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_StreamIteratorDelete)(SiderModuleKey *key) REDISMODULE_ATTR;
+REDISMODULE_API long long (*SiderModule_StreamTrimByLength)(SiderModuleKey *key, int flags, long long length) REDISMODULE_ATTR;
+REDISMODULE_API long long (*SiderModule_StreamTrimByID)(SiderModuleKey *key, int flags, SiderModuleStreamID *id) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_IsKeysPositionRequest)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_KeyAtPos)(SiderModuleCtx *ctx, int pos) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_KeyAtPosWithFlags)(SiderModuleCtx *ctx, int pos, int flags) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_IsChannelsPositionRequest)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_ChannelAtPosWithFlags)(SiderModuleCtx *ctx, int pos, int flags) REDISMODULE_ATTR;
+REDISMODULE_API unsigned long long (*SiderModule_GetClientId)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_GetClientUserNameById)(SiderModuleCtx *ctx, uint64_t id) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_GetClientInfoById)(void *ci, uint64_t id) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_GetClientNameById)(SiderModuleCtx *ctx, uint64_t id) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_SetClientNameById)(uint64_t id, SiderModuleString *name) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_PublishMessage)(SiderModuleCtx *ctx, SiderModuleString *channel, SiderModuleString *message) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_PublishMessageShard)(SiderModuleCtx *ctx, SiderModuleString *channel, SiderModuleString *message) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_GetContextFlags)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_AvoidReplicaTraffic)(void) REDISMODULE_ATTR;
+REDISMODULE_API void * (*SiderModule_PoolAlloc)(SiderModuleCtx *ctx, size_t bytes) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleType * (*SiderModule_CreateDataType)(SiderModuleCtx *ctx, const char *name, int encver, SiderModuleTypeMethods *typemethods) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ModuleTypeSetValue)(SiderModuleKey *key, SiderModuleType *mt, void *value) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ModuleTypeReplaceValue)(SiderModuleKey *key, SiderModuleType *mt, void *new_value, void **old_value) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleType * (*SiderModule_ModuleTypeGetType)(SiderModuleKey *key) REDISMODULE_ATTR;
+REDISMODULE_API void * (*SiderModule_ModuleTypeGetValue)(SiderModuleKey *key) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_IsIOError)(SiderModuleIO *io) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_SetModuleOptions)(SiderModuleCtx *ctx, int options) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_SignalModifiedKey)(SiderModuleCtx *ctx, SiderModuleString *keyname) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_SaveUnsigned)(SiderModuleIO *io, uint64_t value) REDISMODULE_ATTR;
+REDISMODULE_API uint64_t (*SiderModule_LoadUnsigned)(SiderModuleIO *io) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_SaveSigned)(SiderModuleIO *io, int64_t value) REDISMODULE_ATTR;
+REDISMODULE_API int64_t (*SiderModule_LoadSigned)(SiderModuleIO *io) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_EmitAOF)(SiderModuleIO *io, const char *cmdname, const char *fmt, ...) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_SaveString)(SiderModuleIO *io, SiderModuleString *s) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_SaveStringBuffer)(SiderModuleIO *io, const char *str, size_t len) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_LoadString)(SiderModuleIO *io) REDISMODULE_ATTR;
+REDISMODULE_API char * (*SiderModule_LoadStringBuffer)(SiderModuleIO *io, size_t *lenptr) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_SaveDouble)(SiderModuleIO *io, double value) REDISMODULE_ATTR;
+REDISMODULE_API double (*SiderModule_LoadDouble)(SiderModuleIO *io) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_SaveFloat)(SiderModuleIO *io, float value) REDISMODULE_ATTR;
+REDISMODULE_API float (*SiderModule_LoadFloat)(SiderModuleIO *io) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_SaveLongDouble)(SiderModuleIO *io, long double value) REDISMODULE_ATTR;
+REDISMODULE_API long double (*SiderModule_LoadLongDouble)(SiderModuleIO *io) REDISMODULE_ATTR;
+REDISMODULE_API void * (*SiderModule_LoadDataTypeFromString)(const SiderModuleString *str, const SiderModuleType *mt) REDISMODULE_ATTR;
+REDISMODULE_API void * (*SiderModule_LoadDataTypeFromStringEncver)(const SiderModuleString *str, const SiderModuleType *mt, int encver) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_SaveDataTypeToString)(SiderModuleCtx *ctx, void *data, const SiderModuleType *mt) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_Log)(SiderModuleCtx *ctx, const char *level, const char *fmt, ...) REDISMODULE_ATTR REDISMODULE_ATTR_PRINTF(3,4);
+REDISMODULE_API void (*SiderModule_LogIOError)(SiderModuleIO *io, const char *levelstr, const char *fmt, ...) REDISMODULE_ATTR REDISMODULE_ATTR_PRINTF(3,4);
+REDISMODULE_API void (*SiderModule__Assert)(const char *estr, const char *file, int line) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_LatencyAddSample)(const char *event, mstime_t latency) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_StringAppendBuffer)(SiderModuleCtx *ctx, SiderModuleString *str, const char *buf, size_t len) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_TrimStringAllocation)(SiderModuleString *str) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_RetainString)(SiderModuleCtx *ctx, SiderModuleString *str) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_HoldString)(SiderModuleCtx *ctx, SiderModuleString *str) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_StringCompare)(const SiderModuleString *a, const SiderModuleString *b) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleCtx * (*SiderModule_GetContextFromIO)(SiderModuleIO *io) REDISMODULE_ATTR;
+REDISMODULE_API const SiderModuleString * (*SiderModule_GetKeyNameFromIO)(SiderModuleIO *io) REDISMODULE_ATTR;
+REDISMODULE_API const SiderModuleString * (*SiderModule_GetKeyNameFromModuleKey)(SiderModuleKey *key) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_GetDbIdFromModuleKey)(SiderModuleKey *key) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_GetDbIdFromIO)(SiderModuleIO *io) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_GetDbIdFromOptCtx)(SiderModuleKeyOptCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_GetToDbIdFromOptCtx)(SiderModuleKeyOptCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API const SiderModuleString * (*SiderModule_GetKeyNameFromOptCtx)(SiderModuleKeyOptCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API const SiderModuleString * (*SiderModule_GetToKeyNameFromOptCtx)(SiderModuleKeyOptCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API mstime_t (*SiderModule_Milliseconds)(void) REDISMODULE_ATTR;
+REDISMODULE_API uint64_t (*SiderModule_MonotonicMicroseconds)(void) REDISMODULE_ATTR;
+REDISMODULE_API ustime_t (*SiderModule_Microseconds)(void) REDISMODULE_ATTR;
+REDISMODULE_API ustime_t (*SiderModule_CachedMicroseconds)(void) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_DigestAddStringBuffer)(SiderModuleDigest *md, const char *ele, size_t len) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_DigestAddLongLong)(SiderModuleDigest *md, long long ele) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_DigestEndSequence)(SiderModuleDigest *md) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_GetDbIdFromDigest)(SiderModuleDigest *dig) REDISMODULE_ATTR;
+REDISMODULE_API const SiderModuleString * (*SiderModule_GetKeyNameFromDigest)(SiderModuleDigest *dig) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleDict * (*SiderModule_CreateDict)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_FreeDict)(SiderModuleCtx *ctx, SiderModuleDict *d) REDISMODULE_ATTR;
+REDISMODULE_API uint64_t (*SiderModule_DictSize)(SiderModuleDict *d) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_DictSetC)(SiderModuleDict *d, void *key, size_t keylen, void *ptr) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_DictReplaceC)(SiderModuleDict *d, void *key, size_t keylen, void *ptr) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_DictSet)(SiderModuleDict *d, SiderModuleString *key, void *ptr) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_DictReplace)(SiderModuleDict *d, SiderModuleString *key, void *ptr) REDISMODULE_ATTR;
+REDISMODULE_API void * (*SiderModule_DictGetC)(SiderModuleDict *d, void *key, size_t keylen, int *nokey) REDISMODULE_ATTR;
+REDISMODULE_API void * (*SiderModule_DictGet)(SiderModuleDict *d, SiderModuleString *key, int *nokey) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_DictDelC)(SiderModuleDict *d, void *key, size_t keylen, void *oldval) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_DictDel)(SiderModuleDict *d, SiderModuleString *key, void *oldval) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleDictIter * (*SiderModule_DictIteratorStartC)(SiderModuleDict *d, const char *op, void *key, size_t keylen) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleDictIter * (*SiderModule_DictIteratorStart)(SiderModuleDict *d, const char *op, SiderModuleString *key) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_DictIteratorStop)(SiderModuleDictIter *di) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_DictIteratorReseekC)(SiderModuleDictIter *di, const char *op, void *key, size_t keylen) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_DictIteratorReseek)(SiderModuleDictIter *di, const char *op, SiderModuleString *key) REDISMODULE_ATTR;
+REDISMODULE_API void * (*SiderModule_DictNextC)(SiderModuleDictIter *di, size_t *keylen, void **dataptr) REDISMODULE_ATTR;
+REDISMODULE_API void * (*SiderModule_DictPrevC)(SiderModuleDictIter *di, size_t *keylen, void **dataptr) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_DictNext)(SiderModuleCtx *ctx, SiderModuleDictIter *di, void **dataptr) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_DictPrev)(SiderModuleCtx *ctx, SiderModuleDictIter *di, void **dataptr) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_DictCompareC)(SiderModuleDictIter *di, const char *op, void *key, size_t keylen) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_DictCompare)(SiderModuleDictIter *di, const char *op, SiderModuleString *key) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_RegisterInfoFunc)(SiderModuleCtx *ctx, SiderModuleInfoFunc cb) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_RegisterAuthCallback)(SiderModuleCtx *ctx, SiderModuleAuthCallback cb) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_InfoAddSection)(SiderModuleInfoCtx *ctx, const char *name) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_InfoBeginDictField)(SiderModuleInfoCtx *ctx, const char *name) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_InfoEndDictField)(SiderModuleInfoCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_InfoAddFieldString)(SiderModuleInfoCtx *ctx, const char *field, SiderModuleString *value) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_InfoAddFieldCString)(SiderModuleInfoCtx *ctx, const char *field,const  char *value) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_InfoAddFieldDouble)(SiderModuleInfoCtx *ctx, const char *field, double value) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_InfoAddFieldLongLong)(SiderModuleInfoCtx *ctx, const char *field, long long value) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_InfoAddFieldULongLong)(SiderModuleInfoCtx *ctx, const char *field, unsigned long long value) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleServerInfoData * (*SiderModule_GetServerInfo)(SiderModuleCtx *ctx, const char *section) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_FreeServerInfo)(SiderModuleCtx *ctx, SiderModuleServerInfoData *data) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_ServerInfoGetField)(SiderModuleCtx *ctx, SiderModuleServerInfoData *data, const char* field) REDISMODULE_ATTR;
+REDISMODULE_API const char * (*SiderModule_ServerInfoGetFieldC)(SiderModuleServerInfoData *data, const char* field) REDISMODULE_ATTR;
+REDISMODULE_API long long (*SiderModule_ServerInfoGetFieldSigned)(SiderModuleServerInfoData *data, const char* field, int *out_err) REDISMODULE_ATTR;
+REDISMODULE_API unsigned long long (*SiderModule_ServerInfoGetFieldUnsigned)(SiderModuleServerInfoData *data, const char* field, int *out_err) REDISMODULE_ATTR;
+REDISMODULE_API double (*SiderModule_ServerInfoGetFieldDouble)(SiderModuleServerInfoData *data, const char* field, int *out_err) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_SubscribeToServerEvent)(SiderModuleCtx *ctx, SiderModuleEvent event, SiderModuleEventCallback callback) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_SetLRU)(SiderModuleKey *key, mstime_t lru_idle) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_GetLRU)(SiderModuleKey *key, mstime_t *lru_idle) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_SetLFU)(SiderModuleKey *key, long long lfu_freq) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_GetLFU)(SiderModuleKey *key, long long *lfu_freq) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleBlockedClient * (*SiderModule_BlockClientOnKeys)(SiderModuleCtx *ctx, SiderModuleCmdFunc reply_callback, SiderModuleCmdFunc timeout_callback, void (*free_privdata)(SiderModuleCtx*,void*), long long timeout_ms, SiderModuleString **keys, int numkeys, void *privdata) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleBlockedClient * (*SiderModule_BlockClientOnKeysWithFlags)(SiderModuleCtx *ctx, SiderModuleCmdFunc reply_callback, SiderModuleCmdFunc timeout_callback, void (*free_privdata)(SiderModuleCtx*,void*), long long timeout_ms, SiderModuleString **keys, int numkeys, void *privdata, int flags) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_SignalKeyAsReady)(SiderModuleCtx *ctx, SiderModuleString *key) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_GetBlockedClientReadyKey)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleScanCursor * (*SiderModule_ScanCursorCreate)(void) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_ScanCursorRestart)(SiderModuleScanCursor *cursor) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_ScanCursorDestroy)(SiderModuleScanCursor *cursor) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_Scan)(SiderModuleCtx *ctx, SiderModuleScanCursor *cursor, SiderModuleScanCB fn, void *privdata) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ScanKey)(SiderModuleKey *key, SiderModuleScanCursor *cursor, SiderModuleScanKeyCB fn, void *privdata) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_GetContextFlagsAll)(void) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_GetModuleOptionsAll)(void) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_GetKeyspaceNotificationFlagsAll)(void) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_IsSubEventSupported)(SiderModuleEvent event, uint64_t subevent) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_GetServerVersion)(void) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_GetTypeMethodVersion)(void) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_Yield)(SiderModuleCtx *ctx, int flags, const char *busy_reply) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleBlockedClient * (*SiderModule_BlockClient)(SiderModuleCtx *ctx, SiderModuleCmdFunc reply_callback, SiderModuleCmdFunc timeout_callback, void (*free_privdata)(SiderModuleCtx*,void*), long long timeout_ms) REDISMODULE_ATTR;
+REDISMODULE_API void * (*SiderModule_BlockClientGetPrivateData)(SiderModuleBlockedClient *blocked_client) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_BlockClientSetPrivateData)(SiderModuleBlockedClient *blocked_client, void *private_data) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleBlockedClient * (*SiderModule_BlockClientOnAuth)(SiderModuleCtx *ctx, SiderModuleAuthCallback reply_callback, void (*free_privdata)(SiderModuleCtx*,void*)) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_UnblockClient)(SiderModuleBlockedClient *bc, void *privdata) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_IsBlockedReplyRequest)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_IsBlockedTimeoutRequest)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API void * (*SiderModule_GetBlockedClientPrivateData)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleBlockedClient * (*SiderModule_GetBlockedClientHandle)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_AbortBlock)(SiderModuleBlockedClient *bc) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_BlockedClientMeasureTimeStart)(SiderModuleBlockedClient *bc) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_BlockedClientMeasureTimeEnd)(SiderModuleBlockedClient *bc) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleCtx * (*SiderModule_GetThreadSafeContext)(SiderModuleBlockedClient *bc) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleCtx * (*SiderModule_GetDetachedThreadSafeContext)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_FreeThreadSafeContext)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_ThreadSafeContextLock)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ThreadSafeContextTryLock)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_ThreadSafeContextUnlock)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_SubscribeToKeyspaceEvents)(SiderModuleCtx *ctx, int types, SiderModuleNotificationFunc cb) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_AddPostNotificationJob)(SiderModuleCtx *ctx, SiderModulePostNotificationJobFunc callback, void *pd, void (*free_pd)(void*)) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_NotifyKeyspaceEvent)(SiderModuleCtx *ctx, int type, const char *event, SiderModuleString *key) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_GetNotifyKeyspaceEvents)(void) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_BlockedClientDisconnected)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_RegisterClusterMessageReceiver)(SiderModuleCtx *ctx, uint8_t type, SiderModuleClusterMessageReceiver callback) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_SendClusterMessage)(SiderModuleCtx *ctx, const char *target_id, uint8_t type, const char *msg, uint32_t len) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_GetClusterNodeInfo)(SiderModuleCtx *ctx, const char *id, char *ip, char *master_id, int *port, int *flags) REDISMODULE_ATTR;
+REDISMODULE_API char ** (*SiderModule_GetClusterNodesList)(SiderModuleCtx *ctx, size_t *numnodes) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_FreeClusterNodesList)(char **ids) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleTimerID (*SiderModule_CreateTimer)(SiderModuleCtx *ctx, mstime_t period, SiderModuleTimerProc callback, void *data) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_StopTimer)(SiderModuleCtx *ctx, SiderModuleTimerID id, void **data) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_GetTimerInfo)(SiderModuleCtx *ctx, SiderModuleTimerID id, uint64_t *remaining, void **data) REDISMODULE_ATTR;
+REDISMODULE_API const char * (*SiderModule_GetMyClusterID)(void) REDISMODULE_ATTR;
+REDISMODULE_API size_t (*SiderModule_GetClusterSize)(void) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_GetRandomBytes)(unsigned char *dst, size_t len) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_GetRandomHexChars)(char *dst, size_t len) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_SetDisconnectCallback)(SiderModuleBlockedClient *bc, SiderModuleDisconnectFunc callback) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_SetClusterFlags)(SiderModuleCtx *ctx, uint64_t flags) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ExportSharedAPI)(SiderModuleCtx *ctx, const char *apiname, void *func) REDISMODULE_ATTR;
+REDISMODULE_API void * (*SiderModule_GetSharedAPI)(SiderModuleCtx *ctx, const char *apiname) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleCommandFilter * (*SiderModule_RegisterCommandFilter)(SiderModuleCtx *ctx, SiderModuleCommandFilterFunc cb, int flags) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_UnregisterCommandFilter)(SiderModuleCtx *ctx, SiderModuleCommandFilter *filter) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_CommandFilterArgsCount)(SiderModuleCommandFilterCtx *fctx) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_CommandFilterArgGet)(SiderModuleCommandFilterCtx *fctx, int pos) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_CommandFilterArgInsert)(SiderModuleCommandFilterCtx *fctx, int pos, SiderModuleString *arg) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_CommandFilterArgReplace)(SiderModuleCommandFilterCtx *fctx, int pos, SiderModuleString *arg) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_CommandFilterArgDelete)(SiderModuleCommandFilterCtx *fctx, int pos) REDISMODULE_ATTR;
+REDISMODULE_API unsigned long long (*SiderModule_CommandFilterGetClientId)(SiderModuleCommandFilterCtx *fctx) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_Fork)(SiderModuleForkDoneHandler cb, void *user_data) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_SendChildHeartbeat)(double progress) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ExitFromChild)(int retcode) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_KillForkChild)(int child_pid) REDISMODULE_ATTR;
+REDISMODULE_API float (*SiderModule_GetUsedMemoryRatio)(void) REDISMODULE_ATTR;
+REDISMODULE_API size_t (*SiderModule_MallocSize)(void* ptr) REDISMODULE_ATTR;
+REDISMODULE_API size_t (*SiderModule_MallocUsableSize)(void *ptr) REDISMODULE_ATTR;
+REDISMODULE_API size_t (*SiderModule_MallocSizeString)(SiderModuleString* str) REDISMODULE_ATTR;
+REDISMODULE_API size_t (*SiderModule_MallocSizeDict)(SiderModuleDict* dict) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleUser * (*SiderModule_CreateModuleUser)(const char *name) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_FreeModuleUser)(SiderModuleUser *user) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_SetContextUser)(SiderModuleCtx *ctx, const SiderModuleUser *user) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_SetModuleUserACL)(SiderModuleUser *user, const char* acl) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_SetModuleUserACLString)(SiderModuleCtx * ctx, SiderModuleUser *user, const char* acl, SiderModuleString **error) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_GetModuleUserACLString)(SiderModuleUser *user) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_GetCurrentUserName)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleUser * (*SiderModule_GetModuleUserFromUserName)(SiderModuleString *name) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ACLCheckCommandPermissions)(SiderModuleUser *user, SiderModuleString **argv, int argc) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ACLCheckKeyPermissions)(SiderModuleUser *user, SiderModuleString *key, int flags) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_ACLCheckChannelPermissions)(SiderModuleUser *user, SiderModuleString *ch, int literal) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_ACLAddLogEntry)(SiderModuleCtx *ctx, SiderModuleUser *user, SiderModuleString *object, SiderModuleACLLogEntryReason reason) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_ACLAddLogEntryByUserName)(SiderModuleCtx *ctx, SiderModuleString *user, SiderModuleString *object, SiderModuleACLLogEntryReason reason) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_AuthenticateClientWithACLUser)(SiderModuleCtx *ctx, const char *name, size_t len, SiderModuleUserChangedFunc callback, void *privdata, uint64_t *client_id) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_AuthenticateClientWithUser)(SiderModuleCtx *ctx, SiderModuleUser *user, SiderModuleUserChangedFunc callback, void *privdata, uint64_t *client_id) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_DeauthenticateAndCloseClient)(SiderModuleCtx *ctx, uint64_t client_id) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_RedactClientCommandArgument)(SiderModuleCtx *ctx, int pos) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString * (*SiderModule_GetClientCertificate)(SiderModuleCtx *ctx, uint64_t id) REDISMODULE_ATTR;
+REDISMODULE_API int *(*SiderModule_GetCommandKeys)(SiderModuleCtx *ctx, SiderModuleString **argv, int argc, int *num_keys) REDISMODULE_ATTR;
+REDISMODULE_API int *(*SiderModule_GetCommandKeysWithFlags)(SiderModuleCtx *ctx, SiderModuleString **argv, int argc, int *num_keys, int **out_flags) REDISMODULE_ATTR;
+REDISMODULE_API const char *(*SiderModule_GetCurrentCommandName)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_RegisterDefragFunc)(SiderModuleCtx *ctx, SiderModuleDefragFunc func) REDISMODULE_ATTR;
+REDISMODULE_API void *(*SiderModule_DefragAlloc)(SiderModuleDefragCtx *ctx, void *ptr) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleString *(*SiderModule_DefragSiderModuleString)(SiderModuleDefragCtx *ctx, SiderModuleString *str) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_DefragShouldStop)(SiderModuleDefragCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_DefragCursorSet)(SiderModuleDefragCtx *ctx, unsigned long cursor) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_DefragCursorGet)(SiderModuleDefragCtx *ctx, unsigned long *cursor) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_GetDbIdFromDefragCtx)(SiderModuleDefragCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API const SiderModuleString * (*SiderModule_GetKeyNameFromDefragCtx)(SiderModuleDefragCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_EventLoopAdd)(int fd, int mask, SiderModuleEventLoopFunc func, void *user_data) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_EventLoopDel)(int fd, int mask) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_EventLoopAddOneShot)(SiderModuleEventLoopOneShotFunc func, void *user_data) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_RegisterBoolConfig)(SiderModuleCtx *ctx, const char *name, int default_val, unsigned int flags, SiderModuleConfigGetBoolFunc getfn, SiderModuleConfigSetBoolFunc setfn, SiderModuleConfigApplyFunc applyfn, void *privdata) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_RegisterNumericConfig)(SiderModuleCtx *ctx, const char *name, long long default_val, unsigned int flags, long long min, long long max, SiderModuleConfigGetNumericFunc getfn, SiderModuleConfigSetNumericFunc setfn, SiderModuleConfigApplyFunc applyfn, void *privdata) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_RegisterStringConfig)(SiderModuleCtx *ctx, const char *name, const char *default_val, unsigned int flags, SiderModuleConfigGetStringFunc getfn, SiderModuleConfigSetStringFunc setfn, SiderModuleConfigApplyFunc applyfn, void *privdata) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_RegisterEnumConfig)(SiderModuleCtx *ctx, const char *name, int default_val, unsigned int flags, const char **enum_values, const int *int_values, int num_enum_vals, SiderModuleConfigGetEnumFunc getfn, SiderModuleConfigSetEnumFunc setfn, SiderModuleConfigApplyFunc applyfn, void *privdata) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_LoadConfigs)(SiderModuleCtx *ctx) REDISMODULE_ATTR;
+REDISMODULE_API SiderModuleRdbStream *(*SiderModule_RdbStreamCreateFromFile)(const char *filename) REDISMODULE_ATTR;
+REDISMODULE_API void (*SiderModule_RdbStreamFree)(SiderModuleRdbStream *stream) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_RdbLoad)(SiderModuleCtx *ctx, SiderModuleRdbStream *stream, int flags) REDISMODULE_ATTR;
+REDISMODULE_API int (*SiderModule_RdbSave)(SiderModuleCtx *ctx, SiderModuleRdbStream *stream, int flags) REDISMODULE_ATTR;
 
-#define RedisModule_IsAOFClient(id) ((id) == UINT64_MAX)
+#define SiderModule_IsAOFClient(id) ((id) == UINT64_MAX)
 
-/* This is included inline inside each Redis module. */
-static int RedisModule_Init(RedisModuleCtx *ctx, const char *name, int ver, int apiver) REDISMODULE_ATTR_UNUSED;
-static int RedisModule_Init(RedisModuleCtx *ctx, const char *name, int ver, int apiver) {
+/* This is included inline inside each Sider module. */
+static int SiderModule_Init(SiderModuleCtx *ctx, const char *name, int ver, int apiver) REDISMODULE_ATTR_UNUSED;
+static int SiderModule_Init(SiderModuleCtx *ctx, const char *name, int ver, int apiver) {
     void *getapifuncptr = ((void**)ctx)[0];
-    RedisModule_GetApi = (int (*)(const char *, void *)) (unsigned long)getapifuncptr;
+    SiderModule_GetApi = (int (*)(const char *, void *)) (unsigned long)getapifuncptr;
     REDISMODULE_GET_API(Alloc);
     REDISMODULE_GET_API(TryAlloc);
     REDISMODULE_GET_API(Calloc);
@@ -1653,7 +1653,7 @@ static int RedisModule_Init(RedisModuleCtx *ctx, const char *name, int ver, int 
     REDISMODULE_GET_API(GetCurrentCommandName);
     REDISMODULE_GET_API(RegisterDefragFunc);
     REDISMODULE_GET_API(DefragAlloc);
-    REDISMODULE_GET_API(DefragRedisModuleString);
+    REDISMODULE_GET_API(DefragSiderModuleString);
     REDISMODULE_GET_API(DefragShouldStop);
     REDISMODULE_GET_API(DefragCursorSet);
     REDISMODULE_GET_API(DefragCursorGet);
@@ -1672,12 +1672,12 @@ static int RedisModule_Init(RedisModuleCtx *ctx, const char *name, int ver, int 
     REDISMODULE_GET_API(RdbLoad);
     REDISMODULE_GET_API(RdbSave);
 
-    if (RedisModule_IsModuleNameBusy && RedisModule_IsModuleNameBusy(name)) return REDISMODULE_ERR;
-    RedisModule_SetModuleAttribs(ctx,name,ver,apiver);
+    if (SiderModule_IsModuleNameBusy && SiderModule_IsModuleNameBusy(name)) return REDISMODULE_ERR;
+    SiderModule_SetModuleAttribs(ctx,name,ver,apiver);
     return REDISMODULE_OK;
 }
 
-#define RedisModule_Assert(_e) ((_e)?(void)0 : (RedisModule__Assert(#_e,__FILE__,__LINE__),exit(1)))
+#define SiderModule_Assert(_e) ((_e)?(void)0 : (SiderModule__Assert(#_e,__FILE__,__LINE__),exit(1)))
 
 #define RMAPI_FUNC_SUPPORTED(func) (func != NULL)
 

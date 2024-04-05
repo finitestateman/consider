@@ -1,6 +1,6 @@
-/* This file is used by redis-cli in place of server.h when including commands.c
+/* This file is used by sider-cli in place of server.h when including commands.c
  * It contains alternative structs which omit the parts of the commands table
- * that are not suitable for redis-cli, e.g. the command proc. */
+ * that are not suitable for sider-cli, e.g. the command proc. */
 
 #ifndef __REDIS_CLI_COMMANDS_H
 #define __REDIS_CLI_COMMANDS_H
@@ -11,7 +11,7 @@
 /* Syntax specifications for a command argument. */
 typedef struct cliCommandArg {
     char *name;
-    redisCommandArgType type;
+    siderCommandArgType type;
     char *token;
     char *since;
     int flags;
@@ -41,6 +41,6 @@ struct commandDocs {
     char *params; /* A string describing the syntax of the command arguments. */
 };
 
-extern struct commandDocs redisCommandTable[];
+extern struct commandDocs siderCommandTable[];
 
 #endif

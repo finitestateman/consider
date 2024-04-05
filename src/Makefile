@@ -1,12 +1,12 @@
-# Redis Makefile
+# Sider Makefile
 # Copyright (C) 2009 Salvatore Sanfilippo <antirez at gmail dot com>
 # This file is released under the BSD license, see the COPYING file
 #
 # The Makefile composes the final FINAL_CFLAGS and FINAL_LDFLAGS using
-# what is needed for Redis plus the standard CFLAGS and LDFLAGS passed.
-# However when building the dependencies (Jemalloc, Lua, Hiredis, ...)
+# what is needed for Sider plus the standard CFLAGS and LDFLAGS passed.
+# However when building the dependencies (Jemalloc, Lua, Hisider, ...)
 # CFLAGS and LDFLAGS are propagated to the dependencies, so to pass
-# flags only to be used when compiling / linking Redis itself REDIS_CFLAGS
+# flags only to be used when compiling / linking Sider itself REDIS_CFLAGS
 # and REDIS_LDFLAGS are used instead (this is the case of 'make gcov').
 #
 # Dependencies are stored in the Makefile.dep file. To rebuild this file
@@ -25,7 +25,7 @@ ifeq ($(OPTIMIZATION),-O3)
 	endif
 	REDIS_LDFLAGS+=-O3 -flto
 endif
-DEPENDENCY_TARGETS=hiredis linenoise lua hdr_histogram fpconv
+DEPENDENCY_TARGETS=hisider linenoise lua hdr_histogram fpconv
 NODEPS:=clean distclean
 
 # Default settings
@@ -70,7 +70,7 @@ ifeq ($(uname_S),Linux)
 	MALLOC=jemalloc
 endif
 
-# To get ARM stack traces if Redis crashes we need a special C flag.
+# To get ARM stack traces if Sider crashes we need a special C flag.
 ifneq (,$(filter aarch64 armv%,$(uname_M)))
         CFLAGS+=-funwind-tables
 endif
@@ -226,7 +226,7 @@ ifdef OPENSSL_PREFIX
 endif
 
 # Include paths to dependencies
-FINAL_CFLAGS+= -I../deps/hiredis -I../deps/linenoise -I../deps/lua/src -I../deps/hdr_histogram -I../deps/fpconv
+FINAL_CFLAGS+= -I../deps/hisider -I../deps/linenoise -I../deps/lua/src -I../deps/hdr_histogram -I../deps/fpconv
 
 # Determine systemd support and/or build preference (defaulting to auto-detection)
 BUILD_WITH_SYSTEMD=no
@@ -293,15 +293,15 @@ BUILD_MODULE:=2
 ifeq ($(BUILD_TLS),yes)
 	FINAL_CFLAGS+=-DUSE_OPENSSL=$(BUILD_YES) $(OPENSSL_CFLAGS) -DBUILD_TLS_MODULE=$(BUILD_NO)
 	FINAL_LDFLAGS+=$(OPENSSL_LDFLAGS)
-	FINAL_LIBS += ../deps/hiredis/libhiredis_ssl.a $(LIBSSL_LIBS) $(LIBCRYPTO_LIBS)
+	FINAL_LIBS += ../deps/hisider/libhisider_ssl.a $(LIBSSL_LIBS) $(LIBCRYPTO_LIBS)
 endif
 
 TLS_MODULE=
-TLS_MODULE_NAME:=redis-tls$(PROG_SUFFIX).so
+TLS_MODULE_NAME:=sider-tls$(PROG_SUFFIX).so
 TLS_MODULE_CFLAGS:=$(FINAL_CFLAGS)
 ifeq ($(BUILD_TLS),module)
 	FINAL_CFLAGS+=-DUSE_OPENSSL=$(BUILD_MODULE) $(OPENSSL_CFLAGS)
-	TLS_CLIENT_LIBS = ../deps/hiredis/libhiredis_ssl.a $(LIBSSL_LIBS) $(LIBCRYPTO_LIBS)
+	TLS_CLIENT_LIBS = ../deps/hisider/libhisider_ssl.a $(LIBSSL_LIBS) $(LIBCRYPTO_LIBS)
 	TLS_MODULE=$(TLS_MODULE_NAME)
 	TLS_MODULE_CFLAGS+=-DUSE_OPENSSL=$(BUILD_MODULE) $(OPENSSL_CFLAGS) -DBUILD_TLS_MODULE=$(BUILD_MODULE)
 endif
@@ -343,15 +343,15 @@ else
 	GEN_COMMANDS_FLAGS=
 endif
 
-REDIS_SERVER_NAME=redis-server$(PROG_SUFFIX)
-REDIS_SENTINEL_NAME=redis-sentinel$(PROG_SUFFIX)
-REDIS_SERVER_OBJ=adlist.o quicklist.o ae.o anet.o dict.o server.o sds.o zmalloc.o lzf_c.o lzf_d.o pqsort.o zipmap.o sha1.o ziplist.o release.o networking.o util.o object.o db.o replication.o rdb.o t_string.o t_list.o t_set.o t_zset.o t_hash.o config.o aof.o pubsub.o multi.o debug.o sort.o intset.o syncio.o cluster.o crc16.o endianconv.o slowlog.o eval.o bio.o rio.o rand.o memtest.o syscheck.o crcspeed.o crc64.o bitops.o sentinel.o notify.o setproctitle.o blocked.o hyperloglog.o latency.o sparkline.o redis-check-rdb.o redis-check-aof.o geo.o lazyfree.o module.o evict.o expire.o geohash.o geohash_helper.o childinfo.o defrag.o siphash.o rax.o t_stream.o listpack.o localtime.o lolwut.o lolwut5.o lolwut6.o acl.o tracking.o socket.o tls.o sha256.o timeout.o setcpuaffinity.o monotonic.o mt19937-64.o resp_parser.o call_reply.o script_lua.o script.o functions.o function_lua.o commands.o strl.o connection.o unix.o logreqres.o
-REDIS_CLI_NAME=redis-cli$(PROG_SUFFIX)
-REDIS_CLI_OBJ=anet.o adlist.o dict.o redis-cli.o zmalloc.o release.o ae.o redisassert.o crcspeed.o crc64.o siphash.o crc16.o monotonic.o cli_common.o mt19937-64.o strl.o cli_commands.o
-REDIS_BENCHMARK_NAME=redis-benchmark$(PROG_SUFFIX)
-REDIS_BENCHMARK_OBJ=ae.o anet.o redis-benchmark.o adlist.o dict.o zmalloc.o redisassert.o release.o crcspeed.o crc64.o siphash.o crc16.o monotonic.o cli_common.o mt19937-64.o strl.o
-REDIS_CHECK_RDB_NAME=redis-check-rdb$(PROG_SUFFIX)
-REDIS_CHECK_AOF_NAME=redis-check-aof$(PROG_SUFFIX)
+REDIS_SERVER_NAME=sider-server$(PROG_SUFFIX)
+REDIS_SENTINEL_NAME=sider-sentinel$(PROG_SUFFIX)
+REDIS_SERVER_OBJ=adlist.o quicklist.o ae.o anet.o dict.o server.o sds.o zmalloc.o lzf_c.o lzf_d.o pqsort.o zipmap.o sha1.o ziplist.o release.o networking.o util.o object.o db.o replication.o rdb.o t_string.o t_list.o t_set.o t_zset.o t_hash.o config.o aof.o pubsub.o multi.o debug.o sort.o intset.o syncio.o cluster.o crc16.o endianconv.o slowlog.o eval.o bio.o rio.o rand.o memtest.o syscheck.o crcspeed.o crc64.o bitops.o sentinel.o notify.o setproctitle.o blocked.o hyperloglog.o latency.o sparkline.o sider-check-rdb.o sider-check-aof.o geo.o lazyfree.o module.o evict.o expire.o geohash.o geohash_helper.o childinfo.o defrag.o siphash.o rax.o t_stream.o listpack.o localtime.o lolwut.o lolwut5.o lolwut6.o acl.o tracking.o socket.o tls.o sha256.o timeout.o setcpuaffinity.o monotonic.o mt19937-64.o resp_parser.o call_reply.o script_lua.o script.o functions.o function_lua.o commands.o strl.o connection.o unix.o logreqres.o
+REDIS_CLI_NAME=sider-cli$(PROG_SUFFIX)
+REDIS_CLI_OBJ=anet.o adlist.o dict.o sider-cli.o zmalloc.o release.o ae.o siderassert.o crcspeed.o crc64.o siphash.o crc16.o monotonic.o cli_common.o mt19937-64.o strl.o cli_commands.o
+REDIS_BENCHMARK_NAME=sider-benchmark$(PROG_SUFFIX)
+REDIS_BENCHMARK_OBJ=ae.o anet.o sider-benchmark.o adlist.o dict.o zmalloc.o siderassert.o release.o crcspeed.o crc64.o siphash.o crc16.o monotonic.o cli_common.o mt19937-64.o strl.o
+REDIS_CHECK_RDB_NAME=sider-check-rdb$(PROG_SUFFIX)
+REDIS_CHECK_AOF_NAME=sider-check-aof$(PROG_SUFFIX)
 ALL_SOURCES=$(sort $(patsubst %.o,%.c,$(REDIS_SERVER_OBJ) $(REDIS_CLI_OBJ) $(REDIS_BENCHMARK_OBJ)))
 
 all: $(REDIS_SERVER_NAME) $(REDIS_SENTINEL_NAME) $(REDIS_CLI_NAME) $(REDIS_BENCHMARK_NAME) $(REDIS_CHECK_RDB_NAME) $(REDIS_CHECK_AOF_NAME) $(TLS_MODULE)
@@ -398,33 +398,33 @@ ifneq ($(strip $(PREV_FINAL_LDFLAGS)), $(strip $(FINAL_LDFLAGS)))
 .make-prerequisites: persist-settings
 endif
 
-# redis-server
+# sider-server
 $(REDIS_SERVER_NAME): $(REDIS_SERVER_OBJ)
-	$(REDIS_LD) -o $@ $^ ../deps/hiredis/libhiredis.a ../deps/lua/src/liblua.a ../deps/hdr_histogram/libhdrhistogram.a ../deps/fpconv/libfpconv.a $(FINAL_LIBS)
+	$(REDIS_LD) -o $@ $^ ../deps/hisider/libhisider.a ../deps/lua/src/liblua.a ../deps/hdr_histogram/libhdrhistogram.a ../deps/fpconv/libfpconv.a $(FINAL_LIBS)
 
-# redis-sentinel
+# sider-sentinel
 $(REDIS_SENTINEL_NAME): $(REDIS_SERVER_NAME)
 	$(REDIS_INSTALL) $(REDIS_SERVER_NAME) $(REDIS_SENTINEL_NAME)
 
-# redis-check-rdb
+# sider-check-rdb
 $(REDIS_CHECK_RDB_NAME): $(REDIS_SERVER_NAME)
 	$(REDIS_INSTALL) $(REDIS_SERVER_NAME) $(REDIS_CHECK_RDB_NAME)
 
-# redis-check-aof
+# sider-check-aof
 $(REDIS_CHECK_AOF_NAME): $(REDIS_SERVER_NAME)
 	$(REDIS_INSTALL) $(REDIS_SERVER_NAME) $(REDIS_CHECK_AOF_NAME)
 
-# redis-tls.so
+# sider-tls.so
 $(TLS_MODULE_NAME): $(REDIS_SERVER_NAME)
 	$(QUIET_CC)$(CC) -o $@ tls.c -shared -fPIC $(TLS_MODULE_CFLAGS) $(TLS_CLIENT_LIBS)
 
-# redis-cli
+# sider-cli
 $(REDIS_CLI_NAME): $(REDIS_CLI_OBJ)
-	$(REDIS_LD) -o $@ $^ ../deps/hiredis/libhiredis.a ../deps/linenoise/linenoise.o $(FINAL_LIBS) $(TLS_CLIENT_LIBS)
+	$(REDIS_LD) -o $@ $^ ../deps/hisider/libhisider.a ../deps/linenoise/linenoise.o $(FINAL_LIBS) $(TLS_CLIENT_LIBS)
 
-# redis-benchmark
+# sider-benchmark
 $(REDIS_BENCHMARK_NAME): $(REDIS_BENCHMARK_OBJ)
-	$(REDIS_LD) -o $@ $^ ../deps/hiredis/libhiredis.a ../deps/hdr_histogram/libhdrhistogram.a $(FINAL_LIBS) $(TLS_CLIENT_LIBS)
+	$(REDIS_LD) -o $@ $^ ../deps/hisider/libhisider.a ../deps/hdr_histogram/libhdrhistogram.a $(FINAL_LIBS) $(TLS_CLIENT_LIBS)
 
 DEP = $(REDIS_SERVER_OBJ:%.o=%.d) $(REDIS_CLI_OBJ:%.o=%.d) $(REDIS_BENCHMARK_OBJ:%.o=%.d)
 -include $(DEP)
@@ -445,7 +445,7 @@ endif
 commands.c: $(COMMANDS_DEF_FILENAME).def
 
 clean:
-	rm -rf $(REDIS_SERVER_NAME) $(REDIS_SENTINEL_NAME) $(REDIS_CLI_NAME) $(REDIS_BENCHMARK_NAME) $(REDIS_CHECK_RDB_NAME) $(REDIS_CHECK_AOF_NAME) *.o *.gcda *.gcno *.gcov redis.info lcov-html Makefile.dep *.so
+	rm -rf $(REDIS_SERVER_NAME) $(REDIS_SENTINEL_NAME) $(REDIS_CLI_NAME) $(REDIS_BENCHMARK_NAME) $(REDIS_CHECK_RDB_NAME) $(REDIS_CHECK_AOF_NAME) *.o *.gcda *.gcno *.gcov sider.info lcov-html Makefile.dep *.so
 	rm -f $(DEP)
 
 .PHONY: clean
@@ -475,8 +475,8 @@ check: test
 lcov:
 	$(MAKE) gcov
 	@(set -e; cd ..; ./runtest --clients 1)
-	@geninfo -o redis.info .
-	@genhtml --legend -o lcov-html redis.info
+	@geninfo -o sider.info .
+	@genhtml --legend -o lcov-html sider.info
 
 .PHONY: lcov
 

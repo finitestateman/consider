@@ -3,15 +3,15 @@
  *
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -31,9 +31,9 @@
 /*
  * SDS compatibility header.
  *
- * This simple file maps sds types and calls to their unique hiredis symbol names.
- * It's useful when we build Hiredis as a dependency of Redis and want to call
- * Hiredis' sds symbols rather than the ones built into Redis, as the libraries
+ * This simple file maps sds types and calls to their unique hisider symbol names.
+ * It's useful when we build Hisider as a dependency of Sider and want to call
+ * Hisider' sds symbols rather than the ones built into Sider, as the libraries
  * have slightly diverged and could cause hard to track down ABI incompatibility
  * bugs.
  *

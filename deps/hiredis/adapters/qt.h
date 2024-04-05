@@ -1,12 +1,12 @@
 /*-
  * Copyright (C) 2014 Pietro Cerutti <gahr@gahr.ch>
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 1. Redistributions of source code must retain the above copyright
+ * 1. Sidertributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
+ * 2. Sidertributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
@@ -28,67 +28,67 @@
 #include <QSocketNotifier>
 #include "../async.h"
 
-static void RedisQtAddRead(void *);
-static void RedisQtDelRead(void *);
-static void RedisQtAddWrite(void *);
-static void RedisQtDelWrite(void *);
-static void RedisQtCleanup(void *);
+static void SiderQtAddRead(void *);
+static void SiderQtDelRead(void *);
+static void SiderQtAddWrite(void *);
+static void SiderQtDelWrite(void *);
+static void SiderQtCleanup(void *);
 
-class RedisQtAdapter : public QObject {
+class SiderQtAdapter : public QObject {
 
     Q_OBJECT
 
     friend
-    void RedisQtAddRead(void * adapter) {
-        RedisQtAdapter * a = static_cast<RedisQtAdapter *>(adapter);
+    void SiderQtAddRead(void * adapter) {
+        SiderQtAdapter * a = static_cast<SiderQtAdapter *>(adapter);
         a->addRead();
     }
 
     friend
-    void RedisQtDelRead(void * adapter) {
-        RedisQtAdapter * a = static_cast<RedisQtAdapter *>(adapter);
+    void SiderQtDelRead(void * adapter) {
+        SiderQtAdapter * a = static_cast<SiderQtAdapter *>(adapter);
         a->delRead();
     }
 
     friend
-    void RedisQtAddWrite(void * adapter) {
-        RedisQtAdapter * a = static_cast<RedisQtAdapter *>(adapter);
+    void SiderQtAddWrite(void * adapter) {
+        SiderQtAdapter * a = static_cast<SiderQtAdapter *>(adapter);
         a->addWrite();
     }
 
     friend
-    void RedisQtDelWrite(void * adapter) {
-        RedisQtAdapter * a = static_cast<RedisQtAdapter *>(adapter);
+    void SiderQtDelWrite(void * adapter) {
+        SiderQtAdapter * a = static_cast<SiderQtAdapter *>(adapter);
         a->delWrite();
     }
 
     friend
-    void RedisQtCleanup(void * adapter) {
-        RedisQtAdapter * a = static_cast<RedisQtAdapter *>(adapter);
+    void SiderQtCleanup(void * adapter) {
+        SiderQtAdapter * a = static_cast<SiderQtAdapter *>(adapter);
         a->cleanup();
     }
 
     public:
-        RedisQtAdapter(QObject * parent = 0)
+        SiderQtAdapter(QObject * parent = 0)
             : QObject(parent), m_ctx(0), m_read(0), m_write(0) { }
 
-        ~RedisQtAdapter() {
+        ~SiderQtAdapter() {
             if (m_ctx != 0) {
                 m_ctx->ev.data = NULL;
             }
         }
 
-        int setContext(redisAsyncContext * ac) {
+        int setContext(siderAsyncContext * ac) {
             if (ac->ev.data != NULL) {
                 return REDIS_ERR;
             }
             m_ctx = ac;
             m_ctx->ev.data = this;
-            m_ctx->ev.addRead = RedisQtAddRead;
-            m_ctx->ev.delRead = RedisQtDelRead;
-            m_ctx->ev.addWrite = RedisQtAddWrite;
-            m_ctx->ev.delWrite = RedisQtDelWrite;
-            m_ctx->ev.cleanup = RedisQtCleanup;
+            m_ctx->ev.addRead = SiderQtAddRead;
+            m_ctx->ev.delRead = SiderQtDelRead;
+            m_ctx->ev.addWrite = SiderQtAddWrite;
+            m_ctx->ev.delWrite = SiderQtDelWrite;
+            m_ctx->ev.cleanup = SiderQtCleanup;
             return REDIS_OK;
         }
 
@@ -123,11 +123,11 @@ class RedisQtAdapter : public QObject {
         }
 
     private slots:
-        void read() { redisAsyncHandleRead(m_ctx); }
-        void write() { redisAsyncHandleWrite(m_ctx); }
+        void read() { siderAsyncHandleRead(m_ctx); }
+        void write() { siderAsyncHandleWrite(m_ctx); }
 
     private:
-        redisAsyncContext * m_ctx;
+        siderAsyncContext * m_ctx;
         QSocketNotifier * m_read;
         QSocketNotifier * m_write;
 };

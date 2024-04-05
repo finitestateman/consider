@@ -152,18 +152,18 @@
  *
  * Copyright (c) 2009-2012, Pieter Noordhuis <pcnoordhuis at gmail dot com>
  * Copyright (c) 2009-2017, Salvatore Sanfilippo <antirez at gmail dot com>
- * Copyright (c) 2020, Redis Labs, Inc
+ * Copyright (c) 2020, Sider Labs, Inc
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -190,7 +190,7 @@
 #include "ziplist.h"
 #include "config.h"
 #include "endianconv.h"
-#include "redisassert.h"
+#include "siderassert.h"
 
 #define ZIP_END 255         /* Special "end of ziplist" entry. */
 #define ZIP_BIG_PREVLEN 254 /* ZIP_BIG_PREVLEN - 1 is the max number of bytes of
@@ -350,7 +350,7 @@ static inline unsigned int zipIntSize(unsigned char encoding) {
     if (encoding >= ZIP_INT_IMM_MIN && encoding <= ZIP_INT_IMM_MAX)
         return 0; /* 4 bit immediate */
     /* bad encoding, covered by a previous call to ZIP_ASSERT_ENCODING */
-    redis_unreachable();
+    sider_unreachable();
     return 0;
 }
 
@@ -1845,7 +1845,7 @@ static size_t strEntryBytesLarge(size_t slen) {
     return slen + zipStorePrevEntryLength(NULL, ZIP_BIG_PREVLEN) + zipStoreEntryEncoding(NULL, 0, slen);
 }
 
-/* ./redis-server test ziplist <randomseed> */
+/* ./sider-server test ziplist <randomseed> */
 int ziplistTest(int argc, char **argv, int flags) {
     int accurate = (flags & REDIS_TEST_ACCURATE);
     unsigned char *zl, *p;

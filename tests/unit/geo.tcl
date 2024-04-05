@@ -1,5 +1,5 @@
 # Helper functions to simulate search-in-radius in the Tcl side in order to
-# verify the Redis implementation with a fuzzy test.
+# verify the Sider implementation with a fuzzy test.
 proc geo_degrad deg {expr {$deg*(atan(1)*8/360)}}
 proc geo_raddeg rad {expr {$rad/(atan(1)*8/360)}}
 
@@ -264,7 +264,7 @@ start_server {tags {"geo"}} {
     } {ERR *exactly one of BYRADIUS and BYBOX*}
 
     test {GEOSEARCH with STOREDIST option} {
-        catch {r geosearch nyc fromlonlat -73.9798091 40.7598464 bybox 6 6 km asc storedist} e
+        catch {r geosearch nyc fromlonlat -73.9798091 40.7598464 bybox 6 6 km asc stosidert} e
         set e
     } {ERR *syntax*}
 
@@ -488,7 +488,7 @@ start_server {tags {"geo"}} {
         r georadiusbymember points{t} Palermo 500 km store points2{t}
         assert_equal {Palermo Catania} [r zrange points2{t} 0 -1]
 
-        r georadiusbymember points{t} Catania 500 km storedist points2{t}
+        r georadiusbymember points{t} Catania 500 km stosidert points2{t}
         assert_equal {Catania Palermo} [r zrange points2{t} 0 -1]
 
         set res [r zrange points2{t} 0 -1 withscores]
@@ -505,7 +505,7 @@ start_server {tags {"geo"}} {
         r del points{t}
         r geoadd points{t} 13.361389 38.115556 "Palermo" \
                            15.087269 37.502669 "Catania"
-        r georadius points{t} 13.361389 38.115556 500 km storedist points2{t}
+        r georadius points{t} 13.361389 38.115556 500 km stosidert points2{t}
         set res [r zrange points2{t} 0 -1 withscores]
         assert {[lindex $res 1] < 1}
         assert {[lindex $res 3] > 166}
@@ -513,7 +513,7 @@ start_server {tags {"geo"}} {
     }
 
     test {GEOSEARCHSTORE STOREDIST option: plain usage} {
-        r geosearchstore points2{t} points{t} fromlonlat 13.361389 38.115556 byradius 500 km storedist
+        r geosearchstore points2{t} points{t} fromlonlat 13.361389 38.115556 byradius 500 km stosidert
         set res [r zrange points2{t} 0 -1 withscores]
         assert {[lindex $res 1] < 1}
         assert {[lindex $res 3] > 166}
@@ -524,12 +524,12 @@ start_server {tags {"geo"}} {
         r del points{t}
         r geoadd points{t} 13.361389 38.115556 "Palermo" \
                            15.087269 37.502669 "Catania"
-        r georadius points{t} 13.361389 38.115556 500 km storedist points2{t} asc count 1
+        r georadius points{t} 13.361389 38.115556 500 km stosidert points2{t} asc count 1
         assert {[r zcard points2{t}] == 1}
         set res [r zrange points2{t} 0 -1 withscores]
         assert {[lindex $res 0] eq "Palermo"}
 
-        r georadius points{t} 13.361389 38.115556 500 km storedist points2{t} desc count 1
+        r georadius points{t} 13.361389 38.115556 500 km stosidert points2{t} desc count 1
         assert {[r zcard points2{t}] == 1}
         set res [r zrange points2{t} 0 -1 withscores]
         assert {[lindex $res 0] eq "Catania"}
@@ -632,7 +632,7 @@ start_server {tags {"geo"}} {
                             continue
                         }
                         if {$mydist < [expr {$radius_km*1000}]} {
-                            # This is a false positive for redis since given the
+                            # This is a false positive for sider since given the
                             # same points the higher precision calculation provided
                             # by TCL shows the point within range
                             incr rounding_errors
@@ -656,7 +656,7 @@ start_server {tags {"geo"}} {
             if {$res != $res2} {
                 set diff [compare_lists $res $res2]
                 puts "*** Possible problem in GEO radius query ***"
-                puts "Redis: $res"
+                puts "Sider: $res"
                 puts "Tcl  : $res2"
                 puts "Diff : $diff"
                 puts [join $debuginfo "\n"]
@@ -664,7 +664,7 @@ start_server {tags {"geo"}} {
                     if {[lsearch -exact $res2 $place] != -1} {
                         set where "(only in Tcl)"
                     } else {
-                        set where "(only in Redis)"
+                        set where "(only in Sider)"
                     }
                     lassign [lindex [r geopos mypoints $place] 0] lon lat
                     set mydist [geo_distance $lon $lat $search_lon $search_lat]

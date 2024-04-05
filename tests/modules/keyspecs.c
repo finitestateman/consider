@@ -1,50 +1,50 @@
-#include "redismodule.h"
+#include "sidermodule.h"
 
 #define UNUSED(V) ((void) V)
 
 /* This function implements all commands in this module. All we care about is
  * the COMMAND metadata anyway. */
-int kspec_impl(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int kspec_impl(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     UNUSED(argv);
     UNUSED(argc);
 
     /* Handle getkeys-api introspection (for "kspec.nonewithgetkeys")  */
-    if (RedisModule_IsKeysPositionRequest(ctx)) {
+    if (SiderModule_IsKeysPositionRequest(ctx)) {
         for (int i = 1; i < argc; i += 2)
-            RedisModule_KeyAtPosWithFlags(ctx, i, REDISMODULE_CMD_KEY_RO | REDISMODULE_CMD_KEY_ACCESS);
+            SiderModule_KeyAtPosWithFlags(ctx, i, REDISMODULE_CMD_KEY_RO | REDISMODULE_CMD_KEY_ACCESS);
 
         return REDISMODULE_OK;
     }
 
-    RedisModule_ReplyWithSimpleString(ctx, "OK");
+    SiderModule_ReplyWithSimpleString(ctx, "OK");
     return REDISMODULE_OK;
 }
 
-int createKspecNone(RedisModuleCtx *ctx) {
+int createKspecNone(SiderModuleCtx *ctx) {
     /* A command without keyspecs; only the legacy (first,last,step) triple (MSET like spec). */
-    if (RedisModule_CreateCommand(ctx,"kspec.none",kspec_impl,"",1,-1,2) == REDISMODULE_ERR)
+    if (SiderModule_CreateCommand(ctx,"kspec.none",kspec_impl,"",1,-1,2) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
     return REDISMODULE_OK;
 }
 
-int createKspecNoneWithGetkeys(RedisModuleCtx *ctx) {
+int createKspecNoneWithGetkeys(SiderModuleCtx *ctx) {
     /* A command without keyspecs; only the legacy (first,last,step) triple (MSET like spec), but also has a getkeys callback */
-    if (RedisModule_CreateCommand(ctx,"kspec.nonewithgetkeys",kspec_impl,"getkeys-api",1,-1,2) == REDISMODULE_ERR)
+    if (SiderModule_CreateCommand(ctx,"kspec.nonewithgetkeys",kspec_impl,"getkeys-api",1,-1,2) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
     return REDISMODULE_OK;
 }
 
-int createKspecTwoRanges(RedisModuleCtx *ctx) {
+int createKspecTwoRanges(SiderModuleCtx *ctx) {
     /* Test that two position/range-based key specs are combined to produce the
      * legacy (first,last,step) values representing both keys. */
-    if (RedisModule_CreateCommand(ctx,"kspec.tworanges",kspec_impl,"",0,0,0) == REDISMODULE_ERR)
+    if (SiderModule_CreateCommand(ctx,"kspec.tworanges",kspec_impl,"",0,0,0) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    RedisModuleCommand *command = RedisModule_GetCommand(ctx,"kspec.tworanges");
-    RedisModuleCommandInfo info = {
+    SiderModuleCommand *command = SiderModule_GetCommand(ctx,"kspec.tworanges");
+    SiderModuleCommandInfo info = {
         .version = REDISMODULE_COMMAND_INFO_VERSION,
         .arity = -2,
-        .key_specs = (RedisModuleCommandKeySpec[]){
+        .key_specs = (SiderModuleCommandKeySpec[]){
             {
                 .flags = REDISMODULE_CMD_KEY_RO | REDISMODULE_CMD_KEY_ACCESS,
                 .begin_search_type = REDISMODULE_KSPEC_BS_INDEX,
@@ -61,23 +61,23 @@ int createKspecTwoRanges(RedisModuleCtx *ctx) {
             {0}
         }
     };
-    if (RedisModule_SetCommandInfo(command, &info) == REDISMODULE_ERR)
+    if (SiderModule_SetCommandInfo(command, &info) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
     return REDISMODULE_OK;
 }
 
-int createKspecTwoRangesWithGap(RedisModuleCtx *ctx) {
+int createKspecTwoRangesWithGap(SiderModuleCtx *ctx) {
     /* Test that two position/range-based key specs are combined to produce the
      * legacy (first,last,step) values representing just one key. */
-    if (RedisModule_CreateCommand(ctx,"kspec.tworangeswithgap",kspec_impl,"",0,0,0) == REDISMODULE_ERR)
+    if (SiderModule_CreateCommand(ctx,"kspec.tworangeswithgap",kspec_impl,"",0,0,0) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    RedisModuleCommand *command = RedisModule_GetCommand(ctx,"kspec.tworangeswithgap");
-    RedisModuleCommandInfo info = {
+    SiderModuleCommand *command = SiderModule_GetCommand(ctx,"kspec.tworangeswithgap");
+    SiderModuleCommandInfo info = {
         .version = REDISMODULE_COMMAND_INFO_VERSION,
         .arity = -2,
-        .key_specs = (RedisModuleCommandKeySpec[]){
+        .key_specs = (SiderModuleCommandKeySpec[]){
             {
                 .flags = REDISMODULE_CMD_KEY_RO | REDISMODULE_CMD_KEY_ACCESS,
                 .begin_search_type = REDISMODULE_KSPEC_BS_INDEX,
@@ -94,21 +94,21 @@ int createKspecTwoRangesWithGap(RedisModuleCtx *ctx) {
             {0}
         }
     };
-    if (RedisModule_SetCommandInfo(command, &info) == REDISMODULE_ERR)
+    if (SiderModule_SetCommandInfo(command, &info) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
     return REDISMODULE_OK;
 }
 
-int createKspecKeyword(RedisModuleCtx *ctx) {
+int createKspecKeyword(SiderModuleCtx *ctx) {
     /* Only keyword-based specs. The legacy triple is wiped and set to (0,0,0). */
-    if (RedisModule_CreateCommand(ctx,"kspec.keyword",kspec_impl,"",3,-1,1) == REDISMODULE_ERR)
+    if (SiderModule_CreateCommand(ctx,"kspec.keyword",kspec_impl,"",3,-1,1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    RedisModuleCommand *command = RedisModule_GetCommand(ctx,"kspec.keyword");
-    RedisModuleCommandInfo info = {
+    SiderModuleCommand *command = SiderModule_GetCommand(ctx,"kspec.keyword");
+    SiderModuleCommandInfo info = {
         .version = REDISMODULE_COMMAND_INFO_VERSION,
-        .key_specs = (RedisModuleCommandKeySpec[]){
+        .key_specs = (SiderModuleCommandKeySpec[]){
             {
                 .flags = REDISMODULE_CMD_KEY_RO | REDISMODULE_CMD_KEY_ACCESS,
                 .begin_search_type = REDISMODULE_KSPEC_BS_KEYWORD,
@@ -120,21 +120,21 @@ int createKspecKeyword(RedisModuleCtx *ctx) {
             {0}
         }
     };
-    if (RedisModule_SetCommandInfo(command, &info) == REDISMODULE_ERR)
+    if (SiderModule_SetCommandInfo(command, &info) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
     return REDISMODULE_OK;
 }
 
-int createKspecComplex1(RedisModuleCtx *ctx) {
+int createKspecComplex1(SiderModuleCtx *ctx) {
     /* First is a range a single key. The rest are keyword-based specs. */
-    if (RedisModule_CreateCommand(ctx,"kspec.complex1",kspec_impl,"",1,1,1) == REDISMODULE_ERR)
+    if (SiderModule_CreateCommand(ctx,"kspec.complex1",kspec_impl,"",1,1,1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    RedisModuleCommand *command = RedisModule_GetCommand(ctx,"kspec.complex1");
-    RedisModuleCommandInfo info = {
+    SiderModuleCommand *command = SiderModule_GetCommand(ctx,"kspec.complex1");
+    SiderModuleCommandInfo info = {
         .version = REDISMODULE_COMMAND_INFO_VERSION,
-        .key_specs = (RedisModuleCommandKeySpec[]){
+        .key_specs = (SiderModuleCommandKeySpec[]){
             {
                 .flags = REDISMODULE_CMD_KEY_RO,
                 .begin_search_type = REDISMODULE_KSPEC_BS_INDEX,
@@ -157,21 +157,21 @@ int createKspecComplex1(RedisModuleCtx *ctx) {
             {0}
         }
     };
-    if (RedisModule_SetCommandInfo(command, &info) == REDISMODULE_ERR)
+    if (SiderModule_SetCommandInfo(command, &info) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
     return REDISMODULE_OK;
 }
 
-int createKspecComplex2(RedisModuleCtx *ctx) {
+int createKspecComplex2(SiderModuleCtx *ctx) {
     /* First is not legacy, more than STATIC_KEYS_SPECS_NUM specs */
-    if (RedisModule_CreateCommand(ctx,"kspec.complex2",kspec_impl,"",0,0,0) == REDISMODULE_ERR)
+    if (SiderModule_CreateCommand(ctx,"kspec.complex2",kspec_impl,"",0,0,0) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    RedisModuleCommand *command = RedisModule_GetCommand(ctx,"kspec.complex2");
-    RedisModuleCommandInfo info = {
+    SiderModuleCommand *command = SiderModule_GetCommand(ctx,"kspec.complex2");
+    SiderModuleCommandInfo info = {
         .version = REDISMODULE_COMMAND_INFO_VERSION,
-        .key_specs = (RedisModuleCommandKeySpec[]){
+        .key_specs = (SiderModuleCommandKeySpec[]){
             {
                 .flags = REDISMODULE_CMD_KEY_RW | REDISMODULE_CMD_KEY_UPDATE,
                 .begin_search_type = REDISMODULE_KSPEC_BS_KEYWORD,
@@ -212,17 +212,17 @@ int createKspecComplex2(RedisModuleCtx *ctx) {
             {0}
         }
     };
-    if (RedisModule_SetCommandInfo(command, &info) == REDISMODULE_ERR)
+    if (SiderModule_SetCommandInfo(command, &info) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
     return REDISMODULE_OK;
 }
 
-int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int SiderModule_OnLoad(SiderModuleCtx *ctx, SiderModuleString **argv, int argc) {
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    if (RedisModule_Init(ctx, "keyspecs", 1, REDISMODULE_APIVER_1) == REDISMODULE_ERR)
+    if (SiderModule_Init(ctx, "keyspecs", 1, REDISMODULE_APIVER_1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
     if (createKspecNone(ctx) == REDISMODULE_ERR) return REDISMODULE_ERR;

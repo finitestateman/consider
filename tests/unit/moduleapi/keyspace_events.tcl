@@ -58,10 +58,10 @@ tags "modules" {
             r set x 1
             r set x_copy 1
             r eval {
-                redis.pcall('keyspace.del_key_copy', KEYS[1])
-                redis.pcall('keyspace.incr_case1', KEYS[1])
-                redis.pcall('keyspace.incr_case2', KEYS[1])
-                redis.pcall('keyspace.incr_case3', KEYS[1])
+                sider.pcall('keyspace.del_key_copy', KEYS[1])
+                sider.pcall('keyspace.incr_case1', KEYS[1])
+                sider.pcall('keyspace.incr_case2', KEYS[1])
+                sider.pcall('keyspace.incr_case3', KEYS[1])
             } 1 x
             assert_equal {} [r get multi]
             assert_equal {1} [r get lua]
@@ -76,7 +76,7 @@ tags "modules" {
         test "Keyspace notifications: module events test" {
             r config set notify-keyspace-events Kd
             r del x
-            set rd1 [redis_deferring_client]
+            set rd1 [sider_deferring_client]
             assert_equal {1} [psubscribe $rd1 *]
             r keyspace.notify x
             assert_equal {pmessage * __keyspace@9__:x notify} [$rd1 read]

@@ -308,7 +308,7 @@ start_server {tags {"other"}} {
     } {} {needs:reset}
 
     test {RESET clears MONITOR state} {
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
         $rd monitor
         assert_equal [$rd read] "OK"
 
@@ -356,7 +356,7 @@ start_server {tags {"other"}} {
 }
 
 start_server {tags {"other external:skip"}} {
-    test {Don't rehash if redis has child process} {
+    test {Don't rehash if sider has child process} {
         r config set save ""
         r config set rdb-key-save-delay 1000000
 
@@ -401,7 +401,7 @@ start_server {tags {"other external:skip"}} {
             set cmdline [read_proc_title [srv 0 pid]]
 
             assert_equal "TEST" [lindex $cmdline 0]
-            assert_match "*/redis-server" [lindex $cmdline 1]
+            assert_match "*/sider-server" [lindex $cmdline 1]
             
             if {$::tls} {
                 set expect_port [srv 0 pport]
@@ -417,7 +417,7 @@ start_server {tags {"other external:skip"}} {
             assert_equal $expect_port [lindex $cmdline 3]
             assert_equal $expect_tls_port [lindex $cmdline 4]
             assert_match "*/tests/tmp/server.*/socket" [lindex $cmdline 5]
-            assert_match "*/tests/tmp/redis.conf.*" [lindex $cmdline 6]
+            assert_match "*/tests/tmp/sider.conf.*" [lindex $cmdline 6]
 
             # Try setting a bad template
             catch {r config set "proc-title-template" "{invalid-var}"} err

@@ -6,9 +6,9 @@ using namespace std;
 
 #include "example-qt.h"
 
-void getCallback(redisAsyncContext *, void * r, void * privdata) {
+void getCallback(siderAsyncContext *, void * r, void * privdata) {
 
-    redisReply * reply = static_cast<redisReply *>(r);
+    siderReply * reply = static_cast<siderReply *>(r);
     ExampleQt * ex = static_cast<ExampleQt *>(privdata);
     if (reply == nullptr || ex == nullptr) return;
 
@@ -19,18 +19,18 @@ void getCallback(redisAsyncContext *, void * r, void * privdata) {
 
 void ExampleQt::run() {
 
-    m_ctx = redisAsyncConnect("localhost", 6379);
+    m_ctx = siderAsyncConnect("localhost", 6379);
 
     if (m_ctx->err) {
         cerr << "Error: " << m_ctx->errstr << endl;
-        redisAsyncFree(m_ctx);
+        siderAsyncFree(m_ctx);
         emit finished();
     }
 
     m_adapter.setContext(m_ctx);
 
-    redisAsyncCommand(m_ctx, NULL, NULL, "SET key %s", m_value);
-    redisAsyncCommand(m_ctx, getCallback, this, "GET key");
+    siderAsyncCommand(m_ctx, NULL, NULL, "SET key %s", m_value);
+    siderAsyncCommand(m_ctx, getCallback, this, "GET key");
 }
 
 int main (int argc, char **argv) {

@@ -1,11 +1,11 @@
 require 'rubygems'
-require 'redis'
+require 'sider'
 
 $runs = []; # Remember the error rate of each run for average purposes.
 $o = {};    # Options set parsing arguments
 
 def testit(filename)
-    r = Redis.new
+    r = Sider.new
     r.config("SET","maxmemory","2000000")
     if $o[:ttl]
         r.config("SET","maxmemory-policy","volatile-ttl")

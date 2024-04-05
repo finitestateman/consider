@@ -3,15 +3,15 @@
  *
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -39,24 +39,24 @@ extern "C" {
 #endif
 
 /* Structure pointing to our actually configured allocators */
-typedef struct hiredisAllocFuncs {
+typedef struct hisiderAllocFuncs {
     void *(*mallocFn)(size_t);
     void *(*callocFn)(size_t,size_t);
     void *(*reallocFn)(void*,size_t);
     char *(*strdupFn)(const char*);
     void (*freeFn)(void*);
-} hiredisAllocFuncs;
+} hisiderAllocFuncs;
 
-hiredisAllocFuncs hiredisSetAllocators(hiredisAllocFuncs *ha);
-void hiredisResetAllocators(void);
+hisiderAllocFuncs hisiderSetAllocators(hisiderAllocFuncs *ha);
+void hisiderResetAllocators(void);
 
 #ifndef _WIN32
 
-/* Hiredis' configured allocator function pointer struct */
-extern hiredisAllocFuncs hiredisAllocFns;
+/* Hisider' configured allocator function pointer struct */
+extern hisiderAllocFuncs hisiderAllocFns;
 
 static inline void *hi_malloc(size_t size) {
-    return hiredisAllocFns.mallocFn(size);
+    return hisiderAllocFns.mallocFn(size);
 }
 
 static inline void *hi_calloc(size_t nmemb, size_t size) {
@@ -64,19 +64,19 @@ static inline void *hi_calloc(size_t nmemb, size_t size) {
     if (SIZE_MAX / size < nmemb)
         return NULL;
 
-    return hiredisAllocFns.callocFn(nmemb, size);
+    return hisiderAllocFns.callocFn(nmemb, size);
 }
 
 static inline void *hi_realloc(void *ptr, size_t size) {
-    return hiredisAllocFns.reallocFn(ptr, size);
+    return hisiderAllocFns.reallocFn(ptr, size);
 }
 
 static inline char *hi_strdup(const char *str) {
-    return hiredisAllocFns.strdupFn(str);
+    return hisiderAllocFns.strdupFn(str);
 }
 
 static inline void hi_free(void *ptr) {
-    hiredisAllocFns.freeFn(ptr);
+    hisiderAllocFns.freeFn(ptr);
 }
 
 #else

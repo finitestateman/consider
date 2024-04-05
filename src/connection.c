@@ -59,13 +59,13 @@ int connTypeRegister(ConnectionType *ct) {
 
 int connTypeInitialize(void) {
     /* currently socket connection type is necessary  */
-    serverAssert(RedisRegisterConnectionTypeSocket() == C_OK);
+    serverAssert(SiderRegisterConnectionTypeSocket() == C_OK);
 
     /* currently unix socket connection type is necessary  */
-    serverAssert(RedisRegisterConnectionTypeUnix() == C_OK);
+    serverAssert(SiderRegisterConnectionTypeUnix() == C_OK);
 
     /* may fail if without BUILD_TLS=yes */
-    RedisRegisterConnectionTypeTLS();
+    SiderRegisterConnectionTypeTLS();
 
     return C_OK;
 }

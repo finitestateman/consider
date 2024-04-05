@@ -2,15 +2,15 @@
  * Copyright (c) 2009-2012, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -100,7 +100,7 @@ pubsubtype pubSubShardType = {
  *----------------------------------------------------------------------------*/
 
 /* Send a pubsub message of type "message" to the client.
- * Normally 'msg' is a Redis object containing the string to send as
+ * Normally 'msg' is a Sider object containing the string to send as
  * message. However if the caller sets 'msg' as NULL, it will be able
  * to send a special message (for instance an Array type) by using the
  * addReply*() API family. */
@@ -291,7 +291,7 @@ int pubsubUnsubscribeChannel(client *c, robj *channel, int notify, pubsubtype ty
         if (listLength(clients) == 0) {
             /* Free the list and associated hash entry at all if this was
              * the latest client, so that it will be possible to abuse
-             * Redis PUBSUB creating millions of channels. */
+             * Sider PUBSUB creating millions of channels. */
             dictDelete(*type.serverPubSubChannels, channel);
             /* As this channel isn't subscribed by anyone, it's safe
              * to remove the channel from the slot. */

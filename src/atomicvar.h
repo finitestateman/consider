@@ -24,15 +24,15 @@
  * Copyright (c) 2015, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -55,16 +55,16 @@
 #ifndef __ATOMIC_VAR_H
 #define __ATOMIC_VAR_H
 
-/* Define redisAtomic for atomic variable. */
-#define redisAtomic
+/* Define siderAtomic for atomic variable. */
+#define siderAtomic
 
-/* To test Redis with Helgrind (a Valgrind tool) it is useful to define
+/* To test Sider with Helgrind (a Valgrind tool) it is useful to define
  * the following macro, so that __sync macros are used: those can be detected
  * by Helgrind (even if they are less efficient) so that no false positive
  * is reported. */
 // #define __ATOMIC_VAR_FORCE_SYNC_MACROS
 
-/* There will be many false positives if we test Redis with Helgrind, since
+/* There will be many false positives if we test Sider with Helgrind, since
  * Helgrind can't understand we have imposed ordering on the program, so
  * we use macros in helgrind.h to tell Helgrind inter-thread happens-before
  * relationship explicitly for avoiding false positives.
@@ -84,8 +84,8 @@
 #if !defined(__ATOMIC_VAR_FORCE_SYNC_MACROS) && defined(__STDC_VERSION__) && \
     (__STDC_VERSION__ >= 201112L) && !defined(__STDC_NO_ATOMICS__)
 /* Use '_Atomic' keyword if the compiler supports. */
-#undef  redisAtomic
-#define redisAtomic _Atomic
+#undef  siderAtomic
+#define siderAtomic _Atomic
 /* Implementation using _Atomic in C11. */
 
 #include <stdatomic.h>

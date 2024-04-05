@@ -3,15 +3,15 @@
  * Copyright (c) 2009-2012, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -537,7 +537,7 @@ void loadServerConfigFromString(char *config) {
         if (!strcasecmp(argv[0],"include") && argc == 2) {
             loadServerConfig(argv[1], 0, NULL);
         } else if (!strcasecmp(argv[0],"rename-command") && argc == 3) {
-            struct redisCommand *cmd = lookupCommandBySds(argv[1]);
+            struct siderCommand *cmd = lookupCommandBySds(argv[1]);
             int retval;
 
             if (!cmd) {
@@ -634,7 +634,7 @@ void loadServerConfigFromString(char *config) {
 
 loaderr:
     if (argv) sdsfreesplitres(argv,argc);
-    fprintf(stderr, "\n*** FATAL CONFIG FILE ERROR (Redis %s) ***\n",
+    fprintf(stderr, "\n*** FATAL CONFIG FILE ERROR (Sider %s) ***\n",
         REDIS_VERSION);
     if (i < totlines) {
         fprintf(stderr, "Reading the configuration file, at line %d\n", linenum);
@@ -935,7 +935,7 @@ void configSetCommand(client *c) {
         goto err;
     }
 
-    RedisModuleConfigChangeV1 cc = {.num_changes = config_count, .config_names = config_names};
+    SiderModuleConfigChangeV1 cc = {.num_changes = config_count, .config_names = config_names};
     moduleFireServerEvent(REDISMODULE_EVENT_CONFIG, REDISMODULE_SUBEVENT_CONFIG_CHANGE, &cc);
     addReply(c,shared.ok);
     goto end;
@@ -1119,8 +1119,8 @@ struct rewriteConfigState *rewriteConfigReadOldFile(char *path) {
     FILE *fp = fopen(path,"r");
     if (fp == NULL && errno != ENOENT) return NULL;
 
-    struct redis_stat sb;
-    if (fp && redis_fstat(fileno(fp),&sb) == -1) return NULL;
+    struct sider_stat sb;
+    if (fp && sider_fstat(fileno(fp),&sb) == -1) return NULL;
 
     int linenum = -1;
     struct rewriteConfigState *state = rewriteConfigCreateState();
@@ -1265,7 +1265,7 @@ int rewriteConfigRewriteLine(struct rewriteConfigState *state, const char *optio
 }
 
 /* Write the long long 'bytes' value as a string in a way that is parsable
- * inside redis.conf. If possible uses the GB, MB, KB notation. */
+ * inside sider.conf. If possible uses the GB, MB, KB notation. */
 int rewriteConfigFormatMemory(char *buf, size_t len, long long bytes) {
     int gb = 1024*1024*1024;
     int mb = 1024*1024;
@@ -1463,7 +1463,7 @@ void rewriteConfigReplicaOfOption(standardConfig *config, const char *name, stru
 
     /* If this is a master, we want all the slaveof config options
      * in the file to be removed. Note that if this is a cluster instance
-     * we don't want a slaveof directive inside redis.conf. */
+     * we don't want a slaveof directive inside sider.conf. */
     if (server.cluster_enabled || server.masterhost == NULL) {
         rewriteConfigMarkAsProcessed(state, name);
         return;
@@ -1579,7 +1579,7 @@ void rewriteConfigLoadmoduleOption(struct rewriteConfigState *state) {
     dictIterator *di = dictGetIterator(modules);
     dictEntry *de;
     while ((de = dictNext(di)) != NULL) {
-        struct RedisModule *module = dictGetVal(de);
+        struct SiderModule *module = dictGetVal(de);
         line = sdsnew("loadmodule ");
         line = sdscatsds(line, module->loadmod->path);
         for (int i = 0; i < module->loadmod->argc; i++) {
@@ -1910,7 +1910,7 @@ static int sdsConfigSet(standardConfig *config, sds *argv, int argc, const char 
     /* if prev and new configuration are not equal, set the new one */
     if (new != prev && (new == NULL || prev == NULL || sdscmp(prev, new))) {
         /* If MODULE_CONFIG flag is set, then free temporary prev getModuleStringConfig returned.
-         * Otherwise, free the actual previous config value Redis held (Same action, different reasons) */
+         * Otherwise, free the actual previous config value Sider held (Same action, different reasons) */
         sdsfree(prev);
 
         if (config->flags & MODULE_CONFIG) {
@@ -1988,7 +1988,7 @@ static int enumConfigSet(standardConfig *config, sds *argv, int argc, const char
         }
         sdsrange(enumerr,0,-3); /* Remove final ", ". */
 
-        redis_strlcpy(loadbuf, enumerr, LOADBUF_SIZE);
+        sider_strlcpy(loadbuf, enumerr, LOADBUF_SIZE);
 
         sdsfree(enumerr);
         *err = loadbuf;
@@ -2330,8 +2330,8 @@ static int isValidActiveDefrag(int val, const char **err) {
 #ifndef HAVE_DEFRAG
     if (val) {
         *err = "Active defragmentation cannot be enabled: it "
-               "requires a Redis server compiled with a modified Jemalloc "
-               "like the one shipped by default with the Redis source "
+               "requires a Sider server compiled with a modified Jemalloc "
+               "like the one shipped by default with the Sider source "
                "distribution";
         return 0;
     }
@@ -2435,7 +2435,7 @@ static int updateLocaleCollate(const char **err) {
 }
 
 static int updateProcTitleTemplate(const char **err) {
-    if (redisSetProcTitle(NULL) == C_ERR) {
+    if (siderSetProcTitle(NULL) == C_ERR) {
         *err = "failed to set process title";
         return 0;
     }
@@ -2549,7 +2549,7 @@ static int updateMaxclients(const char **err) {
         if (aeResizeSetSize(server.el,
             server.maxclients + CONFIG_FDSET_INCR) == AE_ERR)
         {
-            *err = "The event loop API used by Redis is not able to handle the specified number of clients";
+            *err = "The event loop API used by Sider is not able to handle the specified number of clients";
             return 0;
         }
     }
@@ -2570,7 +2570,7 @@ int updateRequirePass(const char **err) {
     /* The old "requirepass" directive just translates to setting
      * a password to the default user. The only thing we do
      * additionally is to remember the cleartext password in this
-     * case, for backward compatibility with Redis <= 5. */
+     * case, for backward compatibility with Sider <= 5. */
     ACLUpdateDefaultUserPassword(server.requirepass);
     return 1;
 }
@@ -3106,7 +3106,7 @@ standardConfig static_configs[] = {
     createStringConfig("cluster-config-file", NULL, IMMUTABLE_CONFIG, ALLOW_EMPTY_STRING, server.cluster_configfile, "nodes.conf", NULL, NULL),
     createStringConfig("cluster-announce-hostname", NULL, MODIFIABLE_CONFIG, EMPTY_STRING_IS_NULL, server.cluster_announce_hostname, NULL, isValidAnnouncedHostname, updateClusterHostname),
     createStringConfig("cluster-announce-human-nodename", NULL, MODIFIABLE_CONFIG, EMPTY_STRING_IS_NULL, server.cluster_announce_human_nodename, NULL, isValidAnnouncedNodename, updateClusterHumanNodename),
-    createStringConfig("syslog-ident", NULL, IMMUTABLE_CONFIG, ALLOW_EMPTY_STRING, server.syslog_ident, "redis", NULL, NULL),
+    createStringConfig("syslog-ident", NULL, IMMUTABLE_CONFIG, ALLOW_EMPTY_STRING, server.syslog_ident, "sider", NULL, NULL),
     createStringConfig("dbfilename", NULL, MODIFIABLE_CONFIG | PROTECTED_CONFIG, ALLOW_EMPTY_STRING, server.rdb_filename, "dump.rdb", isValidDBfilename, NULL),
     createStringConfig("appendfilename", NULL, IMMUTABLE_CONFIG, ALLOW_EMPTY_STRING, server.aof_filename, "appendonly.aof", isValidAOFfilename, NULL),
     createStringConfig("appenddirname", NULL, IMMUTABLE_CONFIG, ALLOW_EMPTY_STRING, server.aof_dirname, "appendonlydir", isValidAOFdirname, NULL),

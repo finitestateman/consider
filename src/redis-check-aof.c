@@ -3,15 +3,15 @@
  * Copyright (c) 2009-2012, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -128,7 +128,7 @@ int readArgc(FILE *fp, long *target) {
 }
 
 /* Used to decode a RESP record in the AOF file to obtain the original 
- * redis command, and also check whether the command is MULTI/EXEC. If the 
+ * sider command, and also check whether the command is MULTI/EXEC. If the 
  * command is MULTI, the parameter out_multi will be incremented by one, and 
  * if the command is EXEC, the parameter out_multi will be decremented 
  * by one. The parameter out_multi will be used by the upper caller to determine 
@@ -199,7 +199,7 @@ int processAnnotations(FILE *fp, char *filename, int last_file) {
             printf("Failed to truncate AOF %s to timestamp %ld to offset %ld because it is not the last file.\n",
                 filename, to_timestamp, (long int)epos);
             printf("If you insist, please delete all files after this file according to the manifest "
-                "file and delete the corresponding records in manifest file manually. Then re-run redis-check-aof.\n");
+                "file and delete the corresponding records in manifest file manually. Then re-run sider-check-aof.\n");
             exit(1);
         }
         /* Truncate remaining AOF if exceeding 'to_timestamp' */
@@ -230,8 +230,8 @@ int checkSingleAof(char *aof_filename, char *aof_filepath, int last_file, int fi
         exit(1);
     }
 
-    struct redis_stat sb;
-    if (redis_fstat(fileno(fp),&sb) == -1) {
+    struct sider_stat sb;
+    if (sider_fstat(fileno(fp),&sb) == -1) {
         printf("Cannot stat file: %s, aborting...\n", aof_filename);
         exit(1);
     }
@@ -243,7 +243,7 @@ int checkSingleAof(char *aof_filename, char *aof_filepath, int last_file, int fi
 
     if (preamble) {
         char *argv[2] = {NULL, aof_filepath};
-        if (redis_check_rdb_main(2, argv, fp) == C_ERR) {
+        if (sider_check_rdb_main(2, argv, fp) == C_ERR) {
             printf("RDB preamble of AOF file is not sane, aborting.\n");
             exit(1);
         } else {
@@ -340,8 +340,8 @@ int fileIsRDB(char *filepath) {
         exit(1);
     }
 
-    struct redis_stat sb;
-    if (redis_fstat(fileno(fp), &sb) == -1) {
+    struct sider_stat sb;
+    if (sider_fstat(fileno(fp), &sb) == -1) {
         printf("Cannot stat file: %s\n", filepath);
         exit(1);
     }
@@ -376,8 +376,8 @@ int fileIsManifest(char *filepath) {
         exit(1);
     }
 
-    struct redis_stat sb;
-    if (redis_fstat(fileno(fp), &sb) == -1) {
+    struct sider_stat sb;
+    if (sider_fstat(fileno(fp), &sb) == -1) {
         printf("Cannot stat file: %s\n", filepath);
         exit(1);
     }
@@ -416,7 +416,7 @@ int fileIsManifest(char *filepath) {
  * AOF_RDB_PREAMBLE: Old-style RDB-preamble AOF
  * AOF_MULTI_PART: manifest in Multi Part AOF 
  * 
- * redis-check-aof tool will automatically perform different 
+ * sider-check-aof tool will automatically perform different 
  * verification logic according to different file formats.
  * */
 input_file_type getInputFileType(char *filepath) {
@@ -444,7 +444,7 @@ void printAofStyle(int ret, char *aofFileName, char *aofType) {
 
 /* Check if Multi Part AOF is valid. It will check the BASE file and INCR files 
  * at once according to the manifest instructions (this is somewhat similar to 
- * redis' AOF loading).
+ * sider' AOF loading).
  * 
  * When the verification is successful, we can guarantee:
  * 1. The manifest file format is valid
@@ -505,7 +505,7 @@ void checkOldStyleAof(char *filepath, int fix, int preamble) {
     printAofStyle(ret, filepath, (char *)"AOF");
 }
 
-int redis_check_aof_main(int argc, char **argv) {
+int sider_check_aof_main(int argc, char **argv) {
     char *filepath;
     char temp_filepath[PATH_MAX + 1];
     char *dirpath;

@@ -5,18 +5,18 @@
  *  https://github.com/antirez/listpack
  *
  * Copyright (c) 2017, Salvatore Sanfilippo <antirez at gmail dot com>
- * Copyright (c) 2020, Redis Labs, Inc
+ * Copyright (c) 2020, Sider Labs, Inc
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -42,7 +42,7 @@
 
 #include "listpack.h"
 #include "listpack_malloc.h"
-#include "redisassert.h"
+#include "siderassert.h"
 #include "util.h"
 
 #define LP_HDR_SIZE 6       /* 32 bit total len + 16 bit number of elements. */
@@ -165,7 +165,7 @@ int lpSafeToAdd(unsigned char* lp, size_t add) {
  *
  * -----------------------------------------------------------------------------
  *
- * Credits: this function was adapted from the Redis source code, file
+ * Credits: this function was adapted from the Sider source code, file
  * "utils.c", function string2ll(), and is copyright:
  *
  * Copyright(C) 2011, Pieter Noordhuis
@@ -885,7 +885,7 @@ unsigned char *lpInsert(unsigned char *lp, unsigned char *elestr, unsigned char 
         } else if (elestr) {
             lpEncodeString(dst,elestr,size);
         } else {
-            redis_unreachable();
+            sider_unreachable();
         }
         dst += enclen;
         memcpy(dst,backlen,backlen_size);

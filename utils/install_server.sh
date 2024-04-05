@@ -2,13 +2,13 @@
 
 # Copyright 2011 Dvir Volk <dvirsk at gmail dot com>. All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without
+# Sidertribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
-#   1. Redistributions of source code must retain the above copyright notice,
+#   1. Sidertributions of source code must retain the above copyright notice,
 #   this list of conditions and the following disclaimer.
 #
-#   2. Redistributions in binary form must reproduce the above copyright
+#   2. Sidertributions in binary form must reproduce the above copyright
 #   notice, this list of conditions and the following disclaimer in the
 #   documentation and/or other materials provided with the distribution.
 #
@@ -25,7 +25,7 @@
 #
 ################################################################################
 #
-# Service installer for redis server, runs interactively by default.
+# Service installer for sider server, runs interactively by default.
 #
 # To run this script non-interactively (for automation/provisioning purposes),
 # feed the variables into the script. Any missing variables will be prompted!
@@ -34,12 +34,12 @@
 # Example:
 #
 # sudo REDIS_PORT=1234 \
-# 		 REDIS_CONFIG_FILE=/etc/redis/1234.conf \
-# 		 REDIS_LOG_FILE=/var/log/redis_1234.log \
-# 		 REDIS_DATA_DIR=/var/lib/redis/1234 \
-# 		 REDIS_EXECUTABLE=`command -v redis-server` ./utils/install_server.sh
+# 		 REDIS_CONFIG_FILE=/etc/sider/1234.conf \
+# 		 REDIS_LOG_FILE=/var/log/sider_1234.log \
+# 		 REDIS_DATA_DIR=/var/lib/sider/1234 \
+# 		 REDIS_EXECUTABLE=`command -v sider-server` ./utils/install_server.sh
 #
-# This generates a redis config file and an /etc/init.d script, and installs them.
+# This generates a sider config file and an /etc/init.d script, and installs them.
 #
 # /!\ This script should be run as root
 #
@@ -63,8 +63,8 @@ SCRIPTPATH=$(dirname $SCRIPT)
 _REDIS_PORT=6379
 _MANUAL_EXECUTION=false
 
-echo "Welcome to the redis service installer"
-echo "This script will help you easily set up a running redis server"
+echo "Welcome to the sider service installer"
+echo "This script will help you easily set up a running sider server"
 echo
 
 #check for root user
@@ -85,8 +85,8 @@ unset _pid_1_exe
 
 if ! echo $REDIS_PORT | egrep -q '^[0-9]+$' ; then
 	_MANUAL_EXECUTION=true
-	#Read the redis port
-	read  -p "Please select the redis port for this instance: [$_REDIS_PORT] " REDIS_PORT
+	#Read the sider port
+	read  -p "Please select the sider port for this instance: [$_REDIS_PORT] " REDIS_PORT
 	if ! echo $REDIS_PORT | egrep -q '^[0-9]+$' ; then
 		echo "Selecting default: $_REDIS_PORT"
 		REDIS_PORT=$_REDIS_PORT
@@ -95,9 +95,9 @@ fi
 
 if [ -z "$REDIS_CONFIG_FILE" ] ; then
 	_MANUAL_EXECUTION=true
-	#read the redis config file
-	_REDIS_CONFIG_FILE="/etc/redis/$REDIS_PORT.conf"
-	read -p "Please select the redis config file name [$_REDIS_CONFIG_FILE] " REDIS_CONFIG_FILE
+	#read the sider config file
+	_REDIS_CONFIG_FILE="/etc/sider/$REDIS_PORT.conf"
+	read -p "Please select the sider config file name [$_REDIS_CONFIG_FILE] " REDIS_CONFIG_FILE
 	if [ -z "$REDIS_CONFIG_FILE" ] ; then
 		REDIS_CONFIG_FILE=$_REDIS_CONFIG_FILE
 		echo "Selected default - $REDIS_CONFIG_FILE"
@@ -106,9 +106,9 @@ fi
 
 if [ -z "$REDIS_LOG_FILE" ] ; then
 	_MANUAL_EXECUTION=true
-	#read the redis log file path
-	_REDIS_LOG_FILE="/var/log/redis_$REDIS_PORT.log"
-	read -p "Please select the redis log file name [$_REDIS_LOG_FILE] " REDIS_LOG_FILE
+	#read the sider log file path
+	_REDIS_LOG_FILE="/var/log/sider_$REDIS_PORT.log"
+	read -p "Please select the sider log file name [$_REDIS_LOG_FILE] " REDIS_LOG_FILE
 	if [ -z "$REDIS_LOG_FILE" ] ; then
 		REDIS_LOG_FILE=$_REDIS_LOG_FILE
 		echo "Selected default - $REDIS_LOG_FILE"
@@ -117,8 +117,8 @@ fi
 
 if [ -z "$REDIS_DATA_DIR" ] ; then
 	_MANUAL_EXECUTION=true
-	#get the redis data directory
-	_REDIS_DATA_DIR="/var/lib/redis/$REDIS_PORT"
+	#get the sider data directory
+	_REDIS_DATA_DIR="/var/lib/sider/$REDIS_PORT"
 	read -p "Please select the data directory for this instance [$_REDIS_DATA_DIR] " REDIS_DATA_DIR
 	if [ -z "$REDIS_DATA_DIR" ] ; then
 		REDIS_DATA_DIR=$_REDIS_DATA_DIR
@@ -128,23 +128,23 @@ fi
 
 if [ ! -x "$REDIS_EXECUTABLE" ] ; then
 	_MANUAL_EXECUTION=true
-	#get the redis executable path
-	_REDIS_EXECUTABLE=`command -v redis-server`
-	read -p "Please select the redis executable path [$_REDIS_EXECUTABLE] " REDIS_EXECUTABLE
+	#get the sider executable path
+	_REDIS_EXECUTABLE=`command -v sider-server`
+	read -p "Please select the sider executable path [$_REDIS_EXECUTABLE] " REDIS_EXECUTABLE
 	if [ ! -x "$REDIS_EXECUTABLE" ] ; then
 		REDIS_EXECUTABLE=$_REDIS_EXECUTABLE
 
 		if [ ! -x "$REDIS_EXECUTABLE" ] ; then
-			echo "Mmmmm...  it seems like you don't have a redis executable. Did you run make install yet?"
+			echo "Mmmmm...  it seems like you don't have a sider executable. Did you run make install yet?"
 			exit 1
 		fi
 	fi
 fi
 
-#check the default for redis cli
-CLI_EXEC=`command -v redis-cli`
+#check the default for sider cli
+CLI_EXEC=`command -v sider-cli`
 if [ -z "$CLI_EXEC" ] ; then
-	CLI_EXEC=`dirname $REDIS_EXECUTABLE`"/redis-cli"
+	CLI_EXEC=`dirname $REDIS_EXECUTABLE`"/sider-cli"
 fi
 
 echo "Selected config:"
@@ -160,16 +160,16 @@ if $_MANUAL_EXECUTION == true ; then
 	read -p "Is this ok? Then press ENTER to go on or Ctrl-C to abort." _UNUSED_
 fi
 
-mkdir -p `dirname "$REDIS_CONFIG_FILE"` || die "Could not create redis config directory"
-mkdir -p `dirname "$REDIS_LOG_FILE"` || die "Could not create redis log dir"
-mkdir -p "$REDIS_DATA_DIR" || die "Could not create redis data directory"
+mkdir -p `dirname "$REDIS_CONFIG_FILE"` || die "Could not create sider config directory"
+mkdir -p `dirname "$REDIS_LOG_FILE"` || die "Could not create sider log dir"
+mkdir -p "$REDIS_DATA_DIR" || die "Could not create sider data directory"
 
 #render the templates
 TMP_FILE="/tmp/${REDIS_PORT}.conf"
-DEFAULT_CONFIG="${SCRIPTPATH}/../redis.conf"
-INIT_TPL_FILE="${SCRIPTPATH}/redis_init_script.tpl"
-INIT_SCRIPT_DEST="/etc/init.d/redis_${REDIS_PORT}"
-PIDFILE="/var/run/redis_${REDIS_PORT}.pid"
+DEFAULT_CONFIG="${SCRIPTPATH}/../sider.conf"
+INIT_TPL_FILE="${SCRIPTPATH}/sider_init_script.tpl"
+INIT_SCRIPT_DEST="/etc/init.d/sider_${REDIS_PORT}"
+PIDFILE="/var/run/sider_${REDIS_PORT}.pid"
 
 if [ ! -f "$DEFAULT_CONFIG" ]; then
 	echo "Mmmmm... the default config is missing. Did you switch to the utils directory?"
@@ -190,7 +190,7 @@ EOF
 sed "$SED_EXPR" $DEFAULT_CONFIG >> $TMP_FILE
 
 #cat $TPL_FILE | while read line; do eval "echo \"$line\"" >> $TMP_FILE; done
-cp $TMP_FILE $REDIS_CONFIG_FILE || die "Could not write redis config file $REDIS_CONFIG_FILE"
+cp $TMP_FILE $REDIS_CONFIG_FILE || die "Could not write sider config file $REDIS_CONFIG_FILE"
 
 #Generate sample script from template file
 rm -f $TMP_FILE
@@ -210,17 +210,17 @@ REDISPORT=\"$REDIS_PORT\"\n\n
 REDIS_CHKCONFIG_INFO=\
 "# REDHAT chkconfig header\n\n
 # chkconfig: - 58 74\n
-# description: redis_${REDIS_PORT} is the redis daemon.\n
+# description: sider_${REDIS_PORT} is the sider daemon.\n
 ### BEGIN INIT INFO\n
-# Provides: redis_6379\n
+# Provides: sider_6379\n
 # Required-Start: \$network \$local_fs \$remote_fs\n
 # Required-Stop: \$network \$local_fs \$remote_fs\n
 # Default-Start: 2 3 4 5\n
 # Default-Stop: 0 1 6\n
 # Should-Start: \$syslog \$named\n
 # Should-Stop: \$syslog \$named\n
-# Short-Description: start and stop redis_${REDIS_PORT}\n
-# Description: Redis daemon\n
+# Short-Description: start and stop sider_${REDIS_PORT}\n
+# Description: Sider daemon\n
 ### END INIT INFO\n\n"
 
 if command -v chkconfig >/dev/null; then
@@ -250,17 +250,17 @@ REDISPORT="$REDIS_PORT"
 ###############
 # SysV Init Information
 # chkconfig: - 58 74
-# description: redis_${REDIS_PORT} is the redis daemon.
+# description: sider_${REDIS_PORT} is the sider daemon.
 ### BEGIN INIT INFO
-# Provides: redis_${REDIS_PORT}
+# Provides: sider_${REDIS_PORT}
 # Required-Start: \$network \$local_fs \$remote_fs
 # Required-Stop: \$network \$local_fs \$remote_fs
 # Default-Start: 2 3 4 5
 # Default-Stop: 0 1 6
 # Should-Start: \$syslog \$named
 # Should-Stop: \$syslog \$named
-# Short-Description: start and stop redis_${REDIS_PORT}
-# Description: Redis daemon
+# Short-Description: start and stop sider_${REDIS_PORT}
+# Description: Sider daemon
 ### END INIT INFO
 
 EOT
@@ -268,23 +268,23 @@ cat ${INIT_TPL_FILE} >> ${TMP_FILE}
 
 #copy to /etc/init.d
 cp $TMP_FILE $INIT_SCRIPT_DEST && \
-	chmod +x $INIT_SCRIPT_DEST || die "Could not copy redis init script to  $INIT_SCRIPT_DEST"
+	chmod +x $INIT_SCRIPT_DEST || die "Could not copy sider init script to  $INIT_SCRIPT_DEST"
 echo "Copied $TMP_FILE => $INIT_SCRIPT_DEST"
 
 #Install the service
 echo "Installing service..."
 if command -v chkconfig >/dev/null 2>&1; then
 	# we're chkconfig, so lets add to chkconfig and put in runlevel 345
-	chkconfig --add redis_${REDIS_PORT} && echo "Successfully added to chkconfig!"
-	chkconfig --level 345 redis_${REDIS_PORT} on && echo "Successfully added to runlevels 345!"
+	chkconfig --add sider_${REDIS_PORT} && echo "Successfully added to chkconfig!"
+	chkconfig --level 345 sider_${REDIS_PORT} on && echo "Successfully added to runlevels 345!"
 elif command -v update-rc.d >/dev/null 2>&1; then
 	#if we're not a chkconfig box assume we're able to use update-rc.d
-	update-rc.d redis_${REDIS_PORT} defaults && echo "Success!"
+	update-rc.d sider_${REDIS_PORT} defaults && echo "Success!"
 else
 	echo "No supported init tool found."
 fi
 
-/etc/init.d/redis_$REDIS_PORT start || die "Failed starting service..."
+/etc/init.d/sider_$REDIS_PORT start || die "Failed starting service..."
 
 #tada
 echo "Installation successful!"

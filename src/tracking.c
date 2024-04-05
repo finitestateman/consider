@@ -3,15 +3,15 @@
  * Copyright (c) 2019, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -190,7 +190,7 @@ void enableTracking(client *c, uint64_t redirect_to, uint64_t options, robj **pr
     if (TrackingTable == NULL) {
         TrackingTable = raxNew();
         PrefixTable = raxNew();
-        TrackingChannelName = createStringObject("__redis__:invalidate",20);
+        TrackingChannelName = createStringObject("__sider__:invalidate",20);
     }
 
     /* For broadcasting, set the list of prefixes in the client. */
@@ -211,7 +211,7 @@ void enableTracking(client *c, uint64_t redirect_to, uint64_t options, robj **pr
 /* This function is called after the execution of a readonly command in the
  * case the client 'c' has keys tracking enabled and the tracking is not
  * in BCAST mode. It will populate the tracking invalidation table according
- * to the keys the user fetched, so that Redis will know what are the clients
+ * to the keys the user fetched, so that Sider will know what are the clients
  * that should receive an invalidation message with certain groups of keys
  * are modified. */
 void trackingRememberKeys(client *tracking, client *executing) {
@@ -260,7 +260,7 @@ void trackingRememberKeys(client *tracking, client *executing) {
  *
  * In case the 'proto' argument is non zero, the function will assume that
  * 'keyname' points to a buffer of 'keylen' bytes already expressed in the
- * form of Redis RESP protocol. This is used for:
+ * form of Sider RESP protocol. This is used for:
  * - In BCAST mode, to send an array of invalidated keys to all
  *   applicable clients
  * - Following a flush command, to send a single RESP NULL to indicate
@@ -295,7 +295,7 @@ void sendTrackingMessage(client *c, char *keyname, size_t keylen, int proto) {
     /* Only send such info for clients in RESP version 3 or more. However
      * if redirection is active, and the connection we redirect to is
      * in Pub/Sub mode, we can support the feature with RESP 2 as well,
-     * by sending Pub/Sub messages in the __redis__:invalidate channel. */
+     * by sending Pub/Sub messages in the __sider__:invalidate channel. */
     if (c->resp > 2) {
         addReplyPushLen(c,2);
         addReplyBulkCBuffer(c,"invalidate",10);
@@ -323,7 +323,7 @@ void sendTrackingMessage(client *c, char *keyname, size_t keylen, int proto) {
     if (!(old_flags & CLIENT_PUSHING)) c->flags &= ~CLIENT_PUSHING;
 }
 
-/* This function is called when a key is modified in Redis and in the case
+/* This function is called when a key is modified in Sider and in the case
  * we have at least one client with the BCAST mode enabled.
  * Its goal is to set the key in the right broadcast state if the key
  * matches one or more prefixes in the prefix table. Later when we
@@ -347,7 +347,7 @@ void trackingRememberKeyToBroadcast(client *c, char *keyname, size_t keylen) {
     raxStop(&ri);
 }
 
-/* This function is called from signalModifiedKey() or other places in Redis
+/* This function is called from signalModifiedKey() or other places in Sider
  * when a key changes value. In the context of keys tracking, our task here is
  * to send a notification to every client that may have keys about such caching
  * slot.
@@ -358,7 +358,7 @@ void trackingRememberKeyToBroadcast(client *c, char *keyname, size_t keylen) {
  *
  * The last argument 'bcast' tells the function if it should also schedule
  * the key for broadcasting to clients in BCAST mode. This is the case when
- * the function is called from the Redis core once a key is modified, however
+ * the function is called from the Sider core once a key is modified, however
  * we also call the function in order to evict keys in the key table in case
  * of memory pressure: in that case the key didn't really change, so we want
  * just to notify the clients that are in the table for this key, that would
@@ -449,7 +449,7 @@ void trackingHandlePendingKeyInvalidations(void) {
     listEmpty(server.tracking_pending_keys);
 }
 
-/* This function is called when one or all the Redis databases are
+/* This function is called when one or all the Sider databases are
  * flushed. Caching keys are not specific for each DB but are global: 
  * currently what we do is send a special notification to clients with 
  * tracking enabled, sending a RESP NULL, which means, "all the keys", 
@@ -495,12 +495,12 @@ void trackingInvalidateKeysOnFlush(int async) {
     }
 }
 
-/* Tracking forces Redis to remember information about which client may have
+/* Tracking forces Sider to remember information about which client may have
  * certain keys. In workloads where there are a lot of reads, but keys are
  * hardly modified, the amount of information we have to remember server side
  * could be a lot, with the number of keys being totally not bound.
  *
- * So Redis allows the user to configure a maximum number of keys for the
+ * So Sider allows the user to configure a maximum number of keys for the
  * invalidation table. This function makes sure that we don't go over the
  * specified fill rate: if we are over, we can just evict information about
  * a random key, and send invalidation messages to clients like if the key was
@@ -544,7 +544,7 @@ void trackingLimitUsedSlots(void) {
     timeout_counter++;
 }
 
-/* Generate Redis protocol for an array containing all the key names
+/* Generate Sider protocol for an array containing all the key names
  * in the 'keys' radix tree. If the client is not NULL, the list will not
  * include keys that were modified the last time by this client, in order
  * to implement the NOLOOP option.

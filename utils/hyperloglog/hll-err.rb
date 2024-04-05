@@ -1,13 +1,13 @@
 # hll-err.rb - Copyright (C) 2014 Salvatore Sanfilippo
 # BSD license, See the COPYING file for more information.
 #
-# Check error of HyperLogLog Redis implementation for different set sizes.
+# Check error of HyperLogLog Sider implementation for different set sizes.
 
 require 'rubygems'
-require 'redis'
+require 'sider'
 require 'digest/sha1'
 
-r = Redis.new
+r = Sider.new
 r.del('hll')
 i = 0
 while true do

@@ -10,10 +10,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          curl -fsSL https://packages.redis.io/gpg | sudo gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg
-          echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/redis.list
+          curl -fsSL https://packages.sider.io/gpg | sudo gpg --dearmor -o /usr/share/keyrings/sider-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/sider-archive-keyring.gpg] https://packages.sider.io/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/sider.list
           sudo apt-get update
-          sudo apt-get install -y redis-server valgrind libevent-dev
+          sudo apt-get install -y sider-server valgrind libevent-dev
 
       - name: Build using cmake
         env:
@@ -47,7 +47,7 @@ jobs:
       - name: Install dependencies
         run: |
           yum -y install http://rpms.remirepo.net/enterprise/remi-release-7.rpm
-          yum -y --enablerepo=remi install redis
+          yum -y --enablerepo=remi install sider
           yum -y install gcc gcc-c++ make openssl openssl-devel cmake3 valgrind libevent-devel
 
       - name: Build using cmake
@@ -84,7 +84,7 @@ jobs:
         run: |
           dnf -y upgrade --refresh
           dnf -y install https://rpms.remirepo.net/enterprise/remi-release-8.rpm
-          dnf -y module install redis:remi-6.0
+          dnf -y module install sider:remi-6.0
           dnf -y group install "Development Tools"
           dnf -y install openssl-devel cmake valgrind libevent-devel
 
@@ -133,10 +133,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew install openssl redis@7.0
-          brew link redis@7.0 --force
+          brew install openssl sider@7.0
+          brew link sider@7.0 --force
 
-      - name: Build hiredis
+      - name: Build hisider
         run: USE_SSL=1 make
 
       - name: Run tests
@@ -155,7 +155,7 @@ jobs:
           choco install -y ninja memurai-developer
 
       - uses: ilammy/msvc-dev-cmd@v1
-      - name: Build hiredis
+      - name: Build hisider
         run: |
           mkdir build && cd build
           cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DENABLE_EXAMPLES=ON
@@ -163,7 +163,7 @@ jobs:
 
       - name: Run tests
         run: |
-          ./build/hiredis-test.exe
+          ./build/hisider-test.exe
 
       - name: Install Cygwin Action
         uses: cygwin/cygwin-install-action@v2

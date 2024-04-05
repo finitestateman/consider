@@ -58,7 +58,7 @@ test "MULTI-EXEC with write operations is MOVED" {
 }
 
 test "read-only blocking operations from replica" {
-    set rd [redis_deferring_client redis 1]
+    set rd [sider_deferring_client sider 1]
     $rd readonly
     $rd read
     $rd XREAD BLOCK 0 STREAMS k 0
@@ -78,7 +78,7 @@ test "read-only blocking operations from replica" {
 
 test "reply MOVED when eval from replica for update" {
     catch {[$replica eval {#!lua
-        return redis.call('del','a')
+        return sider.call('del','a')
         } 1 a
     ]} err
     assert {[string range $err 0 4] eq {MOVED}}

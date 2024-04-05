@@ -7,8 +7,8 @@ then
 fi
 
 TAG=$1
-TARNAME="redis-${TAG}.tar.gz"
-DOWNLOADURL="http://download.redis.io/releases/${TARNAME}"
+TARNAME="sider-${TAG}.tar.gz"
+DOWNLOADURL="http://download.sider.io/releases/${TARNAME}"
 
 echo "Doing sanity test on the actual tarball"
 
@@ -17,10 +17,10 @@ rm -rf test_release_tmp_dir
 mkdir test_release_tmp_dir
 cd test_release_tmp_dir
 rm -f $TARNAME
-rm -rf redis-${TAG}
+rm -rf sider-${TAG}
 wget $DOWNLOADURL
 tar xvzf $TARNAME
-cd redis-${TAG}
+cd sider-${TAG}
 make
 ./runtest
 ./runtest-sentinel

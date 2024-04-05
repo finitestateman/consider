@@ -2,15 +2,15 @@
 
 /*
  * Copyright 2001-2010 Georges Menie (www.menie.org)
- * Copyright 2010-2012 Salvatore Sanfilippo (adapted to Redis coding style)
+ * Copyright 2010-2012 Salvatore Sanfilippo (adapted to Sider coding style)
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *     * Redistributions of source code must retain the above copyright
+ *     * Sidertributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copyright
+ *     * Sidertributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
  *     * Neither the name of the University of California, Berkeley nor the

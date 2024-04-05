@@ -3,15 +3,15 @@
  * Copyright (c) 2006-2012, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -269,7 +269,7 @@ int anetResolve(char *err, char *host, char *ipbuf, size_t ipbuf_len,
 
 static int anetSetReuseAddr(char *err, int fd) {
     int yes = 1;
-    /* Make sure connection-intensive things like the redis benchmark
+    /* Make sure connection-intensive things like the sider benchmark
      * will be able to close/open sockets a zillion of times */
     if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1) {
         anetSetError(err, "setsockopt SO_REUSEADDR: %s", strerror(errno));
@@ -285,7 +285,7 @@ static int anetCreateSocket(char *err, int domain) {
         return ANET_ERR;
     }
 
-    /* Make sure connection-intensive things like the redis benchmark
+    /* Make sure connection-intensive things like the sider benchmark
      * will be able to close/open sockets a zillion of times */
     if (anetSetReuseAddr(err,s) == ANET_ERR) {
         close(s);
@@ -398,7 +398,7 @@ int anetUnixGenericConnect(char *err, const char *path, int flags)
         return ANET_ERR;
 
     sa.sun_family = AF_LOCAL;
-    redis_strlcpy(sa.sun_path,path,sizeof(sa.sun_path));
+    sider_strlcpy(sa.sun_path,path,sizeof(sa.sun_path));
     if (flags & ANET_CONNECT_NONBLOCK) {
         if (anetNonBlock(err,s) != ANET_OK) {
             close(s);
@@ -510,7 +510,7 @@ int anetUnixServer(char *err, char *path, mode_t perm, int backlog)
 
     memset(&sa,0,sizeof(sa));
     sa.sun_family = AF_LOCAL;
-    redis_strlcpy(sa.sun_path,path,sizeof(sa.sun_path));
+    sider_strlcpy(sa.sun_path,path,sizeof(sa.sun_path));
     if (anetListen(err,s,(struct sockaddr*)&sa,sizeof(sa),backlog,perm) == ANET_ERR)
         return ANET_ERR;
     return s;

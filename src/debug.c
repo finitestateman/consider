@@ -1,17 +1,17 @@
 /*
  * Copyright (c) 2009-2020, Salvatore Sanfilippo <antirez at gmail dot com>
- * Copyright (c) 2020, Redis Labs, Inc
+ * Copyright (c) 2020, Sider Labs, Inc
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -137,7 +137,7 @@ void mixStringObjectDigest(unsigned char *digest, robj *o) {
  * Note that this function does not reset the initial 'digest' passed, it
  * will continue mixing this object digest to anything that was already
  * present. */
-void xorObjectDigest(redisDb *db, robj *keyobj, unsigned char *digest, robj *o) {
+void xorObjectDigest(siderDb *db, robj *keyobj, unsigned char *digest, robj *o) {
     uint32_t aux = htonl(o->type);
     mixDigest(digest,&aux,sizeof(aux));
     long long expiretime = getExpire(db,keyobj);
@@ -253,7 +253,7 @@ void xorObjectDigest(redisDb *db, robj *keyobj, unsigned char *digest, robj *o) 
         }
         streamIteratorStop(&si);
     } else if (o->type == OBJ_MODULE) {
-        RedisModuleDigest md = {{0},{0},keyobj,db->id};
+        SiderModuleDigest md = {{0},{0},keyobj,db->id};
         moduleValue *mv = o->ptr;
         moduleType *mt = mv->type;
         moduleInitDigestContext(md);
@@ -284,7 +284,7 @@ void computeDatasetDigest(unsigned char *final) {
     memset(final,0,20); /* Start with a clean result */
 
     for (j = 0; j < server.dbnum; j++) {
-        redisDb *db = server.db+j;
+        siderDb *db = server.db+j;
 
         if (dictSize(db->dict) == 0) continue;
         di = dictGetSafeIterator(db->dict);
@@ -407,14 +407,14 @@ void debugCommand(client *c) {
 "DIGEST-VALUE <key> [<key> ...]",
 "    Output a hex signature of the values of all the specified keys.",
 "ERROR <string>",
-"    Return a Redis protocol error with <string> as message. Useful for clients",
-"    unit tests to simulate Redis errors.",
+"    Return a Sider protocol error with <string> as message. Useful for clients",
+"    unit tests to simulate Sider errors.",
 "LEAK <string>",
 "    Create a memory leak of the input string.",
 "LOG <message>",
 "    Write <message> to the server log.",
 "HTSTATS <dbid> [full]",
-"    Return hash table statistics of the specified Redis database.",
+"    Return hash table statistics of the specified Sider database.",
 "HTSTATS-KEY <key> [full]",
 "    Like HTSTATS but for the hash table stored at <key>'s value.",
 "LOADAOF",
@@ -465,7 +465,7 @@ void debugCommand(client *c) {
 "    Crash the server with sigsegv.",
 "SET-ACTIVE-EXPIRE <0|1>",
 "    Setting it to 0 disables expiring keys in background when they are not",
-"    accessed (otherwise the Redis behavior). Setting it to 1 reenables back the",
+"    accessed (otherwise the Sider behavior). Setting it to 1 reenables back the",
 "    default.",
 "QUICKLIST-PACKED-THRESHOLD <size>",
 "    Sets the threshold for elements to be inserted as plain vs packed nodes",
@@ -477,7 +477,7 @@ void debugCommand(client *c) {
 "STRINGMATCH-TEST",
 "    Run a fuzz tester against the stringmatchlen() function.",
 "STRUCTSIZE",
-"    Return the size of different Redis core C structures.",
+"    Return the size of different Sider core C structures.",
 "LISTPACK <key>",
 "    Show low level info about the listpack encoding of <key>.",
 "QUICKLIST <key> [<0|1>]",
@@ -954,7 +954,7 @@ NULL
     } else if (!strcasecmp(c->argv[1]->ptr,"stringmatch-test") && c->argc == 2)
     {
         stringmatchlen_fuzz_test();
-        addReplyStatus(c,"Apparently Redis did not crash: test passed");
+        addReplyStatus(c,"Apparently Sider did not crash: test passed");
     } else if (!strcasecmp(c->argv[1]->ptr,"set-disable-deny-scripts") && c->argc == 3)
     {
         server.script_disable_deny_script = atoi(c->argv[2]->ptr);
@@ -1795,9 +1795,9 @@ void logRegisters(ucontext_t *uc) {
 
 #endif /* HAVE_BACKTRACE */
 
-/* Return a file descriptor to write directly to the Redis log with the
+/* Return a file descriptor to write directly to the Sider log with the
  * write(2) syscall, that can be used in critical sections of the code
- * where the rest of Redis can't be trusted (for example during the memory
+ * where the rest of Sider can't be trusted (for example during the memory
  * test) or when an API call requires a raw fd.
  *
  * Close it with closeDirectLogFiledes(). */
@@ -1871,7 +1871,7 @@ void logServerInfo(void) {
     robj *argv[1];
     argv[0] = createStringObject("all", strlen("all"));
     dict *section_dict = genInfoSectionDict(argv, 1, NULL, &all, &everything);
-    infostring = genRedisInfoString(section_dict, all, everything);
+    infostring = genSiderInfoString(section_dict, all, everything);
     if (server.cluster_enabled){
         infostring = genClusterDebugString(infostring);
     }
@@ -1903,7 +1903,7 @@ void logModulesInfo(void) {
 }
 
 /* Log information about the "current" client, that is, the client that is
- * currently being served by Redis. May be NULL if Redis is not serving a
+ * currently being served by Sider. May be NULL if Sider is not serving a
  * client right now. */
 void logCurrentClient(client *cc, const char *title) {
     if (cc == NULL) return;
@@ -2029,7 +2029,7 @@ static void killMainThread(void) {
 
 /* Kill the running threads (other than current) in an unclean way. This function
  * should be used only when it's critical to stop the threads for some reason.
- * Currently Redis does this only on crash (for instance on SIGSEGV) in order
+ * Currently Sider does this only on crash (for instance on SIGSEGV) in order
  * to perform a fast memory check without other threads messing with memory. */
 void killThreads(void) {
     killMainThread();
@@ -2122,7 +2122,7 @@ void sigsegvHandler(int sig, siginfo_t *info, void *secret) {
 
     bugReportStart();
     serverLog(LL_WARNING,
-        "Redis %s crashed by signal: %d, si_code: %d", REDIS_VERSION, sig, info->si_code);
+        "Sider %s crashed by signal: %d, si_code: %d", REDIS_VERSION, sig, info->si_code);
     if (sig == SIGSEGV || sig == SIGBUS) {
         serverLog(LL_WARNING,
         "Accessing address: %p", (void*)info->si_addr);
@@ -2196,10 +2196,10 @@ void bugReportEnd(int killViaSignal, int sig) {
     serverLogRaw(LL_WARNING|LL_RAW,
 "\n=== REDIS BUG REPORT END. Make sure to include from START to END. ===\n\n"
 "       Please report the crash by opening an issue on github:\n\n"
-"           http://github.com/redis/redis/issues\n\n"
-"  If a Redis module was involved, please open in the module's repo instead.\n\n"
-"  Suspect RAM error? Use redis-server --test-memory to verify it.\n\n"
-"  Some other issues could be detected by redis-server --check-system\n"
+"           http://github.com/sider/sider/issues\n\n"
+"  If a Sider module was involved, please open in the module's repo instead.\n\n"
+"  Suspect RAM error? Use sider-server --test-memory to verify it.\n\n"
+"  Some other issues could be detected by sider-server --check-system\n"
 );
 
     /* free(messages); Don't call free() with possibly corrupted memory. */

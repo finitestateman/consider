@@ -5,18 +5,18 @@
  * We do that by scanning the keyspace and for each pointer we have, we can try to
  * ask the allocator if moving it to a new address will help reduce fragmentation.
  *
- * Copyright (c) 2020, Redis Labs, Inc
+ * Copyright (c) 2020, Sider Labs, Inc
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -321,7 +321,7 @@ void activeDefragQuickListNodes(quicklist *ql) {
 /* when the value has lots of elements, we want to handle it later and not as
  * part of the main dictionary scan. this is needed in order to prevent latency
  * spikes when handling large items */
-void defragLater(redisDb *db, dictEntry *kde) {
+void defragLater(siderDb *db, dictEntry *kde) {
     sds key = sdsdup(dictGetKey(kde));
     listAddNodeTail(db->defrag_later, key);
 }
@@ -421,7 +421,7 @@ void scanLaterHash(robj *ob, unsigned long *cursor) {
     *cursor = dictScanDefrag(d, *cursor, scanCallbackCountScanned, &defragfns, NULL);
 }
 
-void defragQuicklist(redisDb *db, dictEntry *kde) {
+void defragQuicklist(siderDb *db, dictEntry *kde) {
     robj *ob = dictGetVal(kde);
     quicklist *ql = ob->ptr, *newql;
     serverAssert(ob->type == OBJ_LIST && ob->encoding == OBJ_ENCODING_QUICKLIST);
@@ -433,7 +433,7 @@ void defragQuicklist(redisDb *db, dictEntry *kde) {
         activeDefragQuickListNodes(ql);
 }
 
-void defragZsetSkiplist(redisDb *db, dictEntry *kde) {
+void defragZsetSkiplist(siderDb *db, dictEntry *kde) {
     robj *ob = dictGetVal(kde);
     zset *zs = (zset*)ob->ptr;
     zset *newzs;
@@ -464,7 +464,7 @@ void defragZsetSkiplist(redisDb *db, dictEntry *kde) {
     dictDefragTables(zs->dict);
 }
 
-void defragHash(redisDb *db, dictEntry *kde) {
+void defragHash(siderDb *db, dictEntry *kde) {
     robj *ob = dictGetVal(kde);
     dict *d, *newd;
     serverAssert(ob->type == OBJ_HASH && ob->encoding == OBJ_ENCODING_HT);
@@ -480,7 +480,7 @@ void defragHash(redisDb *db, dictEntry *kde) {
     dictDefragTables(ob->ptr);
 }
 
-void defragSet(redisDb *db, dictEntry *kde) {
+void defragSet(siderDb *db, dictEntry *kde) {
     robj *ob = dictGetVal(kde);
     dict *d, *newd;
     serverAssert(ob->type == OBJ_SET && ob->encoding == OBJ_ENCODING_HT);
@@ -635,7 +635,7 @@ void* defragStreamConsumerGroup(raxIterator *ri, void *privdata) {
     return NULL;
 }
 
-void defragStream(redisDb *db, dictEntry *kde) {
+void defragStream(siderDb *db, dictEntry *kde) {
     robj *ob = dictGetVal(kde);
     serverAssert(ob->type == OBJ_STREAM && ob->encoding == OBJ_ENCODING_STREAM);
     stream *s = ob->ptr, *news;
@@ -659,7 +659,7 @@ void defragStream(redisDb *db, dictEntry *kde) {
 /* Defrag a module key. This is either done immediately or scheduled
  * for later. Returns then number of pointers defragged.
  */
-void defragModule(redisDb *db, dictEntry *kde) {
+void defragModule(siderDb *db, dictEntry *kde) {
     robj *obj = dictGetVal(kde);
     serverAssert(obj->type == OBJ_MODULE);
 
@@ -670,7 +670,7 @@ void defragModule(redisDb *db, dictEntry *kde) {
 /* for each key we scan in the main dict, this function will attempt to defrag
  * all the various pointers it has. Returns a stat of how many pointers were
  * moved. */
-void defragKey(redisDb *db, dictEntry *de) {
+void defragKey(siderDb *db, dictEntry *de) {
     sds keysds = dictGetKey(de);
     robj *newob, *ob;
     unsigned char *newzl;
@@ -750,7 +750,7 @@ void defragKey(redisDb *db, dictEntry *de) {
 /* Defrag scan callback for the main db dictionary. */
 void defragScanCallback(void *privdata, const dictEntry *de) {
     long long hits_before = server.stat_active_defrag_hits;
-    defragKey((redisDb*)privdata, (dictEntry*)de);
+    defragKey((siderDb*)privdata, (dictEntry*)de);
     if (server.stat_active_defrag_hits != hits_before)
         server.stat_active_defrag_key_hits++;
     else
@@ -821,7 +821,7 @@ static sds defrag_later_current_key = NULL;
 static unsigned long defrag_later_cursor = 0;
 
 /* returns 0 if no more work needs to be been done, and 1 if time is up and more work is needed. */
-int defragLaterStep(redisDb *db, long long endtime) {
+int defragLaterStep(siderDb *db, long long endtime) {
     unsigned int iterations = 0;
     unsigned long long prev_defragged = server.stat_active_defrag_hits;
     unsigned long long prev_scanned = server.stat_active_defrag_scanned;
@@ -922,7 +922,7 @@ void activeDefragCycle(void) {
     static int current_db = -1;
     static unsigned long cursor = 0;
     static unsigned long expires_cursor = 0;
-    static redisDb *db = NULL;
+    static siderDb *db = NULL;
     static long long start_scan, start_stat;
     unsigned int iterations = 0;
     unsigned long long prev_defragged = server.stat_active_defrag_hits;

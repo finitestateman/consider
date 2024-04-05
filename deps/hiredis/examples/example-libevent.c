@@ -3,12 +3,12 @@
 #include <string.h>
 #include <signal.h>
 
-#include <hiredis.h>
+#include <hisider.h>
 #include <async.h>
 #include <adapters/libevent.h>
 
-void getCallback(redisAsyncContext *c, void *r, void *privdata) {
-    redisReply *reply = r;
+void getCallback(siderAsyncContext *c, void *r, void *privdata) {
+    siderReply *reply = r;
     if (reply == NULL) {
         if (c->errstr) {
             printf("errstr: %s\n", c->errstr);
@@ -18,10 +18,10 @@ void getCallback(redisAsyncContext *c, void *r, void *privdata) {
     printf("argv[%s]: %s\n", (char*)privdata, reply->str);
 
     /* Disconnect after receiving the reply to GET */
-    redisAsyncDisconnect(c);
+    siderAsyncDisconnect(c);
 }
 
-void connectCallback(const redisAsyncContext *c, int status) {
+void connectCallback(const siderAsyncContext *c, int status) {
     if (status != REDIS_OK) {
         printf("Error: %s\n", c->errstr);
         return;
@@ -29,7 +29,7 @@ void connectCallback(const redisAsyncContext *c, int status) {
     printf("Connected...\n");
 }
 
-void disconnectCallback(const redisAsyncContext *c, int status) {
+void disconnectCallback(const siderAsyncContext *c, int status) {
     if (status != REDIS_OK) {
         printf("Error: %s\n", c->errstr);
         return;
@@ -43,25 +43,25 @@ int main (int argc, char **argv) {
 #endif
 
     struct event_base *base = event_base_new();
-    redisOptions options = {0};
+    siderOptions options = {0};
     REDIS_OPTIONS_SET_TCP(&options, "127.0.0.1", 6379);
     struct timeval tv = {0};
     tv.tv_sec = 1;
     options.connect_timeout = &tv;
 
 
-    redisAsyncContext *c = redisAsyncConnectWithOptions(&options);
+    siderAsyncContext *c = siderAsyncConnectWithOptions(&options);
     if (c->err) {
         /* Let *c leak for now... */
         printf("Error: %s\n", c->errstr);
         return 1;
     }
 
-    redisLibeventAttach(c,base);
-    redisAsyncSetConnectCallback(c,connectCallback);
-    redisAsyncSetDisconnectCallback(c,disconnectCallback);
-    redisAsyncCommand(c, NULL, NULL, "SET key %b", argv[argc-1], strlen(argv[argc-1]));
-    redisAsyncCommand(c, getCallback, (char*)"end-1", "GET key");
+    siderLibeventAttach(c,base);
+    siderAsyncSetConnectCallback(c,connectCallback);
+    siderAsyncSetDisconnectCallback(c,disconnectCallback);
+    siderAsyncCommand(c, NULL, NULL, "SET key %b", argv[argc-1], strlen(argv[argc-1]));
+    siderAsyncCommand(c, getCallback, (char*)"end-1", "GET key");
     event_base_dispatch(base);
     return 0;
 }

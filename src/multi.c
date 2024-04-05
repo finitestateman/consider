@@ -2,15 +2,15 @@
  * Copyright (c) 2009-2012, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -149,7 +149,7 @@ void execCommand(client *c) {
     int j;
     robj **orig_argv;
     int orig_argc, orig_argv_len;
-    struct redisCommand *orig_cmd;
+    struct siderCommand *orig_cmd;
 
     if (!(c->flags & CLIENT_MULTI)) {
         addReplyError(c,"EXEC without MULTI");
@@ -274,7 +274,7 @@ void execCommand(client *c) {
 typedef struct watchedKey {
     listNode node;
     robj *key;
-    redisDb *db;
+    siderDb *db;
     client *client;
     unsigned expired:1; /* Flag that we're watching an already expired key. */
 } watchedKey;
@@ -374,7 +374,7 @@ int isWatchedKeyExpired(client *c) {
 
 /* "Touch" a key, so that if this key is being WATCHed by some client the
  * next EXEC will fail. */
-void touchWatchedKey(redisDb *db, robj *key) {
+void touchWatchedKey(siderDb *db, robj *key) {
     list *clients;
     listIter li;
     listNode *ln;
@@ -387,7 +387,7 @@ void touchWatchedKey(redisDb *db, robj *key) {
     /* Check if we are already watching for this key */
     listRewind(clients,&li);
     while((ln = listNext(&li))) {
-        watchedKey *wk = redis_member2struct(watchedKey, node, ln);
+        watchedKey *wk = sider_member2struct(watchedKey, node, ln);
         client *c = wk->client;
 
         if (wk->expired) {
@@ -422,7 +422,7 @@ void touchWatchedKey(redisDb *db, robj *key) {
  * replaced_with: for SWAPDB, the WATCH should be invalidated if
  * the key exists in either of them, and skipped only if it
  * doesn't exist in both. */
-void touchAllWatchedKeysInDb(redisDb *emptied, redisDb *replaced_with) {
+void touchAllWatchedKeysInDb(siderDb *emptied, siderDb *replaced_with) {
     listIter li;
     listNode *ln;
     dictEntry *de;
@@ -440,7 +440,7 @@ void touchAllWatchedKeysInDb(redisDb *emptied, redisDb *replaced_with) {
             if (!clients) continue;
             listRewind(clients,&li);
             while((ln = listNext(&li))) {
-                watchedKey *wk = redis_member2struct(watchedKey, node, ln);
+                watchedKey *wk = sider_member2struct(watchedKey, node, ln);
                 if (wk->expired) {
                     if (!replaced_with || !dictFind(replaced_with->dict, key->ptr)) {
                         /* Expired key now deleted. No logical change. Clear the

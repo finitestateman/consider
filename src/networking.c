@@ -2,15 +2,15 @@
  * Copyright (c) 2009-2012, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -384,7 +384,7 @@ void _addReplyProtoToList(client *c, list *reply_list, const char *s, size_t len
 /* The subscribe / unsubscribe command family has a push as a reply,
  * or in other words, it responds with a push (or several of them
  * depending on how many arguments it got), and has no reply. */
-int cmdHasPushAsReply(struct redisCommand *cmd) {
+int cmdHasPushAsReply(struct siderCommand *cmd) {
     if (!cmd) return 0;
     return cmd->proc == subscribeCommand  || cmd->proc == unsubscribeCommand ||
            cmd->proc == psubscribeCommand || cmd->proc == punsubscribeCommand ||
@@ -464,7 +464,7 @@ void addReplySds(client *c, sds s) {
  * client buffer, trying the static buffer initially, and using the string
  * of objects if not possible.
  *
- * It is efficient because does not create an SDS object nor an Redis object
+ * It is efficient because does not create an SDS object nor an Sider object
  * if not needed. The object will only be created by calling
  * _addReplyProtoToList() if we fail to extend the existing tail object
  * in the list of objects. */
@@ -474,7 +474,7 @@ void addReplyProto(client *c, const char *s, size_t len) {
 }
 
 /* Low level function called by the addReplyError...() functions.
- * It emits the protocol for a Redis error, in the form:
+ * It emits the protocol for a Sider error, in the form:
  *
  * -ERRORCODE Error Message<CR><LF>
  *
@@ -537,11 +537,11 @@ void afterErrorReply(client *c, const char *s, size_t len, int flags) {
      * be sent because addReply*() against master clients has no effect...
      * A notable example is:
      *
-     *    EVAL 'redis.call("incr",KEYS[1]); redis.call("nonexisting")' 1 x
+     *    EVAL 'sider.call("incr",KEYS[1]); sider.call("nonexisting")' 1 x
      *
      * Where the master must propagate the first change even if the second
      * will produce an error. However it is useful to log such events since
-     * they are rare and may hint at errors in a script or a bug in Redis. */
+     * they are rare and may hint at errors in a script or a bug in Sider. */
     int ctype = getClientType(c);
     if (ctype == CLIENT_TYPE_MASTER || ctype == CLIENT_TYPE_SLAVE || c->id == CLIENT_ID_AOF) {
         char *to, *from;
@@ -1040,7 +1040,7 @@ void addReplyBulkLen(client *c, robj *obj) {
     addReplyLongLongWithPrefix(c,len,'$');
 }
 
-/* Add a Redis Object as a bulk reply */
+/* Add a Sider Object as a bulk reply */
 void addReplyBulk(client *c, robj *obj) {
     addReplyBulkLen(c,obj);
     addReply(c,obj);
@@ -1262,19 +1262,19 @@ void clientAcceptHandler(connection *conn) {
     {
         if (connIsLocal(conn) != 1) {
             char *err =
-                "-DENIED Redis is running in protected mode because protected "
+                "-DENIED Sider is running in protected mode because protected "
                 "mode is enabled and no password is set for the default user. "
                 "In this mode connections are only accepted from the loopback interface. "
-                "If you want to connect from external computers to Redis you "
+                "If you want to connect from external computers to Sider you "
                 "may adopt one of the following solutions: "
                 "1) Just disable protected mode sending the command "
                 "'CONFIG SET protected-mode no' from the loopback interface "
-                "by connecting to Redis from the same host the server is "
-                "running, however MAKE SURE Redis is not publicly accessible "
+                "by connecting to Sider from the same host the server is "
+                "running, however MAKE SURE Sider is not publicly accessible "
                 "from internet if you do so. Use CONFIG REWRITE to make this "
                 "change permanent. "
                 "2) Alternatively you can just disable the protected mode by "
-                "editing the Redis configuration file, and setting the protected "
+                "editing the Sider configuration file, and setting the protected "
                 "mode option to 'no', and then restarting the server. "
                 "3) If you started the server manually just for testing, restart "
                 "it with the '--protected-mode no' option. "
@@ -1563,7 +1563,7 @@ void freeClient(client *c) {
     /* Notify module system that this client auth status changed. */
     moduleNotifyUserChanged(c);
 
-    /* Free the RedisModuleBlockedClient held onto for reprocessing if not already freed. */
+    /* Free the SiderModuleBlockedClient held onto for reprocessing if not already freed. */
     zfree(c->module_blocked_client);
 
     /* If this client was scheduled for async freeing we need to remove it
@@ -1707,7 +1707,7 @@ void freeClient(client *c) {
 void freeClientAsync(client *c) {
     /* We need to handle concurrent access to the server.clients_to_close list
      * only in the freeClientAsync() function, since it's the only function that
-     * may access the list while Redis uses I/O threads. All the other accesses
+     * may access the list while Sider uses I/O threads. All the other accesses
      * are in the context of the main thread while the other threads are
      * idle. */
     if (c->flags & CLIENT_CLOSE_ASAP || c->flags & CLIENT_SCRIPT) return;
@@ -2052,7 +2052,7 @@ int handleClientsWithPendingWrites(void) {
 
 /* resetClient prepare the client to process the next command */
 void resetClient(client *c) {
-    redisCommandProc *prevcmd = c->cmd ? c->cmd->proc : NULL;
+    siderCommandProc *prevcmd = c->cmd ? c->cmd->proc : NULL;
 
     freeClientArgv(c);
     c->cur_script = NULL;
@@ -2172,7 +2172,7 @@ int processInlineBuffer(client *c) {
         c->repl_ack_time = server.unixtime;
 
     /* Masters should never send us inline protocol to run actual
-     * commands. If this happens, it is likely due to a bug in Redis where
+     * commands. If this happens, it is likely due to a bug in Sider where
      * we got some desynchronization in the protocol, for example
      * because of a PSYNC gone bad.
      *
@@ -2196,7 +2196,7 @@ int processInlineBuffer(client *c) {
         c->argv_len_sum = 0;
     }
 
-    /* Create redis objects for all arguments. */
+    /* Create sider objects for all arguments. */
     for (c->argc = 0, j = 0; j < argc; j++) {
         c->argv[c->argc] = createObject(OBJ_STRING,argv[j]);
         c->argc++;
@@ -2631,7 +2631,7 @@ void readQueryFromClient(connection *conn) {
      * buffer contains exactly the SDS string representing the object, even
      * at the risk of requiring more read(2) calls. This way the function
      * processMultiBulkBuffer() can avoid copying buffers to create the
-     * Redis Object representing the argument. */
+     * Sider Object representing the argument. */
     if (c->reqtype == PROTO_REQ_MULTIBULK && c->multibulklen && c->bulklen != -1
         && c->bulklen >= PROTO_MBULK_BIG_ARG)
     {
@@ -2717,10 +2717,10 @@ done:
     beforeNextClient(c);
 }
 
-/* A Redis "Address String" is a colon separated ip:port pair.
+/* A Sider "Address String" is a colon separated ip:port pair.
  * For IPv4 it's in the form x.y.z.k:port, example: "127.0.0.1:1234".
  * For IPv6 addresses we use [] around the IP part, like in "[::1]:1234".
- * For Unix sockets we use path:0, like in "/tmp/redis:0".
+ * For Unix sockets we use path:0, like in "/tmp/sider:0".
  *
  * An Address String always fits inside a buffer of NET_ADDR_STR_LEN bytes,
  * including the null term.
@@ -3600,7 +3600,7 @@ void helloCommand(client *c) {
     addReplyMapLen(c,6 + !server.sentinel_mode);
 
     addReplyBulkCString(c,"server");
-    addReplyBulkCString(c,"redis");
+    addReplyBulkCString(c,"sider");
 
     addReplyBulkCString(c,"version");
     addReplyBulkCString(c,REDIS_VERSION);
@@ -3627,11 +3627,11 @@ void helloCommand(client *c) {
 
 /* This callback is bound to POST and "Host:" command names. Those are not
  * really commands, but are used in security attacks in order to talk to
- * Redis instances via HTTP, with a technique called "cross protocol scripting"
- * which exploits the fact that services like Redis will discard invalid
+ * Sider instances via HTTP, with a technique called "cross protocol scripting"
+ * which exploits the fact that services like Sider will discard invalid
  * HTTP headers and will process what follows.
  *
- * As a protection against this attack, Redis will terminate the connection
+ * As a protection against this attack, Sider will terminate the connection
  * when a POST or "Host:" header is seen, and will log the event from
  * time to time (to avoid creating a DOS as a result of too many logs). */
 void securityWarningCommand(client *c) {
@@ -3642,9 +3642,9 @@ void securityWarningCommand(client *c) {
         char ip[NET_IP_STR_LEN];
         int port;
         if (connAddrPeerName(c->conn, ip, sizeof(ip), &port) == -1) {
-            serverLog(LL_WARNING,"Possible SECURITY ATTACK detected. It looks like somebody is sending POST or Host: commands to Redis. This is likely due to an attacker attempting to use Cross Protocol Scripting to compromise your Redis instance. Connection aborted.");
+            serverLog(LL_WARNING,"Possible SECURITY ATTACK detected. It looks like somebody is sending POST or Host: commands to Sider. This is likely due to an attacker attempting to use Cross Protocol Scripting to compromise your Sider instance. Connection aborted.");
         } else {
-            serverLog(LL_WARNING,"Possible SECURITY ATTACK detected. It looks like somebody is sending POST or Host: commands to Redis. This is likely due to an attacker attempting to use Cross Protocol Scripting to compromise your Redis instance. Connection from %s:%d aborted.", ip, port);
+            serverLog(LL_WARNING,"Possible SECURITY ATTACK detected. It looks like somebody is sending POST or Host: commands to Sider. This is likely due to an attacker attempting to use Cross Protocol Scripting to compromise your Sider instance. Connection from %s:%d aborted.", ip, port);
         }
         logged_time = now;
     }
@@ -3753,7 +3753,7 @@ void rewriteClientCommandArgument(client *c, int i, robj *newval) {
     }
 }
 
-/* This function returns the number of bytes that Redis is
+/* This function returns the number of bytes that Sider is
  * using to store the reply still not read by the client.
  *
  * Note: this function is very fast so can be called as many time as
@@ -4035,7 +4035,7 @@ static void pauseClientsByClient(mstime_t endTime, int isPauseClientAll) {
  * so that a failover without data loss to occur. Replicas will continue to receive
  * traffic to facilitate this functionality.
  * 
- * This function is also internally used by Redis Cluster for the manual
+ * This function is also internally used by Sider Cluster for the manual
  * failover procedure implemented by CLUSTER FAILOVER.
  *
  * The function always succeed, even if there is already a pause in progress.
@@ -4079,7 +4079,7 @@ uint32_t isPausedActionsWithUpdate(uint32_t actions_bitmask) {
     return (server.paused_actions & actions_bitmask);
 }
 
-/* This function is called by Redis in order to process a few events from
+/* This function is called by Sider in order to process a few events from
  * time to time while blocked into some not interruptible operation.
  * This allows to reply to clients with the -LOADING error while loading the
  * data set at startup or after a full resynchronization with the master
@@ -4108,7 +4108,7 @@ void processEventsWhileBlocked(void) {
     /* Note: when we are processing events while blocked (for instance during
      * busy Lua scripts), we set a global flag. When such flag is set, we
      * avoid handling the read part of clients using threaded I/O.
-     * See https://github.com/redis/redis/issues/6988 for more info.
+     * See https://github.com/sider/sider/issues/6988 for more info.
      * Note that there could be cases of nested calls to this function,
      * specifically on a busy script during async_loading rdb, and scripts
      * that came from AOF. */
@@ -4147,7 +4147,7 @@ void processEventsWhileBlocked(void) {
 #endif
 
 typedef struct __attribute__((aligned(CACHE_LINE_SIZE))) threads_pending {
-    redisAtomic unsigned long value;
+    siderAtomic unsigned long value;
 } threads_pending;
 
 pthread_t io_threads[IO_THREADS_MAX_NUM];
@@ -4177,8 +4177,8 @@ void *IOThreadMain(void *myid) {
     char thdname[16];
 
     snprintf(thdname, sizeof(thdname), "io_thd_%ld", id);
-    redis_set_thread_title(thdname);
-    redisSetCpuAffinity(server.server_cpulist);
+    sider_set_thread_title(thdname);
+    siderSetCpuAffinity(server.server_cpulist);
     makeThreadKillable();
 
     while(1) {

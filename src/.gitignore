@@ -1,5 +1,5 @@
 *.gcda
 *.gcno
 *.gcov
-redis.info
+sider.info
 lcov-html

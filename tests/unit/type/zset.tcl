@@ -1119,7 +1119,7 @@ start_server {tags {"zset"}} {
 
     foreach {popmin popmax} {BZPOPMIN BZPOPMAX BZMPOP_MIN BZMPOP_MAX} {
         test "$popmin/$popmax with a single existing sorted set - $encoding" {
-            set rd [redis_deferring_client]
+            set rd [sider_deferring_client]
             create_zset zset {0 a 1 b 2 c 3 d}
 
             verify_bzpop_response $rd $popmin zset 5 0 {zset a 0} {zset {{a 0}}}
@@ -1131,7 +1131,7 @@ start_server {tags {"zset"}} {
         }
 
         test "$popmin/$popmax with multiple existing sorted sets - $encoding" {
-            set rd [redis_deferring_client]
+            set rd [sider_deferring_client]
             create_zset z1{t} {0 a 1 b 2 c}
             create_zset z2{t} {3 d 4 e 5 f}
 
@@ -1148,7 +1148,7 @@ start_server {tags {"zset"}} {
         }
 
         test "$popmin/$popmax second sorted set has members - $encoding" {
-            set rd [redis_deferring_client]
+            set rd [sider_deferring_client]
             r del z1{t}
             create_zset z2{t} {3 d 4 e 5 f}
 
@@ -1181,7 +1181,7 @@ start_server {tags {"zset"}} {
     foreach {popmin popmax} {BZPOPMIN BZPOPMAX BZMPOP_MIN BZMPOP_MAX} {
         test "$popmin/$popmax - $encoding RESP3" {
             r hello 3
-            set rd [redis_deferring_client]
+            set rd [sider_deferring_client]
             create_zset zset {0 a 1 b 2 c 3 d}
 
             verify_bzpop_response $rd $popmin zset 5 0 {zset a 0} {zset {{a 0}}}
@@ -1287,7 +1287,7 @@ start_server {tags {"zset"}} {
     } {} {needs:repl}
 
     foreach resp {3 2} {
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
 
         if {[lsearch $::denytags "resp3"] >= 0} {
             if {$resp == 3} {continue}
@@ -1660,10 +1660,10 @@ start_server {tags {"zset"}} {
                 }
 
                 assert_encoding $encoding myzset
-                set fromredis [r zrange myzset 0 -1]
+                set fromsider [r zrange myzset 0 -1]
                 set delta 0
-                for {set i 0} {$i < [llength $fromredis]} {incr i} {
-                    if {[lindex $fromredis $i] != [lindex $auxlist $i]} {
+                for {set i 0} {$i < [llength $fromsider]} {incr i} {
+                    if {[lindex $fromsider $i] != [lindex $auxlist $i]} {
                         incr delta
                     }
                 }
@@ -1779,7 +1779,7 @@ start_server {tags {"zset"}} {
                 # Make sure data is the same in both sides
                 assert {[r zrange zset 0 -1] eq $lexset}
 
-                # Get the Redis output
+                # Get the Sider output
                 set output [r $cmd zset $cmin $cmax]
                 if {$rev} {
                     set outlen [r zlexcount zset $cmax $cmin]
@@ -1795,7 +1795,7 @@ start_server {tags {"zset"}} {
                     # Empty output when ranges are inverted.
                 } else {
                     if {$rev} {
-                        # Invert the Tcl array using Redis itself.
+                        # Invert the Tcl array using Sider itself.
                         set copy [r zrevrange zset 0 -1]
                         # Invert min / max as well
                         lassign [list $min $max $mininc $maxinc] \
@@ -1905,7 +1905,7 @@ start_server {tags {"zset"}} {
 
     foreach {pop} {BZPOPMIN BZMPOP_MIN} {
         test "$pop, ZADD + DEL should not awake blocked client" {
-            set rd [redis_deferring_client]
+            set rd [sider_deferring_client]
             r del zset
 
             bzpop_command $rd $pop zset 0
@@ -1923,7 +1923,7 @@ start_server {tags {"zset"}} {
         }
 
         test "$pop, ZADD + DEL + SET should not awake blocked client" {
-            set rd [redis_deferring_client]
+            set rd [sider_deferring_client]
             r del zset
 
             bzpop_command $rd $pop zset 0
@@ -1943,7 +1943,7 @@ start_server {tags {"zset"}} {
     }
 
         test "BZPOPMIN with same key multiple times should work" {
-            set rd [redis_deferring_client]
+            set rd [sider_deferring_client]
             r del z1{t} z2{t}
 
             # Data arriving after the BZPOPMIN.
@@ -1968,7 +1968,7 @@ start_server {tags {"zset"}} {
 
     foreach {pop} {BZPOPMIN BZMPOP_MIN} {
         test "MULTI/EXEC is isolated from the point of view of $pop" {
-            set rd [redis_deferring_client]
+            set rd [sider_deferring_client]
             r del zset
 
             bzpop_command $rd $pop zset 0
@@ -1985,7 +1985,7 @@ start_server {tags {"zset"}} {
         }
 
         test "$pop with variadic ZADD" {
-            set rd [redis_deferring_client]
+            set rd [sider_deferring_client]
             r del zset
             if {$::valgrind} {after 100}
             bzpop_command $rd $pop zset 0
@@ -1999,7 +1999,7 @@ start_server {tags {"zset"}} {
         }
 
         test "$pop with zero timeout should block indefinitely" {
-            set rd [redis_deferring_client]
+            set rd [sider_deferring_client]
             r del zset
             bzpop_command $rd $pop zset 0
             wait_for_blocked_client
@@ -2057,10 +2057,10 @@ start_server {tags {"zset"}} {
     }
 
     test "BZMPOP with multiple blocked clients" {
-        set rd1 [redis_deferring_client]
-        set rd2 [redis_deferring_client]
-        set rd3 [redis_deferring_client]
-        set rd4 [redis_deferring_client]
+        set rd1 [sider_deferring_client]
+        set rd2 [sider_deferring_client]
+        set rd3 [sider_deferring_client]
+        set rd4 [sider_deferring_client]
         r del myzset{t} myzset2{t}
 
         $rd1 bzmpop 0 2 myzset{t} myzset2{t} min count 1
@@ -2092,7 +2092,7 @@ start_server {tags {"zset"}} {
     }
 
     test "BZMPOP propagate as pop with count command to replica" {
-        set rd [redis_deferring_client]
+        set rd [sider_deferring_client]
         set repl [attach_to_replication_stream]
 
         # BZMPOP without being blocked.
@@ -2138,8 +2138,8 @@ start_server {tags {"zset"}} {
     } {} {needs:repl}
 
     test "BZMPOP should not blocks on non key arguments - #10762" {
-        set rd1 [redis_deferring_client]
-        set rd2 [redis_deferring_client]
+        set rd1 [sider_deferring_client]
+        set rd2 [sider_deferring_client]
         r del myzset myzset2 myzset3
 
         $rd1 bzmpop 0 1 myzset min count 10

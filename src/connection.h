@@ -1,17 +1,17 @@
 
 /*
- * Copyright (c) 2019, Redis Labs
+ * Copyright (c) 2019, Sider Labs
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -291,7 +291,7 @@ static inline int connAddr(connection *conn, char *ip, size_t ip_len, int *port,
 
 /* Format an IP,port pair into something easy to parse. If IP is IPv6
  * (matches for ":"), the ip is surrounded by []. IP and port are just
- * separated by colons. This the standard to display addresses within Redis. */
+ * separated by colons. This the standard to display addresses within Sider. */
 static inline int formatAddr(char *buf, size_t buf_len, char *ip, int port) {
     return snprintf(buf, buf_len, strchr(ip,':') ?
            "[%s]:%d" : "%s:%d", ip, port);
@@ -379,10 +379,10 @@ static inline sds connGetPeerCert(connection *conn) {
     return NULL;
 }
 
-/* Initialize the redis connection framework */
+/* Initialize the sider connection framework */
 int connTypeInitialize(void);
 
-/* Register a connection type into redis connection framework */
+/* Register a connection type into sider connection framework */
 int connTypeRegister(ConnectionType *ct);
 
 /* Lookup a connection type by type name */
@@ -442,9 +442,9 @@ static inline aeFileProc *connAcceptHandler(ConnectionType *ct) {
 /* Get Listeners information, note that caller should free the non-empty string */
 sds getListensInfoString(sds info);
 
-int RedisRegisterConnectionTypeSocket(void);
-int RedisRegisterConnectionTypeUnix(void);
-int RedisRegisterConnectionTypeTLS(void);
+int SiderRegisterConnectionTypeSocket(void);
+int SiderRegisterConnectionTypeUnix(void);
+int SiderRegisterConnectionTypeTLS(void);
 
 /* Return 1 if connection is using TLS protocol, 0 if otherwise. */
 static inline int connIsTLS(connection *conn) {

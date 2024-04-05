@@ -7,7 +7,7 @@
 #include <string.h> // for memset
 #include <errno.h>
 
-/* Values to return from redisPollTick */
+/* Values to return from siderPollTick */
 #define REDIS_POLL_HANDLED_READ    1
 #define REDIS_POLL_HANDLED_WRITE   2
 #define REDIS_POLL_HANDLED_TIMEOUT 4
@@ -16,26 +16,26 @@
  * of the underlying file descriptor.  Useful in cases where there is no formal
  * IO event loop but regular ticking can be used, such as in game engines. */
 
-typedef struct redisPollEvents {
-    redisAsyncContext *context;
-    redisFD fd;
+typedef struct siderPollEvents {
+    siderAsyncContext *context;
+    siderFD fd;
     char reading, writing;
     char in_tick;
     char deleted;
     double deadline;
-} redisPollEvents;
+} siderPollEvents;
 
-static double redisPollTimevalToDouble(struct timeval *tv) {
+static double siderPollTimevalToDouble(struct timeval *tv) {
     if (tv == NULL)
         return 0.0;
     return tv->tv_sec + tv->tv_usec / 1000000.00;
 }
 
-static double redisPollGetNow(void) {
+static double siderPollGetNow(void) {
 #ifndef _MSC_VER
     struct timeval tv;
     gettimeofday(&tv,NULL);
-    return redisPollTimevalToDouble(&tv);
+    return siderPollTimevalToDouble(&tv);
 #else
     FILETIME ft;
     ULARGE_INTEGER li;
@@ -49,14 +49,14 @@ static double redisPollGetNow(void) {
 /* Poll for io, handling any pending callbacks.  The timeout argument can be
  * positive to wait for a maximum given time for IO, zero to poll, or negative
  * to wait forever */
-static int redisPollTick(redisAsyncContext *ac, double timeout) {
+static int siderPollTick(siderAsyncContext *ac, double timeout) {
     int reading, writing;
     struct pollfd pfd;
     int handled;
     int ns;
     int itimeout;
 
-    redisPollEvents *e = (redisPollEvents*)ac->ev.data;
+    siderPollEvents *e = (siderPollEvents*)ac->ev.data;
     if (!e)
         return 0;
 
@@ -91,16 +91,16 @@ static int redisPollTick(redisAsyncContext *ac, double timeout) {
     e->in_tick = 1;
     if (ns) {
         if (reading && (pfd.revents & POLLIN)) {
-            redisAsyncHandleRead(ac);
+            siderAsyncHandleRead(ac);
             handled |= REDIS_POLL_HANDLED_READ;
         }
         /* on Windows, connection failure is indicated with the Exception fdset.
          * handle it the same as writable. */
         if (writing && (pfd.revents & (POLLOUT | POLLERR))) {
             /* context Read callback may have caused context to be deleted, e.g.
-               by doing an redisAsyncDisconnect() */
+               by doing an siderAsyncDisconnect() */
             if (!e->deleted) {
-                redisAsyncHandleWrite(ac);
+                siderAsyncHandleWrite(ac);
                 handled |= REDIS_POLL_HANDLED_WRITE;
             }
         }
@@ -108,11 +108,11 @@ static int redisPollTick(redisAsyncContext *ac, double timeout) {
 
     /* perform timeouts */
     if (!e->deleted && e->deadline != 0.0) {
-        double now = redisPollGetNow();
+        double now = siderPollGetNow();
         if (now >= e->deadline) {
             /* deadline has passed.  disable timeout and perform callback */
             e->deadline = 0.0;
-            redisAsyncHandleTimeout(ac);
+            siderAsyncHandleTimeout(ac);
             handled |= REDIS_POLL_HANDLED_TIMEOUT;
         }
     }
@@ -126,28 +126,28 @@ static int redisPollTick(redisAsyncContext *ac, double timeout) {
     return handled;
 }
 
-static void redisPollAddRead(void *data) {
-    redisPollEvents *e = (redisPollEvents*)data;
+static void siderPollAddRead(void *data) {
+    siderPollEvents *e = (siderPollEvents*)data;
     e->reading = 1;
 }
 
-static void redisPollDelRead(void *data) {
-    redisPollEvents *e = (redisPollEvents*)data;
+static void siderPollDelRead(void *data) {
+    siderPollEvents *e = (siderPollEvents*)data;
     e->reading = 0;
 }
 
-static void redisPollAddWrite(void *data) {
-    redisPollEvents *e = (redisPollEvents*)data;
+static void siderPollAddWrite(void *data) {
+    siderPollEvents *e = (siderPollEvents*)data;
     e->writing = 1;
 }
 
-static void redisPollDelWrite(void *data) {
-    redisPollEvents *e = (redisPollEvents*)data;
+static void siderPollDelWrite(void *data) {
+    siderPollEvents *e = (siderPollEvents*)data;
     e->writing = 0;
 }
 
-static void redisPollCleanup(void *data) {
-    redisPollEvents *e = (redisPollEvents*)data;
+static void siderPollCleanup(void *data) {
+    siderPollEvents *e = (siderPollEvents*)data;
 
     /* if we are currently processing a tick, postpone deletion */
     if (e->in_tick)
@@ -156,23 +156,23 @@ static void redisPollCleanup(void *data) {
         hi_free(e);
 }
 
-static void redisPollScheduleTimer(void *data, struct timeval tv)
+static void siderPollScheduleTimer(void *data, struct timeval tv)
 {
-    redisPollEvents *e = (redisPollEvents*)data;
-    double now = redisPollGetNow();
-    e->deadline = now + redisPollTimevalToDouble(&tv);
+    siderPollEvents *e = (siderPollEvents*)data;
+    double now = siderPollGetNow();
+    e->deadline = now + siderPollTimevalToDouble(&tv);
 }
 
-static int redisPollAttach(redisAsyncContext *ac) {
-    redisContext *c = &(ac->c);
-    redisPollEvents *e;
+static int siderPollAttach(siderAsyncContext *ac) {
+    siderContext *c = &(ac->c);
+    siderPollEvents *e;
 
     /* Nothing should be attached when something is already attached */
     if (ac->ev.data != NULL)
         return REDIS_ERR;
 
     /* Create container for context and r/w events */
-    e = (redisPollEvents*)hi_malloc(sizeof(*e));
+    e = (siderPollEvents*)hi_malloc(sizeof(*e));
     if (e == NULL)
         return REDIS_ERR;
     memset(e, 0, sizeof(*e));
@@ -184,12 +184,12 @@ static int redisPollAttach(redisAsyncContext *ac) {
     e->deadline = 0.0;
 
     /* Register functions to start/stop listening for events */
-    ac->ev.addRead = redisPollAddRead;
-    ac->ev.delRead = redisPollDelRead;
-    ac->ev.addWrite = redisPollAddWrite;
-    ac->ev.delWrite = redisPollDelWrite;
-    ac->ev.scheduleTimer = redisPollScheduleTimer;
-    ac->ev.cleanup = redisPollCleanup;
+    ac->ev.addRead = siderPollAddRead;
+    ac->ev.delRead = siderPollDelRead;
+    ac->ev.addWrite = siderPollAddWrite;
+    ac->ev.delWrite = siderPollDelWrite;
+    ac->ev.scheduleTimer = siderPollScheduleTimer;
+    ac->ev.cleanup = siderPollCleanup;
     ac->ev.data = e;
 
     return REDIS_OK;

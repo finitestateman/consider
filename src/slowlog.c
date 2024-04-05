@@ -5,7 +5,7 @@
  * using the 'slowlog-log-slower-than' config directive, that is also
  * readable and writable using the CONFIG SET/GET command.
  *
- * The slow queries log is actually not "logged" in the Redis log file
+ * The slow queries log is actually not "logged" in the Sider log file
  * but is accessible thanks to the SLOWLOG command.
  *
  * ----------------------------------------------------------------------------
@@ -13,15 +13,15 @@
  * Copyright (c) 2009-2012, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -78,7 +78,7 @@ slowlogEntry *slowlogCreateEntry(client *c, robj **argv, int argc, long long dur
                 /* Here we need to duplicate the string objects composing the
                  * argument vector of the command, because those may otherwise
                  * end shared with string objects stored into keys. Having
-                 * shared objects between any part of Redis, and the data
+                 * shared objects between any part of Sider, and the data
                  * structure holding the data, is a problem: FLUSHALL ASYNC
                  * may release the shared string object and create a race. */
                 se->argv[j] = dupStringObject(argv[j]);
@@ -138,7 +138,7 @@ void slowlogReset(void) {
 }
 
 /* The SLOWLOG command. Implements all the subcommands needed to handle the
- * Redis slow log. */
+ * Sider slow log. */
 void slowlogCommand(client *c) {
     if (c->argc == 2 && !strcasecmp(c->argv[1]->ptr,"help")) {
         const char *help[] = {

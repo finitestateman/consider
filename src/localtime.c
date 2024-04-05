@@ -2,15 +2,15 @@
  * Copyright (c) 2018, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -31,9 +31,9 @@
 
 /* This is a safe version of localtime() which contains no locks and is
  * fork() friendly. Even the _r version of localtime() cannot be used safely
- * in Redis. Another thread may be calling localtime() while the main thread
+ * in Sider. Another thread may be calling localtime() while the main thread
  * forks(). Later when the child process calls localtime() again, for instance
- * in order to log something to the Redis log, it may deadlock: in the copy
+ * in order to log something to the Sider log, it may deadlock: in the copy
  * of the address space of the forked process the lock will never be released.
  *
  * This function takes the timezone 'tz' as argument, and the 'dst' flag is
@@ -47,7 +47,7 @@
  * should be refreshed at safe times.
  *
  * Note that this function does not work for dates < 1/1/1970, it is solely
- * designed to work with what time(NULL) may return, and to support Redis
+ * designed to work with what time(NULL) may return, and to support Sider
  * logging of the dates, it's not really a complete implementation. */
 static int is_leap_year(time_t year) {
     if (year % 4) return 0;         /* A year not divisible by 4 is not leap. */

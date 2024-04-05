@@ -8,15 +8,15 @@
  * Copyright (c) 2006-2012, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -45,11 +45,11 @@
 
 #include "dict.h"
 #include "zmalloc.h"
-#include "redisassert.h"
+#include "siderassert.h"
 
 /* Using dictEnableResize() / dictDisableResize() we make possible to disable
  * resizing and rehashing of the hash table as needed. This is very important
- * for Redis, as we use copy-on-write and don't want to move too much memory
+ * for Sider, as we use copy-on-write and don't want to move too much memory
  * around when there is a child performing saving operations.
  *
  * Note that even when dict_can_resize is set to DICT_RESIZE_AVOID, not all
@@ -1658,7 +1658,7 @@ dictType BenchmarkDictType = {
     printf(msg ": %ld items in %lld ms\n", count, elapsed); \
 } while(0)
 
-/* ./redis-server test dict [<count> | --accurate] */
+/* ./sider-server test dict [<count> | --accurate] */
 int dictTest(int argc, char **argv, int flags) {
     long j;
     long long start, elapsed;

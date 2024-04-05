@@ -2,33 +2,33 @@
 #define __HIREDIS_LIBUV_H__
 #include <stdlib.h>
 #include <uv.h>
-#include "../hiredis.h"
+#include "../hisider.h"
 #include "../async.h"
 #include <string.h>
 
-typedef struct redisLibuvEvents {
-    redisAsyncContext* context;
+typedef struct siderLibuvEvents {
+    siderAsyncContext* context;
     uv_poll_t          handle;
     uv_timer_t         timer;
     int                events;
-} redisLibuvEvents;
+} siderLibuvEvents;
 
 
-static void redisLibuvPoll(uv_poll_t* handle, int status, int events) {
-    redisLibuvEvents* p = (redisLibuvEvents*)handle->data;
+static void siderLibuvPoll(uv_poll_t* handle, int status, int events) {
+    siderLibuvEvents* p = (siderLibuvEvents*)handle->data;
     int ev = (status ? p->events : events);
 
     if (p->context != NULL && (ev & UV_READABLE)) {
-        redisAsyncHandleRead(p->context);
+        siderAsyncHandleRead(p->context);
     }
     if (p->context != NULL && (ev & UV_WRITABLE)) {
-        redisAsyncHandleWrite(p->context);
+        siderAsyncHandleWrite(p->context);
     }
 }
 
 
-static void redisLibuvAddRead(void *privdata) {
-    redisLibuvEvents* p = (redisLibuvEvents*)privdata;
+static void siderLibuvAddRead(void *privdata) {
+    siderLibuvEvents* p = (siderLibuvEvents*)privdata;
 
     if (p->events & UV_READABLE) {
         return;
@@ -36,25 +36,25 @@ static void redisLibuvAddRead(void *privdata) {
 
     p->events |= UV_READABLE;
 
-    uv_poll_start(&p->handle, p->events, redisLibuvPoll);
+    uv_poll_start(&p->handle, p->events, siderLibuvPoll);
 }
 
 
-static void redisLibuvDelRead(void *privdata) {
-    redisLibuvEvents* p = (redisLibuvEvents*)privdata;
+static void siderLibuvDelRead(void *privdata) {
+    siderLibuvEvents* p = (siderLibuvEvents*)privdata;
 
     p->events &= ~UV_READABLE;
 
     if (p->events) {
-        uv_poll_start(&p->handle, p->events, redisLibuvPoll);
+        uv_poll_start(&p->handle, p->events, siderLibuvPoll);
     } else {
         uv_poll_stop(&p->handle);
     }
 }
 
 
-static void redisLibuvAddWrite(void *privdata) {
-    redisLibuvEvents* p = (redisLibuvEvents*)privdata;
+static void siderLibuvAddWrite(void *privdata) {
+    siderLibuvEvents* p = (siderLibuvEvents*)privdata;
 
     if (p->events & UV_WRITABLE) {
         return;
@@ -62,24 +62,24 @@ static void redisLibuvAddWrite(void *privdata) {
 
     p->events |= UV_WRITABLE;
 
-    uv_poll_start(&p->handle, p->events, redisLibuvPoll);
+    uv_poll_start(&p->handle, p->events, siderLibuvPoll);
 }
 
 
-static void redisLibuvDelWrite(void *privdata) {
-    redisLibuvEvents* p = (redisLibuvEvents*)privdata;
+static void siderLibuvDelWrite(void *privdata) {
+    siderLibuvEvents* p = (siderLibuvEvents*)privdata;
 
     p->events &= ~UV_WRITABLE;
 
     if (p->events) {
-        uv_poll_start(&p->handle, p->events, redisLibuvPoll);
+        uv_poll_start(&p->handle, p->events, siderLibuvPoll);
     } else {
         uv_poll_stop(&p->handle);
     }
 }
 
 static void on_timer_close(uv_handle_t *handle) {
-    redisLibuvEvents* p = (redisLibuvEvents*)handle->data;
+    siderLibuvEvents* p = (siderLibuvEvents*)handle->data;
     p->timer.data = NULL;
     if (!p->handle.data) {
         // both timer and handle are closed
@@ -89,7 +89,7 @@ static void on_timer_close(uv_handle_t *handle) {
 }
 
 static void on_handle_close(uv_handle_t *handle) {
-    redisLibuvEvents* p = (redisLibuvEvents*)handle->data;
+    siderLibuvEvents* p = (siderLibuvEvents*)handle->data;
     p->handle.data = NULL;
     if (!p->timer.data) {
         // timer never started, or timer already destroyed
@@ -102,17 +102,17 @@ static void on_handle_close(uv_handle_t *handle) {
 // see: https://github.com/libuv/libuv/blob/v0.11.23/include/uv.h
 #if (UV_VERSION_MAJOR == 0 && UV_VERSION_MINOR < 11) || \
     (UV_VERSION_MAJOR == 0 && UV_VERSION_MINOR == 11 && UV_VERSION_PATCH < 23)
-static void redisLibuvTimeout(uv_timer_t *timer, int status) {
+static void siderLibuvTimeout(uv_timer_t *timer, int status) {
     (void)status; // unused
 #else
-static void redisLibuvTimeout(uv_timer_t *timer) {
+static void siderLibuvTimeout(uv_timer_t *timer) {
 #endif
-    redisLibuvEvents *e = (redisLibuvEvents*)timer->data;
-    redisAsyncHandleTimeout(e->context);
+    siderLibuvEvents *e = (siderLibuvEvents*)timer->data;
+    siderAsyncHandleTimeout(e->context);
 }
 
-static void redisLibuvSetTimeout(void *privdata, struct timeval tv) {
-    redisLibuvEvents* p = (redisLibuvEvents*)privdata;
+static void siderLibuvSetTimeout(void *privdata, struct timeval tv) {
+    siderLibuvEvents* p = (siderLibuvEvents*)privdata;
 
     uint64_t millsec = tv.tv_sec * 1000 + tv.tv_usec / 1000.0;
     if (!p->timer.data) {
@@ -124,11 +124,11 @@ static void redisLibuvSetTimeout(void *privdata, struct timeval tv) {
     }
     // updates the timeout if the timer has already started
     // or start the timer
-    uv_timer_start(&p->timer, redisLibuvTimeout, millsec, 0);
+    uv_timer_start(&p->timer, siderLibuvTimeout, millsec, 0);
 }
 
-static void redisLibuvCleanup(void *privdata) {
-    redisLibuvEvents* p = (redisLibuvEvents*)privdata;
+static void siderLibuvCleanup(void *privdata) {
+    siderLibuvEvents* p = (siderLibuvEvents*)privdata;
 
     p->context = NULL; // indicate that context might no longer exist
     if (p->timer.data) {
@@ -138,21 +138,21 @@ static void redisLibuvCleanup(void *privdata) {
 }
 
 
-static int redisLibuvAttach(redisAsyncContext* ac, uv_loop_t* loop) {
-    redisContext *c = &(ac->c);
+static int siderLibuvAttach(siderAsyncContext* ac, uv_loop_t* loop) {
+    siderContext *c = &(ac->c);
 
     if (ac->ev.data != NULL) {
         return REDIS_ERR;
     }
 
-    ac->ev.addRead        = redisLibuvAddRead;
-    ac->ev.delRead        = redisLibuvDelRead;
-    ac->ev.addWrite       = redisLibuvAddWrite;
-    ac->ev.delWrite       = redisLibuvDelWrite;
-    ac->ev.cleanup        = redisLibuvCleanup;
-    ac->ev.scheduleTimer  = redisLibuvSetTimeout;
+    ac->ev.addRead        = siderLibuvAddRead;
+    ac->ev.delRead        = siderLibuvDelRead;
+    ac->ev.addWrite       = siderLibuvAddWrite;
+    ac->ev.delWrite       = siderLibuvDelWrite;
+    ac->ev.cleanup        = siderLibuvCleanup;
+    ac->ev.scheduleTimer  = siderLibuvSetTimeout;
 
-    redisLibuvEvents* p = (redisLibuvEvents*)hi_malloc(sizeof(*p));
+    siderLibuvEvents* p = (siderLibuvEvents*)hi_malloc(sizeof(*p));
     if (p == NULL)
         return REDIS_ERR;
 

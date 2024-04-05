@@ -4,15 +4,15 @@
  *
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -31,46 +31,46 @@
 
 #ifndef __HIREDIS_ASYNC_H
 #define __HIREDIS_ASYNC_H
-#include "hiredis.h"
+#include "hisider.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct redisAsyncContext; /* need forward declaration of redisAsyncContext */
+struct siderAsyncContext; /* need forward declaration of siderAsyncContext */
 struct dict; /* dictionary header is included in async.c */
 
 /* Reply callback prototype and container */
-typedef void (redisCallbackFn)(struct redisAsyncContext*, void*, void*);
-typedef struct redisCallback {
-    struct redisCallback *next; /* simple singly linked list */
-    redisCallbackFn *fn;
+typedef void (siderCallbackFn)(struct siderAsyncContext*, void*, void*);
+typedef struct siderCallback {
+    struct siderCallback *next; /* simple singly linked list */
+    siderCallbackFn *fn;
     int pending_subs;
     int unsubscribe_sent;
     void *privdata;
-} redisCallback;
+} siderCallback;
 
 /* List of callbacks for either regular replies or pub/sub */
-typedef struct redisCallbackList {
-    redisCallback *head, *tail;
-} redisCallbackList;
+typedef struct siderCallbackList {
+    siderCallback *head, *tail;
+} siderCallbackList;
 
 /* Connection callback prototypes */
-typedef void (redisDisconnectCallback)(const struct redisAsyncContext*, int status);
-typedef void (redisConnectCallback)(const struct redisAsyncContext*, int status);
-typedef void (redisConnectCallbackNC)(struct redisAsyncContext *, int status);
-typedef void(redisTimerCallback)(void *timer, void *privdata);
+typedef void (siderDisconnectCallback)(const struct siderAsyncContext*, int status);
+typedef void (siderConnectCallback)(const struct siderAsyncContext*, int status);
+typedef void (siderConnectCallbackNC)(struct siderAsyncContext *, int status);
+typedef void(siderTimerCallback)(void *timer, void *privdata);
 
-/* Context for an async connection to Redis */
-typedef struct redisAsyncContext {
+/* Context for an async connection to Sider */
+typedef struct siderAsyncContext {
     /* Hold the regular context, so it can be realloc'ed. */
-    redisContext c;
+    siderContext c;
 
     /* Setup error flags so they can be used directly. */
     int err;
     char *errstr;
 
-    /* Not used by hiredis */
+    /* Not used by hisider */
     void *data;
     void (*dataCleanup)(void *privdata);
 
@@ -90,14 +90,14 @@ typedef struct redisAsyncContext {
 
     /* Called when either the connection is terminated due to an error or per
      * user request. The status is set accordingly (REDIS_OK, REDIS_ERR). */
-    redisDisconnectCallback *onDisconnect;
+    siderDisconnectCallback *onDisconnect;
 
     /* Called when the first write event was received. */
-    redisConnectCallback *onConnect;
-    redisConnectCallbackNC *onConnectNC;
+    siderConnectCallback *onConnect;
+    siderConnectCallbackNC *onConnectNC;
 
     /* Regular command callbacks */
-    redisCallbackList replies;
+    siderCallbackList replies;
 
     /* Address used for connect() */
     struct sockaddr *saddr;
@@ -105,45 +105,45 @@ typedef struct redisAsyncContext {
 
     /* Subscription callbacks */
     struct {
-        redisCallbackList replies;
+        siderCallbackList replies;
         struct dict *channels;
         struct dict *patterns;
         int pending_unsubs;
     } sub;
 
     /* Any configured RESP3 PUSH handler */
-    redisAsyncPushFn *push_cb;
-} redisAsyncContext;
+    siderAsyncPushFn *push_cb;
+} siderAsyncContext;
 
-/* Functions that proxy to hiredis */
-redisAsyncContext *redisAsyncConnectWithOptions(const redisOptions *options);
-redisAsyncContext *redisAsyncConnect(const char *ip, int port);
-redisAsyncContext *redisAsyncConnectBind(const char *ip, int port, const char *source_addr);
-redisAsyncContext *redisAsyncConnectBindWithReuse(const char *ip, int port,
+/* Functions that proxy to hisider */
+siderAsyncContext *siderAsyncConnectWithOptions(const siderOptions *options);
+siderAsyncContext *siderAsyncConnect(const char *ip, int port);
+siderAsyncContext *siderAsyncConnectBind(const char *ip, int port, const char *source_addr);
+siderAsyncContext *siderAsyncConnectBindWithReuse(const char *ip, int port,
                                                   const char *source_addr);
-redisAsyncContext *redisAsyncConnectUnix(const char *path);
-int redisAsyncSetConnectCallback(redisAsyncContext *ac, redisConnectCallback *fn);
-int redisAsyncSetConnectCallbackNC(redisAsyncContext *ac, redisConnectCallbackNC *fn);
-int redisAsyncSetDisconnectCallback(redisAsyncContext *ac, redisDisconnectCallback *fn);
+siderAsyncContext *siderAsyncConnectUnix(const char *path);
+int siderAsyncSetConnectCallback(siderAsyncContext *ac, siderConnectCallback *fn);
+int siderAsyncSetConnectCallbackNC(siderAsyncContext *ac, siderConnectCallbackNC *fn);
+int siderAsyncSetDisconnectCallback(siderAsyncContext *ac, siderDisconnectCallback *fn);
 
-redisAsyncPushFn *redisAsyncSetPushCallback(redisAsyncContext *ac, redisAsyncPushFn *fn);
-int redisAsyncSetTimeout(redisAsyncContext *ac, struct timeval tv);
-void redisAsyncDisconnect(redisAsyncContext *ac);
-void redisAsyncFree(redisAsyncContext *ac);
+siderAsyncPushFn *siderAsyncSetPushCallback(siderAsyncContext *ac, siderAsyncPushFn *fn);
+int siderAsyncSetTimeout(siderAsyncContext *ac, struct timeval tv);
+void siderAsyncDisconnect(siderAsyncContext *ac);
+void siderAsyncFree(siderAsyncContext *ac);
 
 /* Handle read/write events */
-void redisAsyncHandleRead(redisAsyncContext *ac);
-void redisAsyncHandleWrite(redisAsyncContext *ac);
-void redisAsyncHandleTimeout(redisAsyncContext *ac);
-void redisAsyncRead(redisAsyncContext *ac);
-void redisAsyncWrite(redisAsyncContext *ac);
+void siderAsyncHandleRead(siderAsyncContext *ac);
+void siderAsyncHandleWrite(siderAsyncContext *ac);
+void siderAsyncHandleTimeout(siderAsyncContext *ac);
+void siderAsyncRead(siderAsyncContext *ac);
+void siderAsyncWrite(siderAsyncContext *ac);
 
 /* Command functions for an async context. Write the command to the
  * output buffer and register the provided callback. */
-int redisvAsyncCommand(redisAsyncContext *ac, redisCallbackFn *fn, void *privdata, const char *format, va_list ap);
-int redisAsyncCommand(redisAsyncContext *ac, redisCallbackFn *fn, void *privdata, const char *format, ...);
-int redisAsyncCommandArgv(redisAsyncContext *ac, redisCallbackFn *fn, void *privdata, int argc, const char **argv, const size_t *argvlen);
-int redisAsyncFormattedCommand(redisAsyncContext *ac, redisCallbackFn *fn, void *privdata, const char *cmd, size_t len);
+int sidervAsyncCommand(siderAsyncContext *ac, siderCallbackFn *fn, void *privdata, const char *format, va_list ap);
+int siderAsyncCommand(siderAsyncContext *ac, siderCallbackFn *fn, void *privdata, const char *format, ...);
+int siderAsyncCommandArgv(siderAsyncContext *ac, siderCallbackFn *fn, void *privdata, int argc, const char **argv, const size_t *argvlen);
+int siderAsyncFormattedCommand(siderAsyncContext *ac, siderCallbackFn *fn, void *privdata, const char *cmd, size_t len);
 
 #ifdef __cplusplus
 }

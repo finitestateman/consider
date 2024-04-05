@@ -39,11 +39,11 @@ def convert_entry_to_objects_array(cmd, docs):
     1. Name (lower case, e.g. "lolwut")
     2. Arity
     3. Flags
-    4-6. First/last/step key specification (deprecated as of Redis v7.0)
+    4-6. First/last/step key specification (deprecated as of Sider v7.0)
     7. ACL categories
-    8. hints (as of Redis 7.0)
-    9. key-specs (as of Redis 7.0)
-    10. subcommands (as of Redis 7.0)
+    8. hints (as of Sider 7.0)
+    9. key-specs (as of Sider 7.0)
+    10. subcommands (as of Sider 7.0)
 
     docs is the output of `COMMAND DOCS`, which holds a map of additional metadata
 
@@ -102,13 +102,13 @@ srcdir = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + "/../src")
 # MAIN
 if __name__ == '__main__':
     opts = {
-        'description': 'Transform the output from `redis-cli --json` using COMMAND and COMMAND DOCS to a single commands.json format.',
-        'epilog': f'Usage example: {argv[0]} --cli src/redis-cli --port 6379 > commands.json'
+        'description': 'Transform the output from `sider-cli --json` using COMMAND and COMMAND DOCS to a single commands.json format.',
+        'epilog': f'Usage example: {argv[0]} --cli src/sider-cli --port 6379 > commands.json'
     }
     parser = argparse.ArgumentParser(**opts)
     parser.add_argument('--host', type=str, default='localhost')
     parser.add_argument('--port', type=int, default=6379)
-    parser.add_argument('--cli', type=str, default='%s/redis-cli' % srcdir)
+    parser.add_argument('--cli', type=str, default='%s/sider-cli' % srcdir)
     args = parser.parse_args()
 
     payload = OrderedDict()

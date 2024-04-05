@@ -1,6 +1,6 @@
-# A fake Redis node for replaying predefined/expected traffic with a client.
+# A fake Sider node for replaying predefined/expected traffic with a client.
 #
-# Usage: tclsh fake_redis_node.tcl PORT COMMAND REPLY [ COMMAND REPLY [ ... ] ]
+# Usage: tclsh fake_sider_node.tcl PORT COMMAND REPLY [ COMMAND REPLY [ ... ] ]
 #
 # Commands are given as space-separated strings, e.g. "GET foo", and replies as
 # RESP-encoded replies minus the trailing \r\n, e.g. "+OK".

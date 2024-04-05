@@ -1,16 +1,16 @@
 /*
- * Copyright (c) 2019, Redis Labs
+ * Copyright (c) 2019, Sider Labs
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define REDISMODULE_CORE_MODULE /* A module that's part of the redis core, uses server.h too. */
+#define REDISMODULE_CORE_MODULE /* A module that's part of the sider core, uses server.h too. */
 
 #include "server.h"
 #include "connhelpers.h"
@@ -58,8 +58,8 @@
 #define REDIS_TLS_PROTO_DEFAULT     (REDIS_TLS_PROTO_TLSv1_2)
 #endif
 
-SSL_CTX *redis_tls_ctx = NULL;
-SSL_CTX *redis_tls_client_ctx = NULL;
+SSL_CTX *sider_tls_ctx = NULL;
+SSL_CTX *sider_tls_client_ctx = NULL;
 
 static int parseProtocolsConfig(const char *str) {
     int i, count = 0;
@@ -170,13 +170,13 @@ static void tlsInit(void) {
 }
 
 static void tlsCleanup(void) {
-    if (redis_tls_ctx) {
-        SSL_CTX_free(redis_tls_ctx);
-        redis_tls_ctx = NULL;
+    if (sider_tls_ctx) {
+        SSL_CTX_free(sider_tls_ctx);
+        sider_tls_ctx = NULL;
     }
-    if (redis_tls_client_ctx) {
-        SSL_CTX_free(redis_tls_client_ctx);
-        redis_tls_client_ctx = NULL;
+    if (sider_tls_client_ctx) {
+        SSL_CTX_free(sider_tls_client_ctx);
+        sider_tls_client_ctx = NULL;
     }
 
     #if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
@@ -203,7 +203,7 @@ static int tlsPasswordCallback(char *buf, int size, int rwflag, void *u) {
 /* Create a *base* SSL_CTX using the SSL configuration provided. The base context
  * includes everything that's common for both client-side and server-side connections.
  */
-static SSL_CTX *createSSLContext(redisTLSContextConfig *ctx_config, int protocols, int client) {
+static SSL_CTX *createSSLContext(siderTLSContextConfig *ctx_config, int protocols, int client) {
     const char *cert_file = client ? ctx_config->client_cert_file : ctx_config->cert_file;
     const char *key_file = client ? ctx_config->client_key_file : ctx_config->key_file;
     const char *key_file_pass = client ? ctx_config->client_key_file_pass : ctx_config->key_file_pass;
@@ -281,17 +281,17 @@ error:
 
 /* Attempt to configure/reconfigure TLS. This operation is atomic and will
  * leave the SSL_CTX unchanged if fails.
- * @priv: config of redisTLSContextConfig.
+ * @priv: config of siderTLSContextConfig.
  * @reconfigure: if true, ignore the previous configure; if false, only
- *               configure from @ctx_config if redis_tls_ctx is NULL.
+ *               configure from @ctx_config if sider_tls_ctx is NULL.
  */
 static int tlsConfigure(void *priv, int reconfigure) {
-    redisTLSContextConfig *ctx_config = (redisTLSContextConfig *)priv;
+    siderTLSContextConfig *ctx_config = (siderTLSContextConfig *)priv;
     char errbuf[256];
     SSL_CTX *ctx = NULL;
     SSL_CTX *client_ctx = NULL;
 
-    if (!reconfigure && redis_tls_ctx) {
+    if (!reconfigure && sider_tls_ctx) {
         return C_OK;
     }
 
@@ -322,7 +322,7 @@ static int tlsConfigure(void *priv, int reconfigure) {
         SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_SERVER);
         SSL_CTX_sess_set_cache_size(ctx, ctx_config->session_cache_size);
         SSL_CTX_set_timeout(ctx, ctx_config->session_cache_timeout);
-        SSL_CTX_set_session_id_context(ctx, (void *) "redis", 5);
+        SSL_CTX_set_session_id_context(ctx, (void *) "sider", 5);
     } else {
         SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_OFF);
     }
@@ -401,10 +401,10 @@ static int tlsConfigure(void *priv, int reconfigure) {
         if (!client_ctx) goto error;
     }
 
-    SSL_CTX_free(redis_tls_ctx);
-    SSL_CTX_free(redis_tls_client_ctx);
-    redis_tls_ctx = ctx;
-    redis_tls_client_ctx = client_ctx;
+    SSL_CTX_free(sider_tls_ctx);
+    SSL_CTX_free(sider_tls_client_ctx);
+    sider_tls_ctx = ctx;
+    sider_tls_client_ctx = client_ctx;
 
     return C_OK;
 
@@ -456,9 +456,9 @@ typedef struct tls_connection {
 } tls_connection;
 
 static connection *createTLSConnection(int client_side) {
-    SSL_CTX *ctx = redis_tls_ctx;
-    if (client_side && redis_tls_client_ctx)
-        ctx = redis_tls_client_ctx;
+    SSL_CTX *ctx = sider_tls_ctx;
+    if (client_side && sider_tls_client_ctx)
+        ctx = sider_tls_client_ctx;
     tls_connection *conn = zcalloc(sizeof(tls_connection));
     conn->c.type = &CT_TLS;
     conn->c.fd = -1;
@@ -1152,13 +1152,13 @@ static ConnectionType CT_TLS = {
     .get_peer_cert = connTLSGetPeerCert,
 };
 
-int RedisRegisterConnectionTypeTLS(void) {
+int SiderRegisterConnectionTypeTLS(void) {
     return connTypeRegister(&CT_TLS);
 }
 
 #else   /* USE_OPENSSL */
 
-int RedisRegisterConnectionTypeTLS(void) {
+int SiderRegisterConnectionTypeTLS(void) {
     serverLog(LL_VERBOSE, "Connection type %s not builtin", CONN_TYPE_TLS);
     return C_ERR;
 }
@@ -1169,26 +1169,26 @@ int RedisRegisterConnectionTypeTLS(void) {
 
 #include "release.h"
 
-int RedisModule_OnLoad(void *ctx, RedisModuleString **argv, int argc) {
+int SiderModule_OnLoad(void *ctx, SiderModuleString **argv, int argc) {
     UNUSED(argv);
     UNUSED(argc);
 
-    /* Connection modules must be part of the same build as redis. */
-    if (strcmp(REDIS_BUILD_ID_RAW, redisBuildIdRaw())) {
-        serverLog(LL_NOTICE, "Connection type %s was not built together with the redis-server used.", CONN_TYPE_TLS);
+    /* Connection modules must be part of the same build as sider. */
+    if (strcmp(REDIS_BUILD_ID_RAW, siderBuildIdRaw())) {
+        serverLog(LL_NOTICE, "Connection type %s was not built together with the sider-server used.", CONN_TYPE_TLS);
         return REDISMODULE_ERR;
     }
 
-    if (RedisModule_Init(ctx,"tls",1,REDISMODULE_APIVER_1) == REDISMODULE_ERR)
+    if (SiderModule_Init(ctx,"tls",1,REDISMODULE_APIVER_1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
     /* Connection modules is available only bootup. */
-    if ((RedisModule_GetContextFlags(ctx) & REDISMODULE_CTX_FLAGS_SERVER_STARTUP) == 0) {
+    if ((SiderModule_GetContextFlags(ctx) & REDISMODULE_CTX_FLAGS_SERVER_STARTUP) == 0) {
         serverLog(LL_NOTICE, "Connection type %s can be loaded only during bootup", CONN_TYPE_TLS);
         return REDISMODULE_ERR;
     }
 
-    RedisModule_SetModuleOptions(ctx, REDISMODULE_OPTIONS_HANDLE_REPL_ASYNC_LOAD);
+    SiderModule_SetModuleOptions(ctx, REDISMODULE_OPTIONS_HANDLE_REPL_ASYNC_LOAD);
 
     if(connTypeRegister(&CT_TLS) != C_OK)
         return REDISMODULE_ERR;
@@ -1196,7 +1196,7 @@ int RedisModule_OnLoad(void *ctx, RedisModuleString **argv, int argc) {
     return REDISMODULE_OK;
 }
 
-int RedisModule_OnUnload(void *arg) {
+int SiderModule_OnUnload(void *arg) {
     UNUSED(arg);
     serverLog(LL_NOTICE, "Connection type %s can not be unloaded", CONN_TYPE_TLS);
     return REDISMODULE_ERR;

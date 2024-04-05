@@ -4,15 +4,15 @@
  *
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -73,26 +73,26 @@
 extern "C" {
 #endif
 
-typedef struct redisReadTask {
+typedef struct siderReadTask {
     int type;
     long long elements; /* number of elements in multibulk container */
     int idx; /* index in parent (array) object */
     void *obj; /* holds user-generated value for a read task */
-    struct redisReadTask *parent; /* parent task */
+    struct siderReadTask *parent; /* parent task */
     void *privdata; /* user-settable arbitrary field */
-} redisReadTask;
+} siderReadTask;
 
-typedef struct redisReplyObjectFunctions {
-    void *(*createString)(const redisReadTask*, char*, size_t);
-    void *(*createArray)(const redisReadTask*, size_t);
-    void *(*createInteger)(const redisReadTask*, long long);
-    void *(*createDouble)(const redisReadTask*, double, char*, size_t);
-    void *(*createNil)(const redisReadTask*);
-    void *(*createBool)(const redisReadTask*, int);
+typedef struct siderReplyObjectFunctions {
+    void *(*createString)(const siderReadTask*, char*, size_t);
+    void *(*createArray)(const siderReadTask*, size_t);
+    void *(*createInteger)(const siderReadTask*, long long);
+    void *(*createDouble)(const siderReadTask*, double, char*, size_t);
+    void *(*createNil)(const siderReadTask*);
+    void *(*createBool)(const siderReadTask*, int);
     void (*freeObject)(void*);
-} redisReplyObjectFunctions;
+} siderReplyObjectFunctions;
 
-typedef struct redisReader {
+typedef struct siderReader {
     int err; /* Error flags, 0 when there is no error */
     char errstr[128]; /* String representation of error when applicable */
 
@@ -102,25 +102,25 @@ typedef struct redisReader {
     size_t maxbuf; /* Max length of unused buffer */
     long long maxelements; /* Max multi-bulk elements */
 
-    redisReadTask **task;
+    siderReadTask **task;
     int tasks;
 
     int ridx; /* Index of current read task */
     void *reply; /* Temporary reply pointer */
 
-    redisReplyObjectFunctions *fn;
+    siderReplyObjectFunctions *fn;
     void *privdata;
-} redisReader;
+} siderReader;
 
 /* Public API for the protocol parser. */
-redisReader *redisReaderCreateWithFunctions(redisReplyObjectFunctions *fn);
-void redisReaderFree(redisReader *r);
-int redisReaderFeed(redisReader *r, const char *buf, size_t len);
-int redisReaderGetReply(redisReader *r, void **reply);
+siderReader *siderReaderCreateWithFunctions(siderReplyObjectFunctions *fn);
+void siderReaderFree(siderReader *r);
+int siderReaderFeed(siderReader *r, const char *buf, size_t len);
+int siderReaderGetReply(siderReader *r, void **reply);
 
-#define redisReaderSetPrivdata(_r, _p) (int)(((redisReader*)(_r))->privdata = (_p))
-#define redisReaderGetObject(_r) (((redisReader*)(_r))->reply)
-#define redisReaderGetError(_r) (((redisReader*)(_r))->errstr)
+#define siderReaderSetPrivdata(_r, _p) (int)(((siderReader*)(_r))->privdata = (_p))
+#define siderReaderGetObject(_r) (((siderReader*)(_r))->reply)
+#define siderReaderGetError(_r) (((siderReader*)(_r))->errstr)
 
 #ifdef __cplusplus
 }

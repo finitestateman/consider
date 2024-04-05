@@ -27,7 +27,7 @@ start_server {tags {"modules"}} {
         assert {$tre > 3.2 && $tre < 3.4 }
 
         # search using the wrong section
-        catch { [r info.gets badname redis_version] } e
+        catch { [r info.gets badname sider_version] } e
         assert_match {*not found*} $e
 
         # check that section filter works

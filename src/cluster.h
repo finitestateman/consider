@@ -2,7 +2,7 @@
 #define __CLUSTER_H
 
 /*-----------------------------------------------------------------------------
- * Redis cluster data structures, defines, exported API.
+ * Sider cluster data structures, defines, exported API.
  *----------------------------------------------------------------------------*/
 
 #define CLUSTER_SLOTS 16384
@@ -101,9 +101,9 @@ typedef struct clusterLink {
 #define CLUSTERMSG_TYPE_PUBLISHSHARD 10 /* Pub/Sub Publish shard propagation */
 #define CLUSTERMSG_TYPE_COUNT 11        /* Total number of message types. */
 
-/* Flags that a module can set in order to prevent certain Redis Cluster
+/* Flags that a module can set in order to prevent certain Sider Cluster
  * features to be enabled. Useful when implementing a different distributed
- * system on top of Redis Cluster message bus, using modules. */
+ * system on top of Sider Cluster message bus, using modules. */
 #define CLUSTER_MODULE_FLAG_NONE 0
 #define CLUSTER_MODULE_FLAG_NO_FAILOVER (1<<1)
 #define CLUSTER_MODULE_FLAG_NO_REDIRECTION (1<<2)
@@ -170,7 +170,7 @@ typedef struct clusterDictEntryMetadata {
 } clusterDictEntryMetadata;
 
 typedef struct {
-    redisDb *db;                /* A link back to the db this dict belongs to */
+    siderDb *db;                /* A link back to the db this dict belongs to */
 } clusterDictMetadata;
 
 typedef struct clusterState {
@@ -222,7 +222,7 @@ typedef struct clusterState {
     unsigned char owner_not_claiming_slot[CLUSTER_SLOTS / 8];
 } clusterState;
 
-/* Redis cluster messages header */
+/* Sider cluster messages header */
 
 /* Initially we don't know our "name", but we'll find it once we connect
  * to the first node, using the getsockname() function. Then we'll use this
@@ -341,7 +341,7 @@ union clusterMsgData {
 #define CLUSTER_PROTO_VER 1 /* Cluster bus protocol version. */
 
 typedef struct {
-    char sig[4];        /* Signature "RCmb" (Redis Cluster message bus). */
+    char sig[4];        /* Signature "RCmb" (Sider Cluster message bus). */
     uint32_t totlen;    /* Total length of this message */
     uint16_t ver;       /* Protocol version, currently set to 1. */
     uint16_t port;      /* Primary port number (TCP or TLS). */
@@ -368,8 +368,8 @@ typedef struct {
     union clusterMsgData data;
 } clusterMsg;
 
-/* clusterMsg defines the gossip wire protocol exchanged among Redis cluster
- * members, which can be running different versions of redis-server bits,
+/* clusterMsg defines the gossip wire protocol exchanged among Sider cluster
+ * members, which can be running different versions of sider-server bits,
  * especially during cluster rolling upgrades.
  *
  * Therefore, fields in this struct should remain at the same offset from
@@ -414,7 +414,7 @@ void clusterInitListeners(void);
 void clusterCron(void);
 void clusterBeforeSleep(void);
 clusterNode *clusterNodeGetMaster(clusterNode *node);
-clusterNode *getNodeByQuery(client *c, struct redisCommand *cmd, robj **argv, int argc, int *hashslot, int *ask);
+clusterNode *getNodeByQuery(client *c, struct siderCommand *cmd, robj **argv, int argc, int *hashslot, int *ask);
 int verifyClusterNodeId(const char *name, int length);
 clusterNode *clusterLookupNode(const char *name, int length);
 int clusterRedirectBlockedClientIfNeeded(client *c);
@@ -425,12 +425,12 @@ unsigned long getClusterConnectionsCount(void);
 int clusterSendModuleMessageToTarget(const char *target, uint64_t module_id, uint8_t type, const char *payload, uint32_t len);
 void clusterPropagatePublish(robj *channel, robj *message, int sharded);
 unsigned int keyHashSlot(char *key, int keylen);
-void slotToKeyAddEntry(dictEntry *entry, redisDb *db);
-void slotToKeyDelEntry(dictEntry *entry, redisDb *db);
+void slotToKeyAddEntry(dictEntry *entry, siderDb *db);
+void slotToKeyDelEntry(dictEntry *entry, siderDb *db);
 void slotToKeyReplaceEntry(dict *d, dictEntry *entry);
-void slotToKeyInit(redisDb *db);
-void slotToKeyFlush(redisDb *db);
-void slotToKeyDestroy(redisDb *db);
+void slotToKeyInit(siderDb *db);
+void slotToKeyFlush(siderDb *db);
+void slotToKeyDestroy(siderDb *db);
 void clusterUpdateMyselfFlags(void);
 void clusterUpdateMyselfIp(void);
 void slotToChannelAdd(sds channel);

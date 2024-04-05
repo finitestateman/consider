@@ -1,23 +1,23 @@
-/* redisassert.c -- Implement the default _serverAssert and _serverPanic which 
+/* siderassert.c -- Implement the default _serverAssert and _serverPanic which 
  * simply print stack trace to standard error stream.
  * 
  * This file is shared by those modules that try to print some logs about stack trace 
- * but don't have their own implementations of functions in redisassert.h.
+ * but don't have their own implementations of functions in siderassert.h.
  *
  * ----------------------------------------------------------------------------
  *
- * Copyright (c) 2021, Andy Pan <panjf2000@gmail.com> and Redis Labs
+ * Copyright (c) 2021, Andy Pan <panjf2000@gmail.com> and Sider Labs
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *

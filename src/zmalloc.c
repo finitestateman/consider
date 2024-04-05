@@ -3,15 +3,15 @@
  * Copyright (c) 2009-2010, Salvatore Sanfilippo <antirez at gmail dot com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Sidertribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above copyright notice,
+ *   * Sidertributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Sidertributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
+ *   * Neither the name of Sider nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -91,7 +91,7 @@ void zlibc_free(void *ptr) {
 #define update_zmalloc_stat_alloc(__n) atomicIncr(used_memory,(__n))
 #define update_zmalloc_stat_free(__n) atomicDecr(used_memory,(__n))
 
-static redisAtomic size_t used_memory = 0;
+static siderAtomic size_t used_memory = 0;
 
 static void zmalloc_default_oom(size_t size) {
     fprintf(stderr, "zmalloc: Out of memory trying to allocate %zu bytes\n",
@@ -445,11 +445,11 @@ void zmadvise_dontneed(void *ptr) {
 /* Get the RSS information in an OS-specific way.
  *
  * WARNING: the function zmalloc_get_rss() is not designed to be fast
- * and may not be called in the busy loops where Redis tries to release
+ * and may not be called in the busy loops where Sider tries to release
  * memory expiring or swapping out objects.
  *
  * For this kind of "fast RSS reporting" usages use instead the
- * function RedisEstimateRSS() that is a much faster (and less precise)
+ * function SiderEstimateRSS() that is a much faster (and less precise)
  * version of the function. */
 
 #if defined(HAVE_PROC_STAT)
@@ -692,7 +692,7 @@ int jemalloc_purge(void) {
 /* For proc_pidinfo() used later in zmalloc_get_smap_bytes_by_field().
  * Note that this file cannot be included in zmalloc.h because it includes
  * a Darwin queue.h file where there is a "LIST_HEAD" macro (!) defined
- * conficting with Redis user code. */
+ * conficting with Sider user code. */
 #include <libproc.h>
 #endif
 
@@ -785,7 +785,7 @@ size_t zmalloc_get_private_dirty(long pid) {
  * 1) Was released under the following CC attribution license:
  *    http://creativecommons.org/licenses/by/3.0/deed.en_US.
  * 2) Was originally implemented by David Robert Nadeau.
- * 3) Was modified for Redis by Matt Stancliff.
+ * 3) Was modified for Sider by Matt Stancliff.
  * 4) This note exists in order to comply with the original license.
  */
 size_t zmalloc_get_memory_size(void) {

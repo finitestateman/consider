@@ -11,9 +11,9 @@ test "(init) Remove old master entry from sentinels" {
     }
 }
 
-set redis_slaves [expr $::instances_count - 1]
-test "(init) Create a master-slaves cluster of [expr $redis_slaves+1] instances" {
-    create_redis_master_slave_cluster [expr {$redis_slaves+1}]
+set sider_slaves [expr $::instances_count - 1]
+test "(init) Create a master-slaves cluster of [expr $sider_slaves+1] instances" {
+    create_sider_master_slave_cluster [expr {$sider_slaves+1}]
 }
 set master_id 0
 
@@ -22,8 +22,8 @@ test "(init) Sentinels can start monitoring a master" {
     set quorum [expr {$sentinels/2+1}]
     foreach_sentinel_id id {
         S $id SENTINEL MONITOR mymaster \
-              [get_instance_attrib redis $master_id host] \
-              [get_instance_attrib redis $master_id port] $quorum
+              [get_instance_attrib sider $master_id host] \
+              [get_instance_attrib sider $master_id port] $quorum
     }
     foreach_sentinel_id id {
         assert {[S $id sentinel master mymaster] ne {}}
@@ -55,7 +55,7 @@ test "(init) Sentinels are able to auto-discover other sentinels" {
 test "(init) Sentinels are able to auto-discover slaves" {
     foreach_sentinel_id id {
         wait_for_condition 1000 50 {
-            [dict get [S $id SENTINEL MASTER mymaster] num-slaves] == $redis_slaves
+            [dict get [S $id SENTINEL MASTER mymaster] num-slaves] == $sider_slaves
         } else {
             fail "At least some sentinel can't detect some slave"
         }
